@@ -3,6 +3,6 @@
 
 int main()
 {
-    dvg_init(0);
+    dvg_init();
     dvg_run();
 }
