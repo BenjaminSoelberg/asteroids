@@ -13,8 +13,8 @@ link_libraries(${GTK_LIBRARIES})
 
 set(AUTO_GEN_DIR "${PROJECT_BINARY_DIR}/generated")
 add_custom_command(
-        OUTPUT ${AUTO_GEN_DIR}/dvg_rom.h
-        COMMAND ${PYTHON3} ${CMAKE_CURRENT_SOURCE_DIR}/convert.py ${AUTO_GEN_DIR}/dvg_rom.h
+        OUTPUT ${AUTO_GEN_DIR}/dvg_rom.c
+        COMMAND ${PYTHON3} ${CMAKE_CURRENT_SOURCE_DIR}/convert.py ${AUTO_GEN_DIR}/dvg_rom.c
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/convert.py
         COMMENT "Generate (custom command)"
 )
@@ -26,5 +26,6 @@ add_executable(astroids
         asteroids.h
         dvg.c
         dvg.h
-        ${AUTO_GEN_DIR}/dvg_rom.h
+        ${AUTO_GEN_DIR}/dvg_rom.c
+        dvg_rom.h
 )

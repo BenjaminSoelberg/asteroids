@@ -1,8 +1,6 @@
 #ifndef ASTROIDS_DVG_H
 #define ASTROIDS_DVG_H
 
-#include <stdint-gcc.h>
-
 #include "asteroids.h"
 
 #define DVG_MIN_X 0
@@ -24,7 +22,8 @@
 #define DVG_MIN_SP 0
 #define DVG_MAX_SP 3
 
-#define DVG_MIN_PC 0x400
+#define DVG_MIN_PC 0x0
+#define DVG_ROM_START 0x400
 #define DVG_MAX_PC 0xFFF
 
 #define DVG_PC_MASK 0xFFF
@@ -58,6 +57,6 @@
 
 void dvg_init();
 
-void dvg_run(cairo_t *cr);
+void dvg_run(cairo_t *cr, uint16_t start_pc);
 
 #endif //ASTROIDS_DVG_H

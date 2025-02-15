@@ -2,7 +2,6 @@
 #include <string.h>
 #include <assert.h>
 #include "dvg.h"
-#include "dvg_rom.h"
 
 uint16_t x;
 uint16_t y;
@@ -19,20 +18,15 @@ void dvg_init() {
     gsf = DVG_MAX_SF;
     memset(&stack, 0, sizeof stack);
     sp = DVG_MIN_SP;
-    pc = 0x0400;
+    pc = 0x0000;
     current_pc = pc;
 }
-
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "ConstantFunctionResult"
 
 uint16_t get_next_word() {
     uint16_t word = dvg_rom[pc];
     pc++;
     return word;
 }
-
-#pragma clang diagnostic pop
 
 void dvg_draw_to(cairo_t *cr, int16_t delta_x, int16_t delta_y, uint8_t brightness) {
     uint16_t new_x = x + delta_x;
@@ -44,7 +38,7 @@ void dvg_draw_to(cairo_t *cr, int16_t delta_x, int16_t delta_y, uint8_t brightne
         cairo_set_source_rgb(cr, 0, 1.0 / DVG_MAX_BRIGHTNESS * brightness, 0);
         cairo_set_line_width(cr, 1);
 
-        cairo_move_to(cr, x, DVG_MAX_Y - y); // TODO: hmm not very effectively...
+        cairo_move_to(cr, x, DVG_MAX_Y - y); // TODO: hmm not very efficient...
         cairo_line_to(cr, new_x, DVG_MAX_Y - new_y);
         cairo_stroke(cr);
     }
@@ -103,15 +97,13 @@ void dvg_parse_cur(uint16_t word_1, uint16_t word_2) {
 
 void dvg_parse_halt() {
     printf("0x%04X HALT \n", (current_pc * 2));
-    //TODO: set pc to start_pc ?
-    //TODO: Remember to implement
 }
 
 void dvg_parse_jsr(uint16_t word) {
     assert(sp < DVG_MAX_SP);
     uint8_t new_sp = sp + 1;
 
-    uint16_t new_pc = (word & DVG_PC_MASK) - DVG_MIN_PC;
+    uint16_t new_pc = (word & DVG_PC_MASK) - DVG_ROM_START;
     assert(new_pc >= DVG_MIN_PC);
     assert(new_pc <= DVG_MAX_PC);
 
@@ -171,8 +163,9 @@ void dvg_parse_svec(cairo_t *cr, uint16_t word) {
     dvg_draw_to(cr, scaled_delta_x, scaled_delta_y, brightness);
 }
 
-void dvg_run(cairo_t *cr) {
+void dvg_run(cairo_t *cr, uint16_t start_pc) {
     bool keep_running = true;
+    pc = start_pc;
     do {
         current_pc = pc;
         uint16_t word = get_next_word();
@@ -211,7 +204,6 @@ void dvg_run(cairo_t *cr) {
 
             case DVG_OPCODE_JMP:
                 dvg_parse_jmp(word);
-                keep_running = false; // TODO: DEBUG!
                 break;
 
             case DVG_OPCODE_SVEC:

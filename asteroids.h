@@ -1,7 +1,10 @@
-#ifndef ASTROIDS_ASTEROIDS_H
+#pragma once
+
 #define ASTROIDS_ASTEROIDS_H
 
 #include <stdint-gcc.h>
 #include <gtk/gtk.h>
 
-#endif //ASTROIDS_ASTEROIDS_H
+#include "dvg_rom.h"
+
+#undef ASTROIDS_ASTEROIDS_H
