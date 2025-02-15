@@ -35,10 +35,10 @@ void dvg_draw_to(cairo_t *cr, int16_t delta_x, int16_t delta_y, uint8_t brightne
     assert(brightness <= DVG_MAX_BRIGHTNESS);
 
     if (brightness > DVG_MIN_BRIGHTNESS) {
-        cairo_set_source_rgb(cr, 0, 1.0 / DVG_MAX_BRIGHTNESS * brightness, 0);
-        cairo_set_line_width(cr, 1);
+        cairo_set_source_rgb(cr, 1.0 / DVG_MAX_BRIGHTNESS * brightness, 1.0 / DVG_MAX_BRIGHTNESS * brightness, 1.0 / DVG_MAX_BRIGHTNESS * brightness);
+        cairo_set_line_width(cr, 4);
 
-        cairo_move_to(cr, x, DVG_MAX_Y - y); // TODO: hmm not very efficient...
+        cairo_move_to(cr, x, DVG_MAX_Y - y);
         cairo_line_to(cr, new_x, DVG_MAX_Y - new_y);
         cairo_stroke(cr);
     }
@@ -72,7 +72,7 @@ void dvg_parse_vec(cairo_t *cr, uint16_t word_1, uint16_t word_2) {
     int16_t scaled_delta_y = (int16_t) (delta_y >> (DVG_MAX_SF - sf));
     int16_t scaled_delta_x = (int16_t) (delta_x >> (DVG_MAX_SF - sf));
 
-    printf("0x%04X VEC scale=%d, bri=%d, x=%d, y=%d  (%d, %d)\n", (current_pc * 2), sf, brightness, delta_x, delta_y,
+    printf("0x%04X VEC scale=%d, bri=%d, x=%d, y=%d  (%d, %d)\n", current_pc * 2, sf, brightness, delta_x, delta_y,
            scaled_delta_x, scaled_delta_y);
 
     dvg_draw_to(cr, scaled_delta_x, scaled_delta_y, brightness);
@@ -88,7 +88,7 @@ void dvg_parse_cur(uint16_t word_1, uint16_t word_2) {
     uint8_t new_gsf = word_2 >> 12 & DVG_SF_MASK;
     assert(new_gsf <= DVG_MAX_SF);
 
-    printf("0x%04X CUR scale=%d, x=%d, y=%d\n", (current_pc * 2), new_gsf, new_x, new_y);
+    printf("0x%04X CUR scale=%d, x=%d, y=%d\n", current_pc * 2, new_gsf, new_x, new_y);
 
     y = new_y;
     x = new_x;
@@ -96,7 +96,7 @@ void dvg_parse_cur(uint16_t word_1, uint16_t word_2) {
 }
 
 void dvg_parse_halt() {
-    printf("0x%04X HALT \n", (current_pc * 2));
+    printf("0x%04X HALT \n", current_pc * 2);
 }
 
 void dvg_parse_jsr(uint16_t word) {
@@ -121,15 +121,17 @@ void dvg_parse_rts() {
     assert(new_pc >= DVG_MIN_PC);
     assert(new_pc <= DVG_MAX_PC);
 
+    printf("0x%04X RTC sp=0x%02X 0x%04X \n", current_pc * 2, new_sp, new_pc * 2);
     sp = new_sp;
     pc = new_pc;
 }
 
 void dvg_parse_jmp(uint16_t word) {
-    uint16_t new_pc = word & DVG_PC_MASK;
+    uint16_t new_pc = (word & DVG_PC_MASK) - DVG_ROM_START;
     assert(new_pc >= DVG_MIN_PC);
     assert(new_pc <= DVG_MAX_PC);
 
+    printf("0x%04X JMP 0x%04X\n", current_pc * 2, new_pc * 2);
     pc = new_pc;
 }
 
@@ -158,7 +160,7 @@ void dvg_parse_svec(cairo_t *cr, uint16_t word) {
     int16_t scaled_delta_y = (int16_t) (delta_y << (ss + 1));
     int16_t scaled_delta_x = (int16_t) (delta_x << (ss + 1));
 
-    printf("0x%04X SVEC scale=%d(*%d), bri=%d, x=%d, y=%d  (%d, %d)\n", (current_pc * 2), ss, sf, brightness, delta_x, delta_y, scaled_delta_x, scaled_delta_y);
+    printf("0x%04X SVEC scale=%d(*%d), bri=%d, x=%d, y=%d  (%d, %d)\n", current_pc * 2, ss, sf, brightness, delta_x, delta_y, scaled_delta_x, scaled_delta_y);
 
     dvg_draw_to(cr, scaled_delta_x, scaled_delta_y, brightness);
 }
@@ -213,5 +215,6 @@ void dvg_run(cairo_t *cr, uint16_t start_pc) {
             default:
                 assert(0);
         }
-    } while (keep_running);
+
+    } while (keep_running && pc != (0x886/2));
 }
