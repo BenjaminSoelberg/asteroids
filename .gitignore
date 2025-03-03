@@ -78,3 +78,5 @@ fabric.properties
 
 # cmake stuff
 cmake-build-debug/*
+
+rom/

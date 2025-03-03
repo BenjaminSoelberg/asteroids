@@ -1,0 +1,4 @@
+#ifndef ASTROIDS_PRINT_H
+#define ASTROIDS_PRINT_H
+
+#endif //ASTROIDS_PRINT_H

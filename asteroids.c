@@ -1,6 +1,8 @@
 #include "asteroids.h"
 #include <gtk/gtk.h>
+#include <assert.h>
 #include "dvg.h"
+#include "page0.h"
 
 // Custom draw function using Cairo
 static void draw_callback(GtkDrawingArea *area, cairo_t *cr, int width, int height, gpointer data) {
@@ -33,6 +35,8 @@ static void on_activate(GtkApplication *app, gpointer user_data) {
 
 // Main function
 int main(int argc, char **argv) {
+    assert (sizeof(PAGE_0) == 256);
+
     GtkApplication *app = gtk_application_new("com.example.asteroids", G_APPLICATION_DEFAULT_FLAGS);
     g_signal_connect(app, "activate", G_CALLBACK(on_activate), NULL);
 
