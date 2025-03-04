@@ -28,8 +28,8 @@ add_executable(astroids
         dvg.h
         ${AUTO_GEN_DIR}/dvg_rom.c
         dvg_rom.h
-        page0.c
-        page0.h
+        commons.c
+        commons.h
         print.c
         print.h
 )

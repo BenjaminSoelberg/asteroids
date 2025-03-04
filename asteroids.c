@@ -2,7 +2,7 @@
 #include <gtk/gtk.h>
 #include <assert.h>
 #include "dvg.h"
-#include "page0.h"
+#include "commons.h"
 
 // Custom draw function using Cairo
 static void draw_callback(GtkDrawingArea *area, cairo_t *cr, int width, int height, gpointer data) {
@@ -33,9 +33,13 @@ static void on_activate(GtkApplication *app, gpointer user_data) {
     gtk_widget_set_visible(window, TRUE);
 }
 
-// Main function
+void PWRON() {
+
+}
+
 int main(int argc, char **argv) {
-    assert (sizeof(PAGE_0) == 256);
+    assert (sizeof(ZERO_PAGE) == 256);
+    PWRON();
 
     GtkApplication *app = gtk_application_new("com.example.asteroids", G_APPLICATION_DEFAULT_FLAGS);
     g_signal_connect(app, "activate", G_CALLBACK(on_activate), NULL);
