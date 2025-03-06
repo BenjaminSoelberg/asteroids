@@ -33,12 +33,26 @@ static void on_activate(GtkApplication *app, gpointer user_data) {
     gtk_widget_set_visible(window, TRUE);
 }
 
+/**
+ *  PWRON-POWER ON INITIALIZATION
+ *
+ *  THIS ROUTINE SETS UP POINTERS FOR THE VECTOR GENERATOR AND
+ *  CLEARS AND SETS 0 PAGE AS NEEDED.
+ */
 void PWRON() {
 
 }
 
+void test_asserts() {
+    printf("0x%lx\n", sizeof(MEMORY));
+    assert (sizeof(ZERO_PAGE) == 0x100);
+    assert (sizeof(PLAYER_PAGE) == 0x100);
+    assert (sizeof(IO) == 0x2000);
+    assert (sizeof(MEMORY) == 0x8000);
+}
+
 int main(int argc, char **argv) {
-    assert (sizeof(ZERO_PAGE) == 256);
+    test_asserts();
     PWRON();
 
     GtkApplication *app = gtk_application_new("com.example.asteroids", G_APPLICATION_DEFAULT_FLAGS);

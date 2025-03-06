@@ -3,12 +3,12 @@
 
 #include <stdint-gcc.h>
 
+// NOBJ	=27.			        ;NUMBER OF ASTEROIDS
+//                              ;PLUS 1 SHIP
+//                              ;PLUS 1 SAUCER
+//                              ;PLUS 2 SAUCER TORPEDOES
+//                              ;PLUS 4 SHIP TORPEDOES
 #define NOBJ 27
-//                              // NOBJ	=27.			        ;NUMBER OF ASTEROIDS
-//                              //                              ;PLUS 1 SHIP
-//                              //                              ;PLUS 1 SAUCER
-//                              //                              ;PLUS 2 SAUCER TORPEDOES
-//                              //                              ;PLUS 4 SHIP TORPEDOES
 
 typedef struct {
     uint8_t VGSIZE;             //	VGSIZE:     .BLKB 1			;SCALING SIZE (0,10,20,...,F0)
@@ -83,7 +83,77 @@ typedef struct {
     uint8_t RDELAY;             //  RDELAY:     .BLKB 1	    		;DELAY COUNT BEFORE ADDING ROCKS
     uint8_t THUMP3;             //  THUMP3:     .BLKB 1			    ;STARTING VALUE FOR THUMP2
     uint8_t DIFCTY;             //  DIFCTY:     .BLKB 1			    ;DIFFICULTY VALUE FOR STARTING SAUCERS
+    uint8_t FILLER[2];          //  Page is now hopefully 256 bytes big
 } __attribute__((packed)) PLAYER_PAGE;
+
+typedef struct {
+    uint8_t FILLER_0x2000[0x2000 - 0x2000 + 1];
+    uint8_t THRKHZ;             //    THRKHZ	=2001			    ;3KHZ SIGNAL
+    uint8_t HALT;               //    HALT	    =2002			    ;D7=0 FOR HALTED
+    uint8_t HYPSW;              //    HYPSW	    =2003			    ;HYPERSPACE SWITCH (D7=1) FOR ON
+    uint8_t FIRESW;             //    FIRESW	=2004			    ;FIRE BUTTON (D7=1 FOR ON)
+    uint8_t DIAGSW;             //    DIAGSW    =2005			    ;DIGNOSTIC STEP SWITCH
+    uint8_t $LAM;               //    $LAM  	=2006			    ;SLAM SWITCH D7=1 FOR ON
+    uint8_t STSTSW;             //    STSTSW	=2007			    ;SELF TEST SWITCH (D7=1 FOR ON)
+    uint8_t FILLER_0x2008[0x23FF - 0x2008 + 1];
+    uint8_t $COINA;             //    $COINA	=2400			    ;COIN SWITCHES (LEFT TO RIGHT, OFFSET=1)
+    uint8_t FILLER_0x2401[0x2402 - 0x2401 + 1];
+    uint8_t STRT1;              //    STRT1	    =2403			    ;1 PLAYER START SWITCH (D7=1 FOR ON)
+    uint8_t STRT2;              //    STRT2	    =2404			    ;2 PLAYER START SWITCH (D7=1 FOR ON)
+    uint8_t THRUST;             //    THRUST	=2405			    ;THRUST (D7=1 FOR ON)
+    uint8_t ROTR;               //    ROTR	    =2406			    ;ROTATE RIGHT (D7=1 FOR ON)
+    uint8_t ROTL;               //    ROTL	    =2407			    ;ROTATE LEFT (D7=1 FOR ON)
+    uint8_t FILLER_0x2408[0x27FF - 0x2408 + 1];
+    uint8_t OPTN1;              //    OPTN1	    =2800			    ;OPTION SWITCH 8=D1, SW7=D0, 0=ON (GAME PRICE)
+    uint8_t OPTN2;              //    OPTN2	    =2801			    ;D1=SW6, D0=SW5 (MECH VALUES)
+    uint8_t OPTN3;              //    OPTN3	    =2802			    ;D1=SW4, D0=SW3 (SW3=DIFFICULTY)
+    uint8_t OPTN4;              //    OPTN4	    =2803			    ;D1=SW2, D0=SW1 (LANGUAGE)
+    uint8_t FILLER_0x2804[0x2FFF - 0x2804 + 1];
+    uint8_t GOADD;              //    GOADD	    =3000			    ;RESTART VECTOR GEN
+    uint8_t FILLER_0x3001[0x31FF - 0x3001 + 1];
+    uint8_t OUT1;               //    OUT1	    =3200			    ;OUTPUT LATCH
+    //                          //                                  ;D3-D5=COIN COUNTERS, 1=ON (LEFT TO RIGHT RESP)
+    //                          //                                  ;D2=BANK SELECT
+    //                          //                                  ;D1=1 PLAYERS START LAMP, 0=ON
+    //                          //                                  ;D0=2 PLAYERS START LAMP, 0=ON
+    uint8_t FILLER_0x3201[0x33FF - 0x3201 + 1];
+    uint8_t WTDOG;              //    WTDOG	    =3400			    ;WATCH DOG
+    uint8_t FILLER_0x3401[0x35FF - 0x3401 + 1];
+    uint8_t EXPSND;             //    EXPSND	=3600			    ;EXPLOSION SOUND  D6-D7=PITCH,D2-D5=VOLUME
+    uint8_t FILLER_0x3601[0x39FF - 0x3601 + 1];
+    uint8_t THUMP;              //    THUMP	    =3A00			    ;THUMP SOUND D4=1 FOR ON, D0-D3=FREQUENCY
+    uint8_t FILLER_0x3A01[0x3BFF - 0x3A01 + 1];
+    uint8_t SCRSND;             //    SCRSND	=3C00			    ;SAUCER THRUST SOUND,D7=1 FOR ON
+    uint8_t SCRFIR;             //    SCRFIR	=3C01			    ;SAUCER FIRE SOUND, D7=1 FOR ON
+    uint8_t SCRSEL;             //    SCRSEL	=3C02			    ;SAUCER SOUND SELECT,D7=0 FOR SMALL SAUCER,D7=1 FOR LARGERE
+    uint8_t SHPSND;             //    SHPSND	=3C03			    ;SHIP THRUST SOUND, D7=1 FOR ON
+    uint8_t SHPFIR;             //    SHPFIR	=3C04			    ;SHIP FIRE SOUND,D7=1 FOR ON
+    uint8_t TONE;               //    TONE	    =3C05			    ;TONE FOR EXTRA LIFE, D7=1 FOR ON
+    uint8_t FILLER_0x3C06[0x3DFF - 0x3C06 + 1];
+    uint8_t NRESET;             //    NRESET	=3E00			    ;NOISE RESET
+    uint8_t FILLER_0x3E01[0x3FFF - 0x3E01 + 1];
+} __attribute__((packed)) IO;
+
+typedef struct {
+    ZERO_PAGE page0;                                    // 0x0000 - 0x00FF
+    uint8_t STACK[256];                                 // 0x0100 - 0x01FF (unused)
+    PLAYER_PAGE currentPlayer;                          // 0x0200 - 0x02FF
+    PLAYER_PAGE otherPlayer;                            // 0x0300 - 0x03FF
+    uint8_t FILLER_0x0400[0x1FFF - 0x0400 + 1];
+    IO io;                                              // 0x2000 - 0x3FFF
+    union {
+        uint8_t VECRAM[0x47FF - 0x4000 + 1];            // 0x4000 - 0x4FFF      //    VECRAM	=4000			    ;VECTOR RAM
+        uint16_t VECRAM_16[(0x47FF - 0x4000) / 2 + 1];  // 0x4000 - 0x4FFF
+    } __attribute__((packed));
+    uint8_t UNUSED_VECRAM[0x4FFF - 0x4800 + 1];
+    union {
+        uint8_t VECROM[0x57FF - 0x5000 + 1];            // 0x5000 - 0x5FFF      //    VECROM	=5000			    ;VECTOR ROM
+        uint16_t VECROM_16[(0x57FF - 0x5000) / 2 + 1];  // 0x5000 - 0x5FFF
+    };
+    uint8_t UNUSED_VECROM[0x5FFF - 0x5800 + 1];
+    uint8_t FILLER_0x6000[0x67FF - 0x6000 + 1];
+    uint8_t UNUSED_PROGRAM_ROM[0x7FFF - 0x6800 + 1];
+} __attribute__((packed)) MEMORY;
 
 extern ZERO_PAGE page0;
 
