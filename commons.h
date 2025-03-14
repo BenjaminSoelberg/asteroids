@@ -3,6 +3,8 @@
 
 #include <stdint-gcc.h>
 
+#define BIT_7 0x80
+
 // NOBJ	=27.			        ;NUMBER OF ASTEROIDS
 //                              ;PLUS 1 SHIP
 //                              ;PLUS 1 SAUCER
@@ -111,7 +113,8 @@ typedef struct {
     uint8_t FILLER_0x2804[0x2FFF - 0x2804 + 1];
     uint8_t GOADD;              //    GOADD	    =3000			    ;RESTART VECTOR GEN
     uint8_t FILLER_0x3001[0x31FF - 0x3001 + 1];
-    uint8_t OUT1;               //    OUT1	    =3200			    ;OUTPUT LATCH
+    // Use io_setOUT1() to allow the bank switching to take place.
+    uint8_t _OUT1;               //    OUT1	    =3200			    ;OUTPUT LATCH
     //                          //                                  ;D3-D5=COIN COUNTERS, 1=ON (LEFT TO RIGHT RESP)
     //                          //                                  ;D2=BANK SELECT
     //                          //                                  ;D1=1 PLAYERS START LAMP, 0=ON
@@ -136,7 +139,7 @@ typedef struct {
 
 typedef struct {
     ZERO_PAGE page0;                                    // 0x0000 - 0x00FF
-    uint8_t STACK[256];                                 // 0x0100 - 0x01FF (unused)
+    uint8_t stack[256];                                 // 0x0100 - 0x01FF (unused)
     PLAYER_PAGE currentPlayer;                          // 0x0200 - 0x02FF
     PLAYER_PAGE otherPlayer;                            // 0x0300 - 0x03FF
     uint8_t FILLER_0x0400[0x1FFF - 0x0400 + 1];
@@ -156,5 +159,6 @@ typedef struct {
 } __attribute__((packed)) MEMORY;
 
 extern ZERO_PAGE page0;
+extern MEMORY memory;
 
 #endif //ASTROIDS_COMMONS_H
