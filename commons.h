@@ -15,7 +15,8 @@
 typedef struct {
     uint8_t VGSIZE;             //	VGSIZE:     .BLKB 1			;SCALING SIZE (0,10,20,...,F0)
     uint8_t VGBRIT;             //	VGBRIT:     .BLKB 1			;VECTOR BRIGHTNESS (0=OFF, F0=MAX, 10INC)
-    uint8_t VGLIST[2];          //	VGLIST:     .BLKB 2			;VECTOR LIST POINTER
+    //TODO: All access via memory.page0._VGLIST should be sub 0x4000 prior to index
+    uint8_t _VGLIST[2];          //	VGLIST:     .BLKB 2			;VECTOR LIST POINTER
     uint8_t XCOMP[4];           //	XCOMP:      .BLKB 4			;X COMPONENT FOR VECTORS
     uint8_t TEMP1[2];           //	TEMP1:      .BLKB 2			;SCRATCH
     uint8_t TEMP2[2];           //	TEMP2:      .BLKB 2
