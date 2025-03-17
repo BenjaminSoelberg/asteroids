@@ -1,4 +1,5 @@
-#ifndef ASTROIDS_PRINT_H
-#define ASTROIDS_PRINT_H
+#pragma once
 
-#endif //ASTROIDS_PRINT_H
+#define ASTEROIDS_PRINT_H
+
+#undef ASTEROIDS_PRINT_H

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.30)
-project(astroids)
+project(asteroids)
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -21,7 +21,7 @@ add_custom_command(
 
 include_directories(${AUTO_GEN_DIR})
 
-add_executable(astroids
+add_executable(asteroids
         asteroids.c
         asteroids.h
         dvg.c

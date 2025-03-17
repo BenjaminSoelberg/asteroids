@@ -1,5 +1,6 @@
-#ifndef ASTROIDS_COMMONS_H
-#define ASTROIDS_COMMONS_H
+#pragma once
+
+#define ASTEROIDS_COMMONS_H
 
 #include <stdint-gcc.h>
 #include <string.h>
@@ -174,4 +175,4 @@ void io_startGOADD();
 
 void io_pollWTDOG();
 
-#endif //ASTROIDS_COMMONS_H
+#undef ASTEROIDS_COMMONS_H

@@ -1,5 +1,6 @@
-#ifndef ASTROIDS_DVG_H
-#define ASTROIDS_DVG_H
+#pragma once
+
+#define ASTEROIDS_DVG_H
 
 #include <gtk/gtk.h>
 
@@ -59,4 +60,4 @@ void dvg_init();
 
 void dvg_run(cairo_t *cr, uint16_t start_pc);
 
-#endif //ASTROIDS_DVG_H
+#undef ASTEROIDS_DVG_H
