@@ -32,4 +32,10 @@ add_executable(astroids
         commons.h
         print.c
         print.h
+        vg_A35131_1C.c
+        vg_A35131_1C.h
+        game_A35131_1A.c
+        game_A35131_1A.h
+        boot_A35131_1E.c
+        boot_A35131_1E.h
 )

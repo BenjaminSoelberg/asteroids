@@ -2,6 +2,9 @@
 #define ASTROIDS_COMMONS_H
 
 #include <stdint-gcc.h>
+#include <string.h>
+#include <stdbool.h>
+#include <assert.h>
 
 #define BIT_7 0x80
 
@@ -159,7 +162,16 @@ typedef struct {
     uint8_t UNUSED_PROGRAM_ROM[0x7FFF - 0x6800 + 1];
 } __attribute__((packed)) MEMORY;
 
-extern ZERO_PAGE page0;
 extern MEMORY memory;
+
+void io_setOUT1(uint8_t out1);
+
+void wait_for_HALT();
+
+void trigger_nmi();
+
+void io_startGOADD();
+
+void io_pollWTDOG();
 
 #endif //ASTROIDS_COMMONS_H

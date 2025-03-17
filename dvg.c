@@ -1,6 +1,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
+
+#include "dvg_rom.h"
 #include "dvg.h"
 
 uint16_t x;

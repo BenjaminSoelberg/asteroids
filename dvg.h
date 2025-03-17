@@ -1,7 +1,7 @@
 #ifndef ASTROIDS_DVG_H
 #define ASTROIDS_DVG_H
 
-#include "asteroids.h"
+#include <gtk/gtk.h>
 
 #define DVG_MIN_X 0
 #define DVG_MAX_X 0x3FF
