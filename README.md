@@ -1,4 +1,4 @@
-#A faithful C port of the Atari Asteroids using the original ASM source as a base (WIP)
+# A faithful C port of the Atari Asteroids using the original ASM source as a base (WIP)
 
 Will this project ever see the light of day ?
 
