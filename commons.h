@@ -175,4 +175,47 @@ void io_startGOADD();
 
 void io_pollWTDOG();
 
+
+/**
+ * EXPLOSION SOUND  D6-D7=PITCH,D2-D5=VOLUME
+ * @param value
+ */
+void io_set_EXPSND(uint8_t value);
+
+/**
+ * THUMP SOUND D4=1 FOR ON, D0-D3=FREQUENCY
+ * @param value
+ */
+void io_set_THUMP(uint8_t value);
+
+/**
+ * SAUCER THRUST SOUND,D7=1 FOR ON
+ * @param value
+ */
+void io_set_SCRSND(uint8_t value);
+
+/**
+ * SAUCER FIRE SOUND, D7=1 FOR ON
+ * @param value
+ */
+void io_set_SCRFIR(uint8_t value);
+
+/**
+ * SHIP THRUST SOUND, D7=1 FOR ON
+ * @param value
+ */
+void io_set_SHPSND(uint8_t value);
+
+/**
+ * SHIP FIRE SOUND,D7=1 FOR ON
+ * @param value
+ */
+void io_set_SHPFIR(uint8_t value);
+
+/**
+ * TONE FOR EXTRA LIFE, D7=1 FOR ON
+ * @param value 
+ */
+void io_set_TONE(uint8_t value);
+
 #undef ASTEROIDS_COMMONS_H

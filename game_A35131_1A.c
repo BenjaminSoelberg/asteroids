@@ -1228,23 +1228,33 @@ void INIT() {
     //  	RTS
 }
 
+/**
+ * INIT1 - INITIALIZE ALL SOUNDS
+ */
 void INIT1() {
-    // TODO: Not implemented
-
-    //  ;INIT1 - INITIALIZE ALL SOUNDS
-    //  ;
     //  INIT1:	LDA I,0			;STOP ALL SOUNDS
     //  	STA A,EXPSND
+    io_set_EXPSND(0);
     //  	STA A,THUMP
+    io_set_THUMP(0);
     //  	STA A,SCRSND
+    io_set_SCRSND(0);
     //  	STA A,SCRFIR
+    io_set_SCRFIR(0);
     //  	STA A,SHPSND
+    io_set_SHPSND(0);
     //  	STA A,SHPFIR
+    io_set_SHPFIR(0);
     //  	STA A,TONE
+    io_set_TONE(0);
     //  	STA LEXPSND		;TURN OF SOUNDS IN SOFTWARE TOO
+    memory.page0.LEXPSND = 0;
     //  	STA SND1
+    memory.page0.SND1 = 0;
     //  	STA SND2
+    memory.page0.SND2 = 0;
     //  	STA SND3
+    memory.page0.SND3 = 0;
     //  	RTS
 }
 
