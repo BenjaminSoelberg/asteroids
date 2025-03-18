@@ -3,20 +3,35 @@
 #include "vg_A35131_1C.h"
 
 void INIT();
+
 void INIT1();
+
 bool CHKST();
+
 void COLIDE();
+
 void ENEMY();
+
 void FIRE();
+
 bool GETINT();
+
 void HYPER();
+
 void MOTION();
+
 void MOVE();
+
 void PARAMS();
+
 bool SCORES();
+
 void SOUNDS();
+
 void UPDATE();
+
 uint8_t RAND();
+
 void NEWAST();
 
 //      .TITLE ASTROD (21503)
@@ -1208,15 +1223,17 @@ void HYPER() {
  * INIT-INITIALIZATION
  */
 void INIT() {
-    // TODO: Not implemented
-
     //  INIT:	LDA I,02		;STARTING NUMBER OF ROCKS-2 (ADDS 2 IN START LOOP)
     //  	STA SROCKS
+    memory.currentPlayer.SROCKS = 2;
+
     //  	LDX I,03
     //  	LSR OPTN3
     //  	BCS 10$			;IF HARD GAME
     //  	INX			;IF EASY GAME
     //  10$:	STX NHITS
+    memory.page0.NHITS = memory.io.OPTN3 & 1 ? 3 : 4;
+
     //  	LDA I,0
     //  	LDX I,04
     //  30$:	STA X,OBJ+NOBJ
@@ -1224,7 +1241,15 @@ void INIT() {
     //  	STA X,SCORE-1		;CLEAR SCORE
     //  	DEX
     //  	BPL 30$			;CLEAR TORPEDOS AND SAUCER
+    /** Clears 1 SHIP, 1 SAUCER, 2 SAUCER TORPEDOES & 4 SHIP TORPEDOES */
+    for (uint8_t x = 4; x >= 0; x--) {
+        memory.currentPlayer.OBJ[NOBJ + x];
+        memory.currentPlayer.OBJ[NOBJ + 4 + x];
+        memory.page0.SCORE[x - 1];
+    }
+
     //  	STA NROCKS		;CLEAR NUMBER OF ROCKS
+    memory.currentPlayer.NROCKS = 0;
     //  	RTS
 }
 
