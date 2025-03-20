@@ -7,6 +7,8 @@
 #include <stdbool.h>
 #include <assert.h>
 
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 #define BIT_7 0x80
 
 // NOBJ	=27.			        ;NUMBER OF ASTEROIDS

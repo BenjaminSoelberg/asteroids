@@ -11,14 +11,17 @@ MEMORY memory;
     //TODO: Not implement, handle bank select ?
 }
 
+/**
+ * Will wait until the DVG has executed a HALT instruction.
+ */
 void wait_for_HALT() {
     //    10$:	LDA A,HALT
     //    BMI 10$			;WAIT FOR BEAM TO HALT
-    // TODO: Not implemented
+    // TODO: Remember to implement
 }
 
 void trigger_nmi() {
-    /* TODO: Not implemented yet */
+    //TODO: Remember to implement
     assert(false);
 }
 
@@ -26,8 +29,9 @@ void trigger_nmi() {
  * I guess any value will start the vector generator
  */
 void io_startGOADD() {
+    // TODO Clear the HALT flag ?
     //    STA A,GOADD		;START VECTOR GENERATOR
-    // TODO: Not implemented
+    // TODO: Remember to implement
 }
 
 /**
@@ -35,7 +39,7 @@ void io_startGOADD() {
  */
 void io_pollWTDOG() {
     //    STA A,WTDOG
-    // TODO: Not implemented
+    // TODO: Remember to implement
 }
 
 /**
@@ -43,7 +47,7 @@ void io_pollWTDOG() {
  * @param value
  */
 void io_set_EXPSND(uint8_t value) {
-    // TODO: Not implemented
+    // TODO: Remember to implement
 }
 
 /**
@@ -51,7 +55,7 @@ void io_set_EXPSND(uint8_t value) {
  * @param value
  */
 void io_set_THUMP(uint8_t value) {
-    // TODO: Not implemented
+    // TODO: Remember to implement
 }
 
 /**
@@ -59,7 +63,7 @@ void io_set_THUMP(uint8_t value) {
  * @param value
  */
 void io_set_SCRSND(uint8_t value) {
-    // TODO: Not implemented
+    // TODO: Remember to implement
 }
 
 /**
@@ -67,7 +71,7 @@ void io_set_SCRSND(uint8_t value) {
  * @param value
  */
 void io_set_SCRFIR(uint8_t value) {
-    // TODO: Not implemented
+    // TODO: Remember to implement
 }
 
 /**
@@ -75,7 +79,7 @@ void io_set_SCRFIR(uint8_t value) {
  * @param value
  */
 void io_set_SHPSND(uint8_t value) {
-    // TODO: Not implemented
+    // TODO: Remember to implement
 }
 
 /**
@@ -83,7 +87,7 @@ void io_set_SHPSND(uint8_t value) {
  * @param value
  */
 void io_set_SHPFIR(uint8_t value) {
-    // TODO: Not implemented
+    // TODO: Remember to implement
 }
 
 /**
@@ -91,5 +95,5 @@ void io_set_SHPFIR(uint8_t value) {
  * @param value 
  */
 void io_set_TONE(uint8_t value) {
-    // TODO: Not implemented
+    // TODO: Remember to implement
 }

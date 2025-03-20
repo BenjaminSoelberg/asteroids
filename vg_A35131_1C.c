@@ -145,7 +145,7 @@
  *
  */
 void VGHALT() {
-    // TODO: Not implemented
+    // TODO: Remember to implement
 
     //  VGHALT:	LDA I,0B0		;BXXX IS HALT
     //          VGHAL1:	LDY I,0
@@ -256,7 +256,7 @@ void VGHALT() {
  *   USES	A,X,Y,(VGLIST,VGLIST+1),(XCOMP,XCOMP+3)
  */
 void VGSABS(uint8_t x, uint8_t y) {
-    //TODO: Not implemented
+    //TODO: Remember to implement
 
     //  VGSABS:	LDY I,0
     //  STY XCOMP+1

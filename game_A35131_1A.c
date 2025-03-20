@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "game_A35131_1A.h"
 
 #include "vg_A35131_1C.h"
@@ -189,11 +190,16 @@ void NEWAST();
 //  THUMP3:	.BLKB 1			;STARTING VALUE FOR THUMP2
 //  DIFCTY:	.BLKB 1			;DIFFICULTY VALUE FOR STARTING SAUCERS
 
+void NEWVEL();
+
 /**
  *  .SBTTL MAIN LINE LOOP
  *  .=6800
  */
 void START() {
+    //REMOVE//DEBUG//TODO: Below will gives us 8 frames until a complete halt.. FIXME!
+    memory.page0.SYNC=0xFF; //REMOVE//DEBUG//TODO: Implement a real NMI interrupt every 4 ms and remove this line
+
     //TODO: Disassembly has this instruction enabled, find out why !!!!
     //            ;	JMP PWRON
 
@@ -218,10 +224,10 @@ void START() {
             }
 
             //    LSR SYNC
-            uint8_t temp = (memory.page0.SYNC & 1) == 1;
+            bool c = (memory.page0.SYNC & 1);
             memory.page0.SYNC = memory.page0.SYNC >> 1;
             //    BCC START2			;WAIT FOR START OF FRAME
-            if (temp) {
+            if (!c) {
                 continue;
             }
 
@@ -232,7 +238,7 @@ void START() {
             //    LDA A,VECRAM+1		;SWITCH VECTOR BUFFERS
             //    EOR I,02
             //    STA A,VECRAM+1		;CHANGE JMPL TO STARTING BUFFER
-            temp = memory.VECRAM[1] ^= 0x02;
+            uint8_t temp = memory.VECRAM[1] ^= 0x02;
 
             //    STA A,GOADD		;START VECTOR GENERATOR
             io_startGOADD();
@@ -334,7 +340,7 @@ void START() {
  * EXIT	    (C)=SET IF STARTING A NEW GAME
  */
 bool CHKST() {
-    // TODO: Not implemented
+    // TODO: Remember to implement
     return 1 == 0;
     //  CHKST:	LDA NPLAYR
     //  	BEQ 10$			;GAME NOT IN PROGRESS
@@ -524,7 +530,7 @@ bool CHKST() {
  * COLLIDE-COLLISION DETECTOR
  */
 void COLIDE() {
-    //TODO: Not implemented
+    //TODO: Remember to implement
 
     //  COLIDE:	LDX I,07
     //  10$:	LDA X,OBJ+NOBJ
@@ -769,7 +775,7 @@ void COLIDE() {
  * ENEMY-LAUNCH EMEMY SAUCER
  */
 void ENEMY() {
-    //TODO: Not implemented
+    //TODO: Remember to implement
 
     //  ENEMY:	LDA FRAME
     //  	AND I,03
@@ -850,7 +856,7 @@ void ENEMY() {
  * EFIRE-ENEMY FIRE CONTROL
  */
 void FIRE() {
-    //TODO: Not implemented
+    //TODO: Remember to implement
 
     //  EFIRE:	LDA FRAME
     //  	ASL
@@ -1041,7 +1047,7 @@ void FIRE() {
  * @return false if update is in progress or true if ready
  */
 bool GETINT() {
-    //TODO: Not implemented
+    //TODO: Remember to implement
     return true;
 
     //  	.SBTTL GETINT-GET PLAYERS INITIALS FOR HIGH SCORE
@@ -1169,7 +1175,7 @@ bool GETINT() {
  * HYPERSPACE BUTTON PROCESSING
  */
 void HYPER() {
-    // TODO: Not implemented
+    // TODO: Remember to implement
 
     //  HYPER:	LDA NPLAYR
     //  	BEQ 90$			;IF IN ATTRACT
@@ -1225,14 +1231,14 @@ void HYPER() {
 void INIT() {
     //  INIT:	LDA I,02		;STARTING NUMBER OF ROCKS-2 (ADDS 2 IN START LOOP)
     //  	STA SROCKS
-    memory.currentPlayer.SROCKS = 2;
+    memory.currentPlayer.SROCKS = 0x02;
 
     //  	LDX I,03
     //  	LSR OPTN3
     //  	BCS 10$			;IF HARD GAME
     //  	INX			;IF EASY GAME
     //  10$:	STX NHITS
-    memory.page0.NHITS = memory.io.OPTN3 & 1 ? 3 : 4;
+    memory.page0.NHITS = memory.io.OPTN3 & 1 ? 0x03 : 0x04;
 
     //  	LDA I,0
     //  	LDX I,04
@@ -1242,7 +1248,7 @@ void INIT() {
     //  	DEX
     //  	BPL 30$			;CLEAR TORPEDOS AND SAUCER
     /** Clears 1 SHIP, 1 SAUCER, 2 SAUCER TORPEDOES & 4 SHIP TORPEDOES */
-    for (uint8_t x = 4; x >= 0; x--) {
+    for (int8_t x = 0x04; x >= 0; x--) {
         memory.currentPlayer.OBJ[NOBJ + x];
         memory.currentPlayer.OBJ[NOBJ + 4 + x];
         memory.page0.SCORE[x - 1];
@@ -1349,7 +1355,7 @@ void INIT1() {
  * THRU THE PICTURES.
  */
 void MOTION() {
-    //TODO: Not implemented
+    //TODO: Remember to implement
 
     //  MOTION:	LDX I,NOBJ+7		;NUMBER OF OBJECTS TO MOVE
     //  10$:	LDA X,OBJ
@@ -1473,7 +1479,7 @@ void MOTION() {
  * MOVE-MOVE SHIP
  */
 void MOVE() {
-    //TODO: Not implemented
+    //TODO: Remember to implement
 
     //  MOVE:	LDA NPLAYR
     //  	BEQ 90$			;IN ATTRACT MODE
@@ -1641,72 +1647,119 @@ void MOVE() {
 //  
 //  CKSUM4:	.BYTE 99		;7000-73FF
 
+/**
+ * NEWAST - START UP NEW ASTEROIDS
+ */
 void NEWAST() {
-    // TODO: Not implemented
-
-    //  	.SBTTL NEWAST - START UP NEW ASTEROIDS
-    //  ;NEWAST-START NEW ASTEROIDS
-    //  ;
     //  NEWAST:	LDX I,NOBJ-1
+    int8_t x = NOBJ - 1;
+
     //  	LDA RDELAY
     //  	BNE 65$			;DELAY FIRST - CLEAR OLD ROCKS IF ANY
-    //  	LDA OBJ+NOBJ+1
-    //  	BNE 90$			;NOT WHILE SAUCER IS THERE
-    //  	STA XINC+NOBJ+1		;CLEAR SPEED OF SAUCER
-    //  	STA YINC+NOBJ+1
-    //  	INC DIFCTY
-    //  	LDA DIFCTY
-    //  	CMP I,11.
-    //  	BCC 2$			;NOT TOO DIFFICULT
-    //  	DEC DIFCTY
-    //  2$:	LDA SROCKS
-    //  	CLC
-    //  	ADC I,02
-    //  	CMP I,11.
-    //  	BCC 5$			;MAX NUMBER OF OBJECTS
-    //  	LDA I,11.		;LEAVE ONE OPEN PICTURE
-    //  5$:	STA NROCKS		;NUMBER OF ROCKS ACTIVE
-    //  	STA SROCKS
-    //  	STA TEMP1
-    //  	LDY I,NOBJ+1
-    //  10$:	JSR RAND		;RANDOM NUMBER
-    //  	AND I,18		;PICTURE NUMBER
-    //  	ORA I,04		;SIZE OF OBJECT
-    //  	STA X,OBJ		;SET PICTURE
-    //  	JSR NEWVEL		;GET NEW VELOCITY
-    //  	JSR RAND		;RANDOM NUMBER
-    //  	LSR
-    //  	AND I,1F
-    //  	BCC 50$			;START ON X ARIS
-    //  	CMP I,18		;START ON Y AXIS
-    //  	BCC 35$			;IF 0 TO 767
-    //  	AND I,17		;384 TO 512
-    //  35$:	STA X,OBJYH
-    //  	LDA I,0
-    //  	STA X,OBJXH
-    //  	STA X,OBJXL
-    //  	BEQ 60$			;ALWAYS
-    //
-    //  50$:	STA X,OBJXH
-    //  	LDA I,0
-    //  	STA X,OBJYH
-    //  	STA X,OBJYL
-    //  60$:	DEX
-    //  	DEC TEMP1
-    //  	BNE 10$			;LOOP FOR EACH NEW ROCK
-    //  	LDA I,7F
-    //  	STA EDELAY		;SAUCER SHOULD WAIT
-    //  	LDA I,30
-    //  	STA THUMP3		;RESET THUMP SOUND
+    if (memory.currentPlayer.RDELAY == 0) {
+
+        //  	LDA OBJ+NOBJ+1
+        //  	BNE 90$			;NOT WHILE SAUCER IS THERE
+        if (memory.currentPlayer.OBJ[NOBJ + 1] > 0) {
+            return;
+        }
+
+        //  	STA XINC+NOBJ+1		;CLEAR SPEED OF SAUCER
+        //  	STA YINC+NOBJ+1
+        memory.currentPlayer.XINC[NOBJ + 1] = 0;
+        memory.currentPlayer.YINC[NOBJ + 1] = 0;
+
+        //  	INC DIFCTY
+        //  	LDA DIFCTY
+        //  	CMP I,11.
+        //  	BCC 2$			;NOT TOO DIFFICULT
+        //  	DEC DIFCTY
+        if (memory.currentPlayer.DIFCTY < 11) {
+            memory.currentPlayer.DIFCTY++;
+        }
+
+        //  2$:	LDA SROCKS
+        //  	CLC
+        //  	ADC I,02
+        //  	CMP I,11.
+        //  	BCC 5$			;MAX NUMBER OF OBJECTS
+        //  	LDA I,11.		;LEAVE ONE OPEN PICTURE
+        //  5$:	STA NROCKS		;NUMBER OF ROCKS ACTIVE
+        //  	STA SROCKS
+        //  	STA TEMP1
+        memory.currentPlayer.NROCKS = memory.currentPlayer.SROCKS = memory.page0.TEMP1[0] = MIN(
+                memory.currentPlayer.SROCKS + 2, 11);
+
+        /** Get random bits to build up rocks */
+        //  	LDY I,NOBJ+1
+        uint8_t y = NOBJ + 1;
+
+        do {
+            //  10$:	JSR RAND		;RANDOM NUMBER
+            //  	AND I,18		;PICTURE NUMBER
+            //  	ORA I,04		;SIZE OF OBJECT
+            uint8_t a = (RAND() & 0x18) | 0x04;
+            //  	STA X,OBJ		;SET PICTURE
+            memory.currentPlayer.OBJ[x] = a;
+            //  	JSR NEWVEL		;GET NEW VELOCITY
+            NEWVEL();
+            //  	JSR RAND		;RANDOM NUMBER
+            a = RAND();
+            //  	LSR
+            //  	AND I,1F
+            bool c = a & 1;
+            a = (a >> 1) & 0x1f;
+
+            //  	BCC 50$			;START ON X ARIS
+            if (c) {
+                //  	CMP I,18		;START ON Y AXIS
+                //  	BCC 35$			;IF 0 TO 767
+                if (a >= 0x18) {
+                    //  	AND I,17		;384 TO 512
+                    a &= 0x17;
+                }
+                //  35$:	STA X,OBJYH
+                memory.currentPlayer.OBJYH[x] = a;
+                //  	LDA I,0
+                //  	STA X,OBJXH
+                memory.currentPlayer.OBJXH[x] = 0;
+                //  	STA X,OBJXL
+                memory.currentPlayer.OBJXL[x] = 0;
+                //  	BEQ 60$			;ALWAYS
+            } else {
+                //  50$:	STA X,OBJXH
+                memory.currentPlayer.OBJXH[x] = a;
+                //  	LDA I,0
+                //  	STA X,OBJYH
+                memory.currentPlayer.OBJYH[x] = 0;
+                //  	STA X,OBJYL
+                memory.currentPlayer.OBJYL[x] = 0;
+            }
+            //  60$:	DEX
+            x--;
+            //  	DEC TEMP1
+            //  	BNE 10$			;LOOP FOR EACH NEW ROCK
+        } while (--memory.page0.TEMP1[0] > 0); //TODO is this correct or am i missing one ?
+
+        //  	LDA I,7F
+        //  	STA EDELAY		;SAUCER SHOULD WAIT
+        memory.currentPlayer.EDELAY = 0x7f;
+
+        //  	LDA I,30
+        //  	STA THUMP3		;RESET THUMP SOUND
+        memory.currentPlayer.THUMP3 = 0x30;
+    }
+
     //  65$:	LDA I,0
     //  70$:	STA X,OBJ		;CLEAR REST OF OBJECTS
     //  	DEX
     //  	BPL 70$			;ASSUMES SROCKS < NOBJ
+    for (; x >= 0; x--) {
+        memory.currentPlayer.OBJ[x] = 0;
+    }
     //  90$:	RTS
 }
 
-//
-//  
 //  ;NEWSHP-POSITION SHIP FOR START
 //  ;
 //  NEWSHP:	LDA I,0
@@ -1719,14 +1772,16 @@ void NEWAST() {
 //  	LDA I,0C
 //  	STA A,OBJYH+NOBJ
 //  	RTS
-//  
-//  
-//  	.SBTTL NEWVEL - NEW RANDOM VELOCITY USING OLD
-//  ;NEWVEL - NEW RANDOM VELOCITY FOR NEW VELOCITY
-//  ;
-//  ;ENTRY	(X)=INDEX FOR NEW VELOCITY
-//  ;	(Y)=INDEX OF OLD VELOCITY
-//  ;
+
+/**
+ * NEWVEL - NEW RANDOM VELOCITY USING OLD
+ *
+ * ENTRY	(X)=INDEX FOR NEW VELOCITY
+ *          (Y)=INDEX OF OLD VELOCITY
+ */
+void NEWVEL() {
+    //TODO: Remember to implement
+
 //  NEWVEL:	JSR RAND		;RANDOM NUMBER
 //  	AND I,8F
 //  	BPL 10$			;IF POSITIVE NUMBER 0 TO 3
@@ -1747,7 +1802,7 @@ void NEWAST() {
 //  	JSR NEWVE1		;CHECK RANGE OF VELOCITY
 //  	STA X,YINC
 //  	RTS
-//  
+//
 //  NEWVE1:	BPL 20$			;POSITIVE RESULT
 //  	CMP I,-1F
 //  	BCS 15$			;WITHIN RANGE
@@ -1756,7 +1811,7 @@ void NEWAST() {
 //  	BCC 30$			;NOT TOO CLOSE TO ZERO
 //  	LDA I,-6		;AT LEAST 1/2
 //  	RTS
-//  
+//
 //  20$:	CMP I,06
 //  	BCS 25$			;NOT TOO CLOSE TO ZERO
 //  	LDA I,06
@@ -1764,12 +1819,13 @@ void NEWAST() {
 //  	BCC 30$			;WITHIN RANGE
 //  	LDA I,1F
 //  30$:	RTS
+}
 
 /**
  * PARAMS-DISPLAY PARAMETERS
  */
 void PARAMS() {
-    //TODO: Not implemented
+    //TODO: Remember to implement
 
     //  PARAMS:	LDA I,10
     //  	STA VGSIZE		;STANDARD SIZE CHARACTER
@@ -1972,7 +2028,7 @@ void PARAMS() {
  * @return
  */
 bool SCORES() {
-    //TODO: Not implemented
+    //TODO: Remember to implement
     return true;
 
     //  SCORES:	LDA NPLAYR
@@ -2214,7 +2270,7 @@ bool SCORES() {
  * SOUNDS-GENERATE SOUNDS
  */
 void SOUNDS() {
-    //TODO: Not implemented
+    //TODO: Remember to implement
 
     //  SOUNDS:	LDA NPLAYR
     //  	BNE 10$			;NOT IN ATTRACT
@@ -2358,7 +2414,7 @@ void SOUNDS() {
  * UPDATE-UPDATE HIGH SCORE TABLE
  */
 void UPDATE() {
-    //TODO: Not implemented
+    //TODO: Remember to implement
 
     //  UPDATE:	LDA NPLAYR
     //  	BPL 90$			;FRAME AFTER END OF GAME (A=-1)
@@ -2599,7 +2655,8 @@ void UPDATE() {
  * EXIT	(A)=RANDOM NUMBER
  */
 uint8_t RAND() {
-    // TODO: Not implemented
+    // TODO: Remember to implement
+    return (uint8_t)(rand() & 0xFF);;
 
     //  RAND:	ASL POLYL
     //  	ROL POLYH

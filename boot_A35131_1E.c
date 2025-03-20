@@ -127,7 +127,7 @@ _Noreturn void PWRON() {
  * STEST - SELF TEST PROCESSING
  */
 void STEST() {
-    assert(1 == 2); // TODO: Not implemented
+    assert(1 == 2); // TODO: Remember to implement
     //  STEST:	STA AX,4000		;CLEAR ALL OF MEMORY -TURN LIGHTS ON-SOUNDS OFF
     //  	STA AX,4100		;NOTE PAGE 0,1,2 AND 3 CLEARED BY POWER ON RESET
     //  	STA AX,4200
