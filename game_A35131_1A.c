@@ -7,29 +7,29 @@ void INIT();
 
 void INIT1();
 
-bool CHKST();
+bool todo_CHKST();
 
-void COLIDE();
+void todo_COLIDE();
 
-void ENEMY();
+void todo_ENEMY();
 
-void FIRE();
+void todo_FIRE();
 
-bool GETINT();
+bool todo_GETINT();
 
-void HYPER();
+void todo_HYPER();
 
-void MOTION();
+void todo_MOTION();
 
-void MOVE();
+void todo_MOVE();
 
-void PARAMS();
+void todo_PARAMS();
 
-bool SCORES();
+bool todo_SCORES();
 
-void SOUNDS();
+void todo_SOUNDS();
 
-void UPDATE();
+void todo_UPDATE();
 
 uint8_t RAND();
 
@@ -198,7 +198,7 @@ void NEWVEL();
  */
 void START() {
     //REMOVE//DEBUG//TODO: Below will gives us 8 frames until a complete halt.. FIXME!
-    memory.page0.SYNC=0xFF; //REMOVE//DEBUG//TODO: Implement a real NMI interrupt every 4 ms and remove this line
+    memory.page0.SYNC = 0xFF; //REMOVE//DEBUG//TODO: Implement a real NMI interrupt every 4 ms and remove this line
 
     //TODO: Disassembly has this instruction enabled, find out why !!!!
     //            ;	JMP PWRON
@@ -261,51 +261,51 @@ void START() {
             *(uint16_t *) memory.page0._VGLIST = (temp & 0x02) ? 0x4002 : 0x4402; //TODO assumes little-endian
 
             //    JSR CHKST		;CHECK FOR START
-            if (CHKST()) {
+            if (todo_CHKST()) {
                 //    BCS START		;START NEW GAME
                 return;
             }
 
             //    JSR UPDATE		;UPDATE HIGH SCORE TABLES
-            UPDATE();
+            todo_UPDATE();
 
             //    JSR GETINT		;GET INITIALS FOR ANY NEW HIGH SCORE
             //    BPL 20$			;UPDATE IN PROGRESS
-            if (GETINT()) {
+            if (todo_GETINT()) {
                 //    JSR SCORES		;DISPLAY HIGH SCORES
                 //    BCS 20$			;WE ARE DISPLAYING SCORE TABLE
-                if (SCORES()) {
+                if (todo_SCORES()) {
 
                     //    LDA GDELAY		;(NOT ENOUGH TIME FOR ASTEROIDS AND SCORE TABLES)
                     //    BNE 15$			;STARTING A NEW PLAYER
                     if (memory.page0.GDELAY == 0) {
 
                         //    JSR FIRE		;FIRE SHIPS TORPEDOS
-                        FIRE();
+                        todo_FIRE();
 
                         //    JSR HYPER		;CHECK FOR HYPERSPACE
-                        HYPER();
+                        todo_HYPER();
 
                         //    JSR MOVE		;MOVE SHIP BY CONTROLS
-                        MOVE();
+                        todo_MOVE();
 
                         //    JSR ENEMY		;LAUNCH ENEMY SAUCER AND TORPEDOS
-                        ENEMY();
+                        todo_ENEMY();
                     }
 
                     //    15$:	JSR MOTION		;MOVE OBJECTS
-                    MOTION();
+                    todo_MOTION();
 
                     //    JSR COLIDE		;CHECK FOR COLLISIONS
-                    COLIDE();
+                    todo_COLIDE();
                 }
             }
 
             //    20$:	JSR PARAMS		;DISPLAY SCORE AND OTHER PARAMETERS
-            PARAMS();
+            todo_PARAMS();
 
             //    JSR SOUNDS		;GENERATE SOUNDS
-            SOUNDS();
+            todo_SOUNDS();
 
             //    LDA I,1023./8
             //    TAX
@@ -313,7 +313,7 @@ void START() {
             VGSABS(1023 / 8, 1023 / 8);
 
             //    JSR RAND		;KEEP RANDOM NUMBERS COMING
-            RAND();
+            RAND(); // TODO: Why... just to massage the PRNG ?
 
             //    JSR VGHALT		;ADD HALT TO VECTOR LIST
             VGHALT();
@@ -339,7 +339,7 @@ void START() {
  * CHKST	-CHECK FOR START/END OF GAME
  * EXIT	    (C)=SET IF STARTING A NEW GAME
  */
-bool CHKST() {
+bool todo_CHKST() {
     // TODO: Remember to implement
     return 1 == 0;
     //  CHKST:	LDA NPLAYR
@@ -529,7 +529,7 @@ bool CHKST() {
 /**
  * COLLIDE-COLLISION DETECTOR
  */
-void COLIDE() {
+void todo_COLIDE() {
     //TODO: Remember to implement
 
     //  COLIDE:	LDX I,07
@@ -774,7 +774,7 @@ void COLIDE() {
 /**
  * ENEMY-LAUNCH EMEMY SAUCER
  */
-void ENEMY() {
+void todo_ENEMY() {
     //TODO: Remember to implement
 
     //  ENEMY:	LDA FRAME
@@ -853,9 +853,9 @@ void ENEMY() {
 }
 
 /**
- * EFIRE-ENEMY FIRE CONTROL
+ * EFIRE-ENEMY todo_FIRE CONTROL
  */
-void FIRE() {
+void todo_FIRE() {
     //TODO: Remember to implement
 
     //  EFIRE:	LDA FRAME
@@ -1046,7 +1046,7 @@ void FIRE() {
  *
  * @return false if update is in progress or true if ready
  */
-bool GETINT() {
+bool todo_GETINT() {
     //TODO: Remember to implement
     return true;
 
@@ -1174,7 +1174,7 @@ bool GETINT() {
 /**
  * HYPERSPACE BUTTON PROCESSING
  */
-void HYPER() {
+void todo_HYPER() {
     // TODO: Remember to implement
 
     //  HYPER:	LDA NPLAYR
@@ -1349,12 +1349,12 @@ void INIT1() {
 //  99$:	RTS
 
 /**
- * MOTION-MOTION UPDATE ROUTINE
+ * MOTION-MOTION todo_UPDATE ROUTINE
  *
  * THIS ROUTINE ALSO UPDATES THE EXPLOSION INDEX TO SEQUENCE
  * THRU THE PICTURES.
  */
-void MOTION() {
+void todo_MOTION() {
     //TODO: Remember to implement
 
     //  MOTION:	LDX I,NOBJ+7		;NUMBER OF OBJECTS TO MOVE
@@ -1478,7 +1478,7 @@ void MOTION() {
 /**
  * MOVE-MOVE SHIP
  */
-void MOVE() {
+void todo_MOVE() {
     //TODO: Remember to implement
 
     //  MOVE:	LDA NPLAYR
@@ -1743,7 +1743,7 @@ void NEWAST() {
 
         //  	LDA I,7F
         //  	STA EDELAY		;SAUCER SHOULD WAIT
-        memory.currentPlayer.EDELAY = 0x7f;
+        memory.currentPlayer.EDELAY = 0x7F;
 
         //  	LDA I,30
         //  	STA THUMP3		;RESET THUMP SOUND
@@ -1824,7 +1824,7 @@ void NEWVEL() {
 /**
  * PARAMS-DISPLAY PARAMETERS
  */
-void PARAMS() {
+void todo_PARAMS() {
     //TODO: Remember to implement
 
     //  PARAMS:	LDA I,10
@@ -2027,7 +2027,7 @@ void PARAMS() {
  *
  * @return
  */
-bool SCORES() {
+bool todo_SCORES() {
     //TODO: Remember to implement
     return true;
 
@@ -2269,7 +2269,7 @@ bool SCORES() {
 /**
  * SOUNDS-GENERATE SOUNDS
  */
-void SOUNDS() {
+void todo_SOUNDS() {
     //TODO: Remember to implement
 
     //  SOUNDS:	LDA NPLAYR
@@ -2413,7 +2413,7 @@ void SOUNDS() {
 /**
  * UPDATE-UPDATE HIGH SCORE TABLE
  */
-void UPDATE() {
+void todo_UPDATE() {
     //TODO: Remember to implement
 
     //  UPDATE:	LDA NPLAYR
@@ -2656,7 +2656,7 @@ void UPDATE() {
  */
 uint8_t RAND() {
     // TODO: Remember to implement
-    return (uint8_t)(rand() & 0xFF);;
+    return (uint8_t) (rand() & 0xFF);;
 
     //  RAND:	ASL POLYL
     //  	ROL POLYH

@@ -118,7 +118,7 @@ _Noreturn void PWRON() {
     memory.page0.$CMODE |= (memory.io.OPTN3 & 2) << 3;
 
     //  JMP START		;START MAIN LINE OVER
-    while (true) {
+    while (true) { // Made into a while loop to simplify the logic and avoid GOTOs
         START();
     }
 }

@@ -1,5 +1,7 @@
 #include "vg_A35131_1C.h"
 
+void VGADD(int y);
+
 //  .SBTTL VECUT-VECTOR GENERATION UTILITY
 //  .RADIX 16
 //
@@ -134,25 +136,23 @@
 //  ;	JSR VGHEX		;DISPLAY LAST DIGIT
 //  ;	ETC....
 
-//  .SBTTL VGHALT - ADD HALT TO VECTOR LIST
-//  ;VGHALT - ADD HALT TO VECTOR LIST
-//  ;
-//  ;ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
-//  ;EXIT	(VGLIST,VGLIST+1) = NEW VECTOR LIST ADDRESS
-//  ;USES	A,X,Y(VGLIST,VGLIST+1)
-//
 /**
+ * VGHALT - ADD HALT TO VECTOR LIST
  *
+ * ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
+ * EXIT	(VGLIST,VGLIST+1) = NEW VECTOR LIST ADDRESS
+ * USES	A,X,Y(VGLIST,VGLIST+1)
  */
 void VGHALT() {
-    // TODO: Remember to implement
-
     //  VGHALT:	LDA I,0B0		;BXXX IS HALT
-    //          VGHAL1:	LDY I,0
+    //  VGHAL1:	LDY I,0
     //  STA NY,VGLIST
+    memory.page0._VGLIST[0] = 0xB0;
     //  INY
-    //          STA NY,VGLIST
-    //          BNE VGADD		;UPDATE VECTOR LIST
+    //  STA NY,VGLIST
+    memory.page0._VGLIST[1] = 0xB0;
+    //  BNE VGADD		;UPDATE VECTOR LIST
+    VGADD(1);
 }
 
 //
@@ -304,25 +304,27 @@ void VGSABS(uint8_t x, uint8_t y) {
 //          INY
 //  STA NY,VGLIST		;X MSB
 //  ;	JMP VGADD
-//
-//
-//  .SBTTL VGADD - ADD Y+1 TO VECTOR ADDRESS
-//  ;VGADD - ADD Y+1 TO VECTOR LIST ADDRESS
-//  ;
-//  ;ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
-//  ;	(Y) = VALUE+1 TO BE ADDED TO VECTOR LIST
-//  ;EXIT	(VGLIST,VGLIST+1) = NEW VECTOR LIST ADDRESS
-//  ;USES	A,(VGLIST,VGLIST+1)
-//
-//  VGADD:	TYA			;ADD 1+(Y) TO VGLIST
-//  SEC
-//          ADC VGLIST
-//          STA VGLIST
-//          BCC 10$
-//  INC VGLIST+1
-//  10$:	RTS
-//
-//
+
+/**
+ * VGADD - ADD Y+1 TO VECTOR LIST ADDRESS
+ *
+ * ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
+ *          (Y) = VALUE+1 TO BE ADDED TO VECTOR LIST
+ * EXIT	    (VGLIST,VGLIST+1) = NEW VECTOR LIST ADDRESS
+ * USES     A,(VGLIST,VGLIST+1)
+ * @param y add y + 1 to VGLIST
+ */
+void VGADD(int y) {
+    //  VGADD:	TYA			;ADD 1+(Y) TO VGLIST
+    //  SEC
+    //  ADC VGLIST
+    //  STA VGLIST
+    //  BCC 10$
+    //  INC VGLIST+1
+    *(uint16_t *) memory.page0._VGLIST += y + 1; //TODO assumes little-endian
+    //  10$:	RTS
+}
+
 //  .SBTTL VGRTSL - ADD RTSL TO VECTOR LIST
 //  ;VGRTSL - ADD RTSL TO VECTOR LIST
 //  ;
