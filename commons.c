@@ -97,3 +97,15 @@ void io_set_SHPFIR(uint8_t value) {
 void io_set_TONE(uint8_t value) {
     // TODO: Remember to implement
 }
+
+/**
+ * Places an byte in VECRAM at index VGLIST + delta ( - 0x4000)
+ *
+ * @param Y_delta
+ * @param A_value
+ */
+void vg_memory_put(uint8_t Y_delta, uint8_t A_value) {
+    uint16_t index = *(uint16_t *) memory.page0._VGLIST + Y_delta - 0x4000;
+    memory.VECRAM[index] = A_value;
+
+}

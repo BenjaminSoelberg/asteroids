@@ -220,4 +220,12 @@ void io_set_SHPFIR(uint8_t value);
  */
 void io_set_TONE(uint8_t value);
 
+/**
+ * Places an byte in VECRAM at index VGLIST + delta ( - 0x4000)
+ *
+ * @param Y_delta
+ * @param A_value
+ */
+void vg_memory_put(uint8_t Y_delta, uint8_t A_value);
+
 #undef ASTEROIDS_COMMONS_H

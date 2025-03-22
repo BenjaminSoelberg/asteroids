@@ -1,6 +1,8 @@
 #include "vg_A35131_1C.h"
 
-void VGADD(int y);
+void VGADD(uint8_t Y_delta);
+
+void VGDOT(uint8_t A_timer, uint8_t X_intensity);
 
 //  .SBTTL VECUT-VECTOR GENERATION UTILITY
 //  .RADIX 16
@@ -147,10 +149,10 @@ void VGHALT() {
     //  VGHALT:	LDA I,0B0		;BXXX IS HALT
     //  VGHAL1:	LDY I,0
     //  STA NY,VGLIST
-    memory.page0._VGLIST[0] = 0xB0;
+    vg_memory_put(0, 0xB0);
     //  INY
     //  STA NY,VGLIST
-    memory.page0._VGLIST[1] = 0xB0;
+    vg_memory_put(1, 0xB0);
     //  BNE VGADD		;UPDATE VECTOR LIST
     VGADD(1);
 }
@@ -244,8 +246,8 @@ void VGHALT() {
 //
 /**
  * VGSABS - SHORT FORM VGLABS CALL
- * @param x
- * @param y
+ * @param A_x
+ * @param X_y
  *
  * @note
  *   ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
@@ -255,7 +257,7 @@ void VGHALT() {
  *   EXIT	(VGLIST,VGLIST+1) = NEW VECTOR LIST ADDRESS
  *   USES	A,X,Y,(VGLIST,VGLIST+1),(XCOMP,XCOMP+3)
  */
-void VGSABS(uint8_t x, uint8_t y) {
+void VGSABS(uint8_t A_x, uint8_t X_y) {
     //TODO: Remember to implement
 
     //  VGSABS:	LDY I,0
@@ -312,16 +314,16 @@ void VGSABS(uint8_t x, uint8_t y) {
  *          (Y) = VALUE+1 TO BE ADDED TO VECTOR LIST
  * EXIT	    (VGLIST,VGLIST+1) = NEW VECTOR LIST ADDRESS
  * USES     A,(VGLIST,VGLIST+1)
- * @param y add y + 1 to VGLIST
+ * @param Y_delta add y + 1 to VGLIST
  */
-void VGADD(int y) {
+void VGADD(uint8_t Y_delta) {
     //  VGADD:	TYA			;ADD 1+(Y) TO VGLIST
     //  SEC
     //  ADC VGLIST
     //  STA VGLIST
     //  BCC 10$
     //  INC VGLIST+1
-    *(uint16_t *) memory.page0._VGLIST += y + 1; //TODO assumes little-endian
+    *(uint16_t *) memory.page0._VGLIST += Y_delta + 1; //TODO assumes little-endian
     //  10$:	RTS
 }
 
@@ -443,40 +445,53 @@ void VGADD(int y) {
 //          STA NY,VGLIST		;STORE LAST BYTE OF VCTR
 //          JMP VGADD		;UPDATE VECTOR ADDRESS POINTER
 //  .ENDC
-//
-//
-//  .SBTTL VGWAIT - ADD WAIT TO VECTOR LIST
-//  ;VGWAIT - ADD WAIT TO VECTOR LIST
-//  ;
-//  ;ENTRY	(VGLIST,VGLIST+1) = VECTOR ADDRESS LIST
-//  ;	(A) = TIMER (0=NO DELAY, 90=MAX DELAY, INCREMENTS OF 10)
-//  ;EXIT	(VGLIST,VGLIST+1) = NEW VECTOR ADDRESS LIST
-//  ;USES	A,X,Y,(VGLIST,VGLIST+1)
-//
-//  VGWAIT:	LDX I,0			;NO INTENSITY
-//  ;	JMP VGDOT
-//
-//
-//
-//  .SBTTL VGDOT - DRAW A DOT AT THE CURRENT POSITION
-//  ;VGDOT - DRAW A DOT AT CURRENT POSITION
-//  ;
-//  ;ENTRY 	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
-//  ;	(A) = TIMER (0 = NO DELYA, 90 = MAX DELAY, 10 = INCREMENT)
-//  ;	(X) = INTENSITY (0 = OFF, F0 = MAX, 10 = INCREMENT)
-//  ;EXIT	(VGLIST,VGLIST+1) = NEW VECTOR LIST ADDRESS
-//  ;USES	A,Y, (VGLIST,VGLIST+1)
-//
-//  VGDOT:	LDY I,1
-//  STA NY,VGLIST		;SAVE TIMER VALUE
-//          DEY
-//  TYA			;(A):=(Y):=0
-//  STA NY,VGLIST		;0, TIMER, 0, 0=WAIT
-//          INY
-//  INY
-//          STA NY,VGLIST
-//          INY
-//  TXA			;INSERT INTENSITY
-//  STA NY,VGLIST
-//  JMP VGADD
-//
+
+/**
+ * VGWAIT - ADD WAIT TO VECTOR LIST
+ *
+ * ENTRY	(VGLIST,VGLIST+1) = VECTOR ADDRESS LIST
+ *          (A) = TIMER (0=NO DELAY, 90=MAX DELAY, INCREMENTS OF 10)
+ *
+ * EXIT     (VGLIST,VGLIST+1) = NEW VECTOR ADDRESS LIST
+ *
+ * USES     A,X,Y,(VGLIST,VGLIST+1)
+ */
+void VGWAIT(uint8_t A_timer) {
+    //  VGWAIT:	LDX I,0			;NO INTENSITY
+    //  ;	JMP VGDOT
+    VGDOT(A_timer, 0);
+}
+
+/**
+ * VGDOT - DRAW A DOT AT THE CURRENT POSITION
+ *
+ * ENTRY 	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
+ *          (A) = TIMER (0 = NO DELYA, 90 = MAX DELAY, 10 = INCREMENT)
+ *          (X) = INTENSITY (0 = OFF, F0 = MAX, 10 = INCREMENT)
+ *
+ * 	EXIT	(VGLIST,VGLIST+1) = NEW VECTOR LIST ADDRESS
+ *
+ * 	USES	A,Y, (VGLIST,VGLIST+1)
+ *
+ * @param A_timer
+ * @param X_intensity
+ */
+void VGDOT(uint8_t A_timer, uint8_t X_intensity) {
+    //  VGDOT:	LDY I,1
+    //  STA NY,VGLIST		;SAVE TIMER VALUE
+    vg_memory_put(1, A_timer);
+    //  DEY
+    //  TYA			;(A):=(Y):=0
+    //  STA NY,VGLIST		;0, TIMER, 0, 0=WAIT
+    vg_memory_put(0, 0);
+    //  INY
+    //  INY
+    //  STA NY,VGLIST
+    vg_memory_put(2, 0);
+    //  INY
+    //  TXA			;INSERT INTENSITY
+    //  STA NY,VGLIST
+    vg_memory_put(3, X_intensity);
+    //  JMP VGADD
+    VGADD(3);
+}
