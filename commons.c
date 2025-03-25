@@ -99,13 +99,13 @@ void io_set_TONE(uint8_t value) {
 }
 
 /**
- * Places an byte in VECRAM at index VGLIST + delta ( - 0x4000)
+ * Places an byte in VECRAM at index VGLIST + delta
  *
  * @param Y_delta
  * @param A_value
  */
 void vg_memory_put(uint8_t Y_delta, uint8_t A_value) {
-    uint16_t index = *(uint16_t *) memory.page0._VGLIST + Y_delta - 0x4000;
-    memory.VECRAM[index] = A_value;
+    uint16_t index = memory.page0.VGLIST_16 + Y_delta;
+    memory.VECMEM[index] = A_value;
 
 }

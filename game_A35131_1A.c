@@ -238,7 +238,7 @@ void START() {
             //    LDA A,VECRAM+1		;SWITCH VECTOR BUFFERS
             //    EOR I,02
             //    STA A,VECRAM+1		;CHANGE JMPL TO STARTING BUFFER
-            uint8_t temp = memory.VECRAM[1] ^= 0x02;
+            uint8_t temp = memory.VECMEM[1] ^= 0x02;
 
             //    STA A,GOADD		;START VECTOR GENERATOR
             io_startGOADD();
@@ -249,7 +249,7 @@ void START() {
             //    INC FRAME		;INCREMENT FRAME COUNTER
             //    BNE 11$			;NO OVERFLOW
             //    INC FRAME+1
-            *(uint16_t *) memory.page0.FRAME += 1; //TODO assumes little-endian
+            memory.page0.FRAME_16 += 1;
 
             //    11$:	LDX I,VECRAM/100
             //    AND I,02
@@ -258,7 +258,7 @@ void START() {
             //    12$:	LDA I,VECRAM&0FF+2
             //    STA VGLIST
             //    STX VGLIST+1		;RESET VECTOR LIST POINTER
-            *(uint16_t *) memory.page0._VGLIST = (temp & 0x02) ? 0x4002 : 0x4402; //TODO assumes little-endian
+            memory.page0.VGLIST_16 = (temp & 0x02) ? 0x0002 : 0x0402; // Frame buffer 0 or 1
 
             //    JSR CHKST		;CHECK FOR START
             if (todo_CHKST()) {

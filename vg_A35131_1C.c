@@ -323,7 +323,7 @@ void VGADD(uint8_t Y_delta) {
     //  STA VGLIST
     //  BCC 10$
     //  INC VGLIST+1
-    *(uint16_t *) memory.page0._VGLIST += Y_delta + 1; //TODO assumes little-endian
+    memory.page0.VGLIST_16 += Y_delta + 1;
     //  10$:	RTS
 }
 

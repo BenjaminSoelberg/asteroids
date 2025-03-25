@@ -22,7 +22,10 @@ typedef struct {
     uint8_t VGSIZE;             //	VGSIZE:     .BLKB 1			;SCALING SIZE (0,10,20,...,F0)
     uint8_t VGBRIT;             //	VGBRIT:     .BLKB 1			;VECTOR BRIGHTNESS (0=OFF, F0=MAX, 10INC)
     //TODO: All access via memory.page0._VGLIST should be sub 0x4000 prior to index
-    uint8_t _VGLIST[2];          //	VGLIST:     .BLKB 2			;VECTOR LIST POINTER
+    union {
+        uint8_t _VGLIST[2];     //	VGLIST:     .BLKB 2			;VECTOR LIST POINTER
+        uint16_t VGLIST_16;
+    } __attribute__((packed));
     uint8_t XCOMP[4];           //	XCOMP:      .BLKB 4			;X COMPONENT FOR VECTORS
     uint8_t TEMP1[2];           //	TEMP1:      .BLKB 2			;SCRATCH
     uint8_t TEMP2[2];           //	TEMP2:      .BLKB 2
@@ -42,7 +45,10 @@ typedef struct {
     uint8_t RENTRY;             //	RENTRY:     .BLKB 1			;BLOW UP ON REENTRY IF NEGATIVE (NON-ZERO IF HE JUST HYPERSPACED)
     uint8_t GDELAY;             //	GDELAY:     .BLKB 1			;DELAY BEFORE STARTING GAME
     uint8_t SYNC;               //	SYNC:       .BLKB 1			;FRAME COUNTER SYNC
-    uint8_t FRAME[2];           //	FRAME:      .BLKB 2			;FRAME COUNTER
+    union {
+        uint8_t FRAME[2];       //	FRAME:      .BLKB 2			;FRAME COUNTER
+        uint16_t FRAME_16;
+    } __attribute__((packed));
     uint8_t $INTCT;             //	$INTCT:     .BLKB 1			;INTERRUPT COUNTER
     uint8_t POLYL;              //	POLYL:      .BLKB 1			;POLY COUNTER VALUES
     uint8_t POLYH;              //	POLYH:      .BLKB 1
@@ -152,15 +158,9 @@ typedef struct {
     uint8_t FILLER_0x0400[0x1FFF - 0x0400 + 1];
     IO io;                                              // 0x2000 - 0x3FFF
     union {
-        uint8_t VECRAM[0x47FF - 0x4000 + 1];            // 0x4000 - 0x4FFF      //    VECRAM	=4000			    ;VECTOR RAM
-        uint16_t VECRAM_16[(0x47FF - 0x4000) / 2 + 1];  // 0x4000 - 0x4FFF
-    } __attribute__((packed));
-    uint8_t UNUSED_VECRAM[0x4FFF - 0x4800 + 1];
-    union {
-        uint8_t VECROM[0x57FF - 0x5000 + 1];            // 0x5000 - 0x5FFF      //    VECROM	=5000			    ;VECTOR ROM
-        uint16_t VECROM_16[(0x57FF - 0x5000) / 2 + 1];  // 0x5000 - 0x5FFF
+        uint8_t VECMEM[0x5FFF - 0x4000 + 1];            // 0x4000 - 0x5FFF All the vector memory
+        uint8_t VECRAM_16[(0x5FFF - 0x4000 + 1) / 2 + 1];
     };
-    uint8_t UNUSED_VECROM[0x5FFF - 0x5800 + 1];
     uint8_t FILLER_0x6000[0x67FF - 0x6000 + 1];
     uint8_t UNUSED_PROGRAM_ROM[0x7FFF - 0x6800 + 1];
 } __attribute__((packed)) MEMORY;
