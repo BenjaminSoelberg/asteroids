@@ -2,7 +2,8 @@
 
 #include "game_A35131_1A.h"
 
-void STEST();
+void todo_STEST();
+//TODO: Remember to implement
 
 //  	.TITLE ASTTST-ASTEROID SELF TEST
 //  	.CSECT
@@ -72,7 +73,7 @@ _Noreturn void PWRON() {
     //	LDY A,STSTSW
     //	BMI STEST		;IF SELF TEST SWITCH ON
     if (memory.io.STSTSW & 0x80) {
-        STEST();
+        todo_STEST();
     }
 
     //	INX
@@ -124,9 +125,9 @@ _Noreturn void PWRON() {
 }
 
 /**
- * STEST - SELF TEST PROCESSING
+ * todo_STEST - SELF TEST PROCESSING
  */
-void STEST() {
+void todo_STEST() {
     assert(1 == 2); // TODO: Remember to implement
     //  STEST:	STA AX,4000		;CLEAR ALL OF MEMORY -TURN LIGHTS ON-SOUNDS OFF
     //  	STA AX,4100		;NOTE PAGE 0,1,2 AND 3 CLEARED BY POWER ON RESET

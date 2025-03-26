@@ -23,7 +23,7 @@ void todo_MOTION();
 
 void todo_MOVE();
 
-void todo_PARAMS();
+void PARAMS();
 
 bool todo_SCORES();
 
@@ -31,9 +31,13 @@ void todo_SOUNDS();
 
 void todo_UPDATE();
 
-uint8_t RAND();
+uint8_t todo_RAND();
 
 void NEWAST();
+
+void todo_DIGITS(void *A_digits_page0_ptr, uint8_t Y_length, uint8_t X_intensity, bool C_zero_suppression);
+
+void todo_HEX(uint8_t A_digit, uint8_t TEMP4_2_intensity);
 
 //      .TITLE ASTROD (21503)
 //  	.ASECT
@@ -190,7 +194,7 @@ void NEWAST();
 //  THUMP3:	.BLKB 1			;STARTING VALUE FOR THUMP2
 //  DIFCTY:	.BLKB 1			;DIFFICULTY VALUE FOR STARTING SAUCERS
 
-void NEWVEL();
+void todo_NEWVEL();
 
 /**
  *  .SBTTL MAIN LINE LOOP
@@ -220,7 +224,7 @@ void START() {
             //    START2:	LDA A,STSTSW		;NOTE NMI NOT ACTIVE IF STSTSW ON
             //    5$:	BMI 5$			;IN SELF TEST-WANT FOR WATCHDOG TO RESET SOUNDS
             if (memory.io.STSTSW & 0x80) {
-                trigger_nmi();
+                _trigger_nmi();
             }
 
             //    LSR SYNC
@@ -233,7 +237,7 @@ void START() {
 
             //    10$:	LDA A,HALT
             //    BMI 10$			;WAIT FOR BEAM TO HALT
-            wait_for_HALT();
+            todo_wait_for_HALT();
 
             //    LDA A,VECRAM+1		;SWITCH VECTOR BUFFERS
             //    EOR I,02
@@ -241,10 +245,10 @@ void START() {
             uint8_t temp = memory.VECMEM[1] ^= 0x02;
 
             //    STA A,GOADD		;START VECTOR GENERATOR
-            io_startGOADD();
+            todo_io_startGOADD();
 
             //    STA A,WTDOG
-            io_pollWTDOG();
+            todo_io_pollWTDOG();
 
             //    INC FRAME		;INCREMENT FRAME COUNTER
             //    BNE 11$			;NO OVERFLOW
@@ -263,7 +267,7 @@ void START() {
             //    JSR CHKST		;CHECK FOR START
             if (todo_CHKST()) {
                 //    BCS START		;START NEW GAME
-                return;
+                return; // Avoids GOTO and while loop will call START again
             }
 
             //    JSR UPDATE		;UPDATE HIGH SCORE TABLES
@@ -302,7 +306,7 @@ void START() {
             }
 
             //    20$:	JSR PARAMS		;DISPLAY SCORE AND OTHER PARAMETERS
-            todo_PARAMS();
+            PARAMS();
 
             //    JSR SOUNDS		;GENERATE SOUNDS
             todo_SOUNDS();
@@ -310,10 +314,10 @@ void START() {
             //    LDA I,1023./8
             //    TAX
             //    JSR VGSABS		;POSITION BEAM FOR MINIMUM CURRENT DRAW
-            VGSABS(1023 / 8, 1023 / 8);
+            todo_VGSABS(1023 / 8, 1023 / 8);
 
             //    JSR RAND		;KEEP RANDOM NUMBERS COMING
-            RAND(); // TODO: Why... just to massage the PRNG ?
+            todo_RAND(); // TODO: Why... just to massage the PRNG ?
 
             //    JSR VGHALT		;ADD HALT TO VECTOR LIST
             VGHALT();
@@ -1327,26 +1331,38 @@ void INIT1() {
 //  VGCHAR:	LDA AY,VGMSGA
 //  	LDX AY,VGMSGA+1
 //  	JMP VGADD2		;ADD TO VECTOR LIST
-//  
-//  
-//  	.SBTTL LIVES - DRAW A SHIP FOR EACH LIFE YOU HAVE LEFT
-//  ;LIVES - DRAW A SHIP FOR EACH LIFE YOU HAVE LEFT
-//  ;
-//  ;ENTRY	(A)=X POSITION FOR START OF PICTURES
-//  ;	(CC)=ZERO IF (Y)=0
-//  ;	(Y)=NUMBER OF LIFES
-//  LIVES:	BEQ 99$			;NO LIVES LEFT
-//  	STY TEMP1
-//  	LDX I,852./4		;Y POSITION FOR PICTURES
-//  	LDY I,0E0		;1/4 SIZE PICTURE
-//  	STY VGSIZE
-//  	JSR VGSABS		;POSITION BEAM AND RESET SCALE FACTOR
-//  10$:	LXL SHIP17		;LSB OF SHIP PICTURE ROUTINE
-//  	LAH SHIP17
-//  	JSR VGJSRL		;JSRL TO PICTURE
-//  	DEC TEMP1
-//  	BNE 10$			;IF MORE LIVES LEFT
-//  99$:	RTS
+
+/**
+ * LIVES - DRAW A SHIP FOR EACH LIFE YOU HAVE LEFT
+ *
+ * ENTRY    (A)=X POSITION FOR START OF PICTURES
+ *          (CC)=ZERO IF (Y)=0
+ *          (Y)=NUMBER OF LIFES
+ *
+ * @param A_x
+ * @param Y_lives
+ */
+void LIVES(uint8_t A_x, uint8_t Y_lives) {
+    if (Y_lives > 0) {
+        //  LIVES:	BEQ 99$			;NO LIVES LEFT
+        //  	STY TEMP1
+        //  	LDX I,852./4		;Y POSITION FOR PICTURES
+        //  	LDY I,0E0		;1/4 SIZE PICTURE
+        //  	STY VGSIZE
+        memory.page0.VGSIZE = 0xE0;
+        //  	JSR VGSABS		;POSITION BEAM AND RESET SCALE FACTOR
+        todo_VGSABS(A_x, 852 / 4);
+        for (uint8_t i = 0; i < Y_lives; i++) {
+            //  10$:	LXL SHIP17		;LSB OF SHIP PICTURE ROUTINE
+            //  	LAH SHIP17
+            //  	JSR VGJSRL		;JSRL TO PICTURE
+            VGJSRL(SHIP17);
+            //  	DEC TEMP1
+            //  	BNE 10$			;IF MORE LIVES LEFT
+        }
+    }
+    //  99$:	RTS
+}
 
 /**
  * MOTION-MOTION todo_UPDATE ROUTINE
@@ -1687,8 +1703,8 @@ void NEWAST() {
         //  5$:	STA NROCKS		;NUMBER OF ROCKS ACTIVE
         //  	STA SROCKS
         //  	STA TEMP1
-        memory.currentPlayer.NROCKS = memory.currentPlayer.SROCKS = memory.page0.TEMP1[0] = MIN(
-                memory.currentPlayer.SROCKS + 2, 11);
+        memory.currentPlayer.NROCKS = memory.currentPlayer.SROCKS = memory.page0.TEMP1[0] =
+                min(memory.currentPlayer.SROCKS + 2, 11);
 
         /** Get random bits to build up rocks */
         //  	LDY I,NOBJ+1
@@ -1698,13 +1714,13 @@ void NEWAST() {
             //  10$:	JSR RAND		;RANDOM NUMBER
             //  	AND I,18		;PICTURE NUMBER
             //  	ORA I,04		;SIZE OF OBJECT
-            uint8_t a = (RAND() & 0x18) | 0x04;
+            uint8_t a = (todo_RAND() & 0x18) | 0x04;
             //  	STA X,OBJ		;SET PICTURE
             memory.currentPlayer.OBJ[x] = a;
             //  	JSR NEWVEL		;GET NEW VELOCITY
-            NEWVEL();
+            todo_NEWVEL();
             //  	JSR RAND		;RANDOM NUMBER
-            a = RAND();
+            a = todo_RAND();
             //  	LSR
             //  	AND I,1F
             bool c = a & 1;
@@ -1739,7 +1755,8 @@ void NEWAST() {
             x--;
             //  	DEC TEMP1
             //  	BNE 10$			;LOOP FOR EACH NEW ROCK
-        } while (--memory.page0.TEMP1[0] > 0); //TODO is this correct or am i missing one ?
+            //TODO: is this correct or am i missing one ? also, remove the usage of TEMP1
+        } while (--memory.page0.TEMP1[0] > 0);
 
         //  	LDA I,7F
         //  	STA EDELAY		;SAUCER SHOULD WAIT
@@ -1774,12 +1791,12 @@ void NEWAST() {
 //  	RTS
 
 /**
- * NEWVEL - NEW RANDOM VELOCITY USING OLD
+ * todo_NEWVEL - NEW RANDOM VELOCITY USING OLD
  *
  * ENTRY	(X)=INDEX FOR NEW VELOCITY
  *          (Y)=INDEX OF OLD VELOCITY
  */
-void NEWVEL() {
+void todo_NEWVEL() {
     //TODO: Remember to implement
 
 //  NEWVEL:	JSR RAND		;RANDOM NUMBER
@@ -1824,91 +1841,142 @@ void NEWVEL() {
 /**
  * PARAMS-DISPLAY PARAMETERS
  */
-void todo_PARAMS() {
-    //TODO: Remember to implement
-
+void PARAMS() {
     //  PARAMS:	LDA I,10
     //  	STA VGSIZE		;STANDARD SIZE CHARACTER
+    memory.page0.VGSIZE = 0x10;
     //  	LDA I,0
     //  	TAX
     //  	JSR VGSABS		;PREVENT SPORT KILL FROM BLANKING OVER PICTURE
+    todo_VGSABS(0, 0);
     //  	LDA I,60
     //  	JSR VGWAIT
+    VGWAIT(0x60);
     //  	LDA I,100./4
     //  	LDX I,876./4
     //  	JSR VGSABS		;POSITION BEAM
+    todo_VGSABS(100 / 4, 876 / 4);
     //  	LDA I,60
     //  	JSR VGWAIT		;WAIT FOR BEAM
+    VGWAIT(0x60);
     //  	LDX I,0
+    uint8_t intensity = 0x00;
     //  	LDA NPLAYR
     //  	CMP I,02
     //  	BNE 10$			;IF NOT 2 PLAYER GAME
-    //  	LDA PLAYR
-    //  	BNE 10$			;IF PLAYER 2 UP
-    //  	LDX I,20		;INTENSITY CHANGE FOR VECTORS
-    //  	LDA OBJ+NOBJ
-    //  	ORA RENTRY
-    //  	BNE 10$			;IF HE HAS APPEARED
-    //  	LDA SDELAY
-    //  	BMI 10$			;HE HAS DIED
-    //  	LDA FRAME
-    //  	AND I,10
-    //  	BEQ 20$			;FLASH SCORE
+    if (memory.page0.NPLAYR == 2) {
+        //  	LDA PLAYR
+        //  	BNE 10$			;IF PLAYER 2 UP
+        if (memory.page0.PLAYR == 0) {
+            //  	LDX I,20		;INTENSITY CHANGE FOR VECTORS
+            intensity = 0x20;
+            //  	LDA OBJ+NOBJ
+            //  	ORA RENTRY
+            //  	BNE 10$			;IF HE HAS APPEARED
+            if ((memory.currentPlayer.OBJ[NOBJ] | memory.page0.RENTRY) == 0) {
+                //  	LDA SDELAY
+                //  	BMI 10$			;HE HAS DIED
+                if (((int8_t) memory.currentPlayer.SDELAY) > 0) {
+                    //  	LDA FRAME
+                    //  	AND I,10
+                    //  	BEQ 20$			;FLASH SCORE
+                    if (memory.page0.FRAME[0] & 0x10) {
+                        goto _20$;
+                    }
+                }
+            }
+        }
+    }
+
     //  10$:	LDA I,SCORE
     //  	LDY I,02
     //  	SEC
     //  	JSR DIGITS		;DISPLAY PLAYER 1 SCORE
+    todo_DIGITS(&memory.page0.SCORE, 2, intensity, true);
+
     //  	LDA I,0
     //  	JSR HEX			;ADD EXTRA ZERO TO SCORE
+    todo_HEX(0, intensity);
+
+    _20$:
     //  20$:	LDA I,160./4
     //  	LDY HITS
     //  	JSR LIVES		;DISPLAY NUMBER OF LIFES
+    LIVES(160 / 4, memory.page0.HITS[0]);
     //  	LDA I,00
     //  	STA VGSIZE		;SMALL CHARACTERS
+    memory.page0.VGSIZE = 0;
     //  	LDA I,480./4
     //  	LDX I,876./4
     //  	JSR VGSABS		;POSITION BEAM
+    todo_VGSABS(480 / 4, 876 / 4);
     //  	LDA I,50
     //  	JSR VGWAIT		;WAIT FOR BEAM
+    VGWAIT(0x50);
     //  	LDA I,HSCORE
     //  	LDY I,02
     //  	SEC
     //  	JSR DIGITS		;DISPLAY HIGH SCORE
+    //TODO: It seems that X is zero here (according to VGWAIT), but I would expect that it ment no intensity, so can that be true...)
+    todo_DIGITS(&memory.page0.HSCORE, 2, 0x00, true);
     //  	LDA I,0
     //  	JSR VGHEX		;ADD A ZERO TO SCORE
+    VGHEX(0);
     //  	LDA I,10
     //  	STA VGSIZE		;MEDIUM SIZE CHARACTERS
+    memory.page0.VGSIZE = 0x10;
     //  	LDA I,768./4
     //  	LDX I,876./4
     //  	JSR VGSABS		;POSITION BEAM
+    todo_VGSABS(768 / 4, 876 / 4);
     //  	LDA I,50
     //  	JSR VGWAIT		;WAIT FOR BEAM
+    VGWAIT(0x50);
     //  	LDX I,0
+    intensity = 0;
     //  	LDA NPLAYR
     //  	CMP I,01
     //  	BEQ 90$			;NO PLAYER 2 IN 1 PLAYER GAME
-    //  	BCC 30$			;IF IN ATTRACT
-    //  	LDA PLAYR
-    //  	BEQ 30$			;NOT PLAYER 2 UP
-    //  	LDX I,20		;INTENSITY CHANGE FOR DIGITS
-    //  	LDA OBJ+NOBJ
-    //  	ORA RENTRY
-    //  	BNE 30$			;IF HE HAS APPEARED
-    //  	LDA SDELAY
-    //  	BMI 30$			;HE HAS DIED
-    //  	LDA FRAME
-    //  	AND I,10
-    //  	BEQ 40$			;FLASH SCORE
-    //  30$:	LDA I,SCORE+2
-    //  	LDY I,02
-    //  	SEC			;ZERO SUPPRESS
-    //  	JSR DIGITS		;DISPLAY SCORE FOR PLAYER 2
-    //  	LDA I,0
-    //  	JSR HEX			;ADD A ZERO TO SCORE
-    //  40$:	LDA I,828./4
-    //  	LDY HITS+1
-    //  	JMP LIVES		;DISPLAY NUMBER OF LIVES
-    //
+    if (memory.page0.NPLAYR != 1) {
+        //  	BCC 30$			;IF IN ATTRACT
+        if (memory.page0.NPLAYR != 0) {
+            //  	LDA PLAYR
+            //  	BEQ 30$			;NOT PLAYER 2 UP
+            if (memory.page0.PLAYR != 0) {
+                //  	LDX I,20		;INTENSITY CHANGE FOR DIGITS
+                intensity = 0x20;
+                //  	LDA OBJ+NOBJ
+                //  	ORA RENTRY
+                //  	BNE 30$			;IF HE HAS APPEARED
+                if ((memory.currentPlayer.OBJ[NOBJ] | memory.page0.RENTRY) == 0) {
+                    //  	LDA SDELAY
+                    //  	BMI 30$			;HE HAS DIED
+                    if (((int8_t) memory.currentPlayer.SDELAY) >= 0) {
+                        //  	LDA FRAME
+                        //  	AND I,10
+                        //  	BEQ 40$			;FLASH SCORE
+                        if ((memory.page0.FRAME[0] & 0x10) == 0) {
+                            goto _40;
+                        }
+                    }
+                }
+            }
+        }
+
+        //  30$:	LDA I,SCORE+2
+        //  	LDY I,02
+        //  	SEC			;ZERO SUPPRESS
+        //  	JSR DIGITS		;DISPLAY SCORE FOR PLAYER 2
+        todo_DIGITS(&memory.page0.SCORE[2], 2, intensity, true);
+        //  	LDA I,0
+        //  	JSR HEX			;ADD A ZERO TO SCORE
+        todo_HEX(0, intensity);
+        _40:
+        //  40$:	LDA I,828./4
+        //  	LDY HITS+1
+        //  	JMP LIVES		;DISPLAY NUMBER OF LIVES
+        LIVES(828 / 4, memory.page0.HITS[1]);
+    }
     //  90$:	RTS
 }
 
@@ -2554,44 +2622,54 @@ void todo_UPDATE() {
 //  	.BYTE 10.,12.,15.,17.	;4-7
 //  	.BYTE 19.,21.,23.,25.	;8-B
 //  	.BYTE 26.,28.,29.,31.	;C-F
-//  
-//  ;DIGITS - DISPLAY 2Y DIGIT NUMBERS
-//  ;
-//  ;ENTRY	(C) = CARRY SET FOR ZERO SUPPRESSION
-//  ;	(A) = ADDRESS OF (Y) ZERO PAGE LOCATIONS CONTAINING NUMBER (LSB TO MSB)
-//  ;	(X) = CHANGE IN INTENSITY (0,10,20,...)
-//  ;	(Y) = NUMBER OF ZERO PAGE LOCATIONS TO USE (1 TO 256).
-//  ;USES	A,X,Y (TEMP4,TEMP4+2)
-//  DIGITS:	PHP			;SAVE INPU PARAMEERS
-//  	STX TEMP4+2
-//  	DEY
-//  	STY TEMP4+1
-//  	CLC
-//  	ADC TEMP4+1
-//  	STA TEMP4		;MSB OF DIGITS
-//  	PLP
-//  	TAX
-//  10$:	PHP
-//  	LDA X,0
-//  	LSR
-//  	LSR
-//  	LSR
-//  	LSR
-//  	PLP
-//  	JSR HEXZ		;FIRST DIGIT
-//  	LDA TEMP4+1
-//  	BNE 20$
-//  	CLC			;DISPLAY LAST DIGIT (EVEN 0)
-//  20$:	LDX TEMP4
-//  	LDA X,0
-//  	JSR HEXZ		;SECOND DIGIT
-//  	DEC TEMP4
-//  	LDX TEMP4
-//  	DEC TEMP4+1
-//  	BPL 10$			;LOOP FOR EACH SET OF DIGITS
-//  	RTS
-//  
-//  
+
+/**
+ * todo_DIGITS - DISPLAY 2Y DIGIT NUMBERS
+ *
+ * ENTRY	(C) = CARRY SET FOR ZERO SUPPRESSION
+ *      	(A) = ADDRESS OF (Y) ZERO PAGE LOCATIONS CONTAINING NUMBER (LSB TO MSB)
+ *      	(X) = CHANGE IN INTENSITY (0,10,20,...)
+ *      	(Y) = NUMBER OF ZERO PAGE LOCATIONS TO USE (1 TO 256).
+ * USES     A,X,Y (TEMP4,TEMP4+2)
+ *
+ * @param A_digits_page0_ptr
+ * @param Y_length
+ * @param X_intensity
+ * @param C_zero_suppression
+ */
+void todo_DIGITS(void *A_digits_page0_ptr, uint8_t Y_length, uint8_t X_intensity, bool C_zero_suppression) {
+    // TODO: Remember to implement
+
+    //  DIGITS:	PHP			;SAVE INPU PARAMEERS
+    //  	STX TEMP4+2
+    //  	DEY
+    //  	STY TEMP4+1
+    //  	CLC
+    //  	ADC TEMP4+1
+    //  	STA TEMP4		;MSB OF DIGITS
+    //  	PLP
+    //  	TAX
+    //  10$:	PHP
+    //  	LDA X,0
+    //  	LSR
+    //  	LSR
+    //  	LSR
+    //  	LSR
+    //  	PLP
+    //  	JSR HEXZ		;FIRST DIGIT
+    //  	LDA TEMP4+1
+    //  	BNE 20$
+    //  	CLC			;DISPLAY LAST DIGIT (EVEN 0)
+    //  20$:	LDX TEMP4
+    //  	LDA X,0
+    //  	JSR HEXZ		;SECOND DIGIT
+    //  	DEC TEMP4
+    //  	LDX TEMP4
+    //  	DEC TEMP4+1
+    //  	BPL 10$			;LOOP FOR EACH SET OF DIGITS
+    //  	RTS
+}
+
 //  ;DIVIDE-4 BIT RESULT DIVIDE
 //  ;
 //  ;ENTRY (A)=DIVIDEND (UNSIGNED)
@@ -2612,49 +2690,63 @@ void todo_UPDATE() {
 //  	AND I,0F		;4 BITS OF RESULTS
 //  	TAX
 //  	RTS
-//  
-//  
-//  ;HEXZ - DISPLAY DIGITS WITH ZERO SUPPRESSION
-//  ;
-//  ;ENTRY	(A)=LOWER 4 BITS ARE TO BE DISPLAYED
-//  ;	(TEMP4+2)=INTENSITY CHANGE
-//  ;	(C)=CLEAR IF NO ZERO SUPPRESSION
-//  ;EXIT	(C)=CLEAR IF NO ZERO SUPPRESSION
-//  HEXZ:	BCC HEX			;NO ZERO-SUPPRESSION
-//  	AND I,0F
-//  	BEQ HEX1		;USE BLANK
-//  HEX:	LDX TEMP4+2
-//  	BEQ HEX1		;USE JSRL TO CHARACTER ROUTINES
-//  	AND I,0F
-//  	CLC
-//  	ADC I,01		;SKIP OVER BLANK IN
-//  	PHP			;SAVE CARRY
-//  	ASL
-//  	TAY
-//  	LDA AY,VGMSGA
-//  	ASL
-//  	STA TEMP2
-//  	LDA AY,VGMSGA+1
-//  	ROL
-//  	AND I,1F
-//  	ORA I,40		;ADDRESS IS 4000-5FFF
-//  	STA TEMP2+1
-//  	LDY I,0
-//  	STY TEMP1
-//  	STY TEMP1+1
-//  	JSR COPY		;COPY VECTORS WITH INTENSITY CHANGE
-//  	PLP
-//  	RTS
-//  
-//  HEX1:	JMP VGHEXZ
-//  
-//  
+
 /**
- * RAND-RANDOM NUMBER GENERATOR
+ * HEXZ - DISPLAY DIGITS WITH ZERO SUPPRESSION
+ *
+ * ENTRY    (A)=LOWER 4 BITS ARE TO BE DISPLAYED
+ *          (TEMP4+2)=INTENSITY CHANGE
+ *          (C)=CLEAR IF NO ZERO SUPPRESSION
+ *
+ * EXIT     (C)=CLEAR IF NO ZERO SUPPRESSION
+ */
+void todo_HEXZ(uint8_t A_digit, uint8_t TEMP4_2_intensity, bool C_zero_suppression) {
+    //TODO: Rememb er to implement
+
+    //  HEXZ:	BCC HEX			;NO ZERO-SUPPRESSION
+    //  AND I,0F
+    //  BEQ HEX1		;USE BLANK
+    //TODO: if HEX1 then not call HEX (original asm fall through)
+}
+
+void todo_HEX(uint8_t A_digit, uint8_t TEMP4_2_intensity) {
+    //TODO: Remember er to implement
+
+    //  HEX:	LDX TEMP4+2
+    //  BEQ HEX1		;USE JSRL TO CHARACTER ROUTINES
+    //  AND I,0F
+    //  CLC
+    //  ADC I,01		;SKIP OVER BLANK IN
+
+    //TODO: add 1 to A_digit as 0 index is blank
+
+    //  PHP			;SAVE CARRY
+    //  ASL
+    //  TAY
+    //  LDA AY,VGMSGA
+    //  ASL
+    //  STA TEMP2
+    //  LDA AY,VGMSGA+1
+    //  ROL
+    //  AND I,1F
+    //  ORA I,40		;ADDRESS IS 4000-5FFF
+    //  STA TEMP2+1
+    //  LDY I,0
+    //  STY TEMP1
+    //  STY TEMP1+1
+    //  JSR COPY		;COPY VECTORS WITH INTENSITY CHANGE
+    //  PLP
+    //  RTS
+    //
+    //  HEX1:	JMP VGHEXZ
+}
+
+/**
+ * todo_RAND-RANDOM NUMBER GENERATOR
  *
  * EXIT	(A)=RANDOM NUMBER
  */
-uint8_t RAND() {
+uint8_t todo_RAND() {
     // TODO: Remember to implement
     return (uint8_t) (rand() & 0xFF);;
 

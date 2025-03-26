@@ -2,11 +2,32 @@
 
 MEMORY memory;
 
+uint16_t VGMSGA[] = {
+        JSRL | CHAR_SPACE, JSRL | CHAR_0, JSRL | CHAR_1, JSRL | CHAR_2,
+        JSRL | CHAR_3, JSRL | CHAR_4, JSRL | CHAR_5, JSRL | CHAR_6,
+        JSRL | CHAR_7, JSRL | CHAR_8, JSRL | CHAR_9, JSRL | CHAR_A,
+        JSRL | CHAR_B, JSRL | CHAR_C, JSRL | CHAR_D, JSRL | CHAR_E,
+        JSRL | CHAR_F, JSRL | CHAR_G, JSRL | CHAR_H, JSRL | CHAR_I,
+        JSRL | CHAR_J, JSRL | CHAR_K, JSRL | CHAR_L, JSRL | CHAR_M,
+        JSRL | CHAR_N, JSRL | CHAR_O, JSRL | CHAR_P, JSRL | CHAR_Q,
+        JSRL | CHAR_R, JSRL | CHAR_S, JSRL | CHAR_T, JSRL | CHAR_U,
+        JSRL | CHAR_V, JSRL | CHAR_W, JSRL | CHAR_X, JSRL | CHAR_Y,
+        JSRL | CHAR_Z
+};
+
+int32_t max(int32_t a, int32_t b) {
+    return ((a) > (b) ? a : b);
+}
+
+int32_t min(int32_t a, int32_t b) {
+    return ((a) < (b) ? a : b);
+}
+
 /**
  * Used to set OUT1 to allow the bank switching to take place.
  * @param out1 value
  */
- void io_setOUT1(uint8_t out1) {
+void io_setOUT1(uint8_t out1) {
     memory.io._OUT1 = out1;
     //TODO: Not implement, handle bank select ?
 }
@@ -14,13 +35,13 @@ MEMORY memory;
 /**
  * Will wait until the DVG has executed a HALT instruction.
  */
-void wait_for_HALT() {
+void todo_wait_for_HALT() {
     //    10$:	LDA A,HALT
     //    BMI 10$			;WAIT FOR BEAM TO HALT
     // TODO: Remember to implement
 }
 
-void trigger_nmi() {
+void _trigger_nmi() {
     //TODO: Remember to implement
     assert(false);
 }
@@ -28,7 +49,7 @@ void trigger_nmi() {
 /**
  * I guess any value will start the vector generator
  */
-void io_startGOADD() {
+void todo_io_startGOADD() {
     // TODO Clear the HALT flag ?
     //    STA A,GOADD		;START VECTOR GENERATOR
     // TODO: Remember to implement
@@ -37,7 +58,7 @@ void io_startGOADD() {
 /**
  * I guess any value will poll the watchdog timer
  */
-void io_pollWTDOG() {
+void todo_io_pollWTDOG() {
     //    STA A,WTDOG
     // TODO: Remember to implement
 }

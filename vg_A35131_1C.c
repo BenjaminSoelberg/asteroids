@@ -4,6 +4,8 @@ void VGADD(uint8_t Y_delta);
 
 void VGDOT(uint8_t A_timer, uint8_t X_intensity);
 
+void fixme_VGJMP1(uint16_t vg_instruction);
+
 //  .SBTTL VECUT-VECTOR GENERATION UTILITY
 //  .RADIX 16
 //
@@ -175,104 +177,124 @@ void VGHALT() {
 //  BCC VGHEX		;IF NO ZERO SUPPRESSION
 //  AND I,0F
 //  BEQ VGHEX1		;LEAVE C SET
-//
-//
-//  .SBTTL VGHEX - DISPLAY DIGIT
-//  ;VGHEX - DISPLAY DIGIT
-//  ;
-//  ;THIS ROUTINE WILL DISPLAY A DIGIT USING THE DEFAULT CHARACTER SIZE.
-//  ;NO ATTEMPT IS MADE TO USE THE VARIABLE VGSIZE.
-//  ;
-//  ;ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
-//  ;	(A) = LOWER 4 BITS TO BE DISPLAYED
-//  ;EXIT	(VGLIST,VGLIST+1) = NEW VECTOR LIST ADDRESS
-//  ;	(C) = 0
-//  ;USES	A,X,Y,(VGLIST,VGLIST+1)
-//
-//  VGHEX:	AND I,0F
-//  CLC
-//          ADC I,01		;CLEARS C BIT
-//          VGHEX1:	PHP			;SAVE C FLAG
-//          ASL
-//  LDY I,0
-//  TAX
-//          LDA AX,VGMSGA
-//          STA NY,VGLIST
-//          LDA AX,VGMSGA+1		;COPY JSRL TO CHARACTER ROUTINE
-//          INY
-//  STA NY,VGLIST
-//  JSR VGADD		;UPDATE VECTOR LIST POINTER
-//  PLP			;RESTORE C FLAG
-//          RTS
-//  .ENDC
-//
-//
-//  .SBTTL VGJMPL - ADD JMPL TO VECTOR LIST
-//  ;VGJMPL - ADD JMPL TO VECTOR LIST
-//  ;
-//  ;ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
-//  ;	(A) = MSB OF ADDRESS
-//  ;	(X) = LSB OF ADDRESS
-//  ;EXIT	(VGLIST,VGLIST+1) = NEW VECTOR LIST ADDRESS
-//  ;USES	A,Y,(VGLIST,VGLIST+1)
-//
-//  VGJMPL:	LSR
-//          AND I,0F		;BASE ADDRESS IS RELATIVE TO ZERO
-//  ORA I,0E0
-//  VGJMP1:	LDY I,01
-//  STA NY,VGLIST
-//  DEY
-//          TXA
-//  ROR
-//          STA NY,VGLIST		;SAVE MSB + OPCODE
-//          INY
-//  BNE VGADD		;UPDATE VECTOR POINTER
-//
-//
-//  .SBTTL VGJSRL - ADD JSRL TO VECTOR LIST
-//  ;VGJSRL - ADD JSRL TO VECTOR LIST
-//  ;
-//  ;ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
-//  ;	(A) = MSB OF ADDRESS
-//  ;	(X) = LSB OF ADDRESS
-//  ;EXIT	(VGLIST,VGLIST+1) = NEW VECTOR LIST ADDRESS
-//  ;USES	A,Y,(VGLIST,VGLIST+1)
-//
-//  VGJSRL:	LSR
-//          AND I,0F		;BASE ADDRESS IS RELATIVE
-//  ORA I,0C0
-//  BNE VGJMP1		;MOVE INTO VECTOR LIST
-//
-//
+
 /**
- * VGSABS - SHORT FORM VGLABS CALL
+ * VGHEX - DISPLAY DIGIT
+ *          THIS ROUTINE WILL DISPLAY A DIGIT USING THE DEFAULT CHARACTER SIZE.
+ *          NO ATTEMPT IS MADE TO USE THE VARIABLE VGSIZE.
+ * ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
+ *          (A) = LOWER 4 BITS TO BE DISPLAYED
+ * EXIT     (VGLIST,VGLIST+1) = NEW VECTOR LIST ADDRESS
+ * 	        (C) = 0
+ * USES     A,X,Y,(VGLIST,VGLIST+1)
+ */
+void VGHEX(uint8_t A_digit) {
+    //  VGHEX:	AND I,0F
+    //  CLC
+    //  ADC I,01		;CLEARS C BIT
+    //  VGHEX1:	PHP			;SAVE C FLAG
+    //  ASL
+    //  LDY I,0
+    //  TAX
+    //  LDA AX,VGMSGA
+    //  STA NY,VGLIST
+    vg_memory_put(0, VGMSGA[A_digit] & 0xFF);
+    //  LDA AX,VGMSGA+1		;COPY JSRL TO CHARACTER ROUTINE
+    //  INY
+    //  STA NY,VGLIST
+    vg_memory_put(1, VGMSGA[A_digit] >> 8);
+    //  JSR VGADD		;UPDATE VECTOR LIST POINTER
+    VGADD(1);
+    //  PLP			;RESTORE C FLAG
+    //  RTS
+}
+
+/**
+ * VGJMPL - ADD JMPL TO VECTOR LIST
+ * ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
+ *          (A) = MSB OF ADDRESS
+ *          (X) = LSB OF ADDRESS
+ * EXIT     (VGLIST,VGLIST+1) = NEW VECTOR LIST ADDRESS
+ * USES     A,Y,(VGLIST,VGLIST+1)
+ *
+ * @note    ASM not ported but reimplemented to fit new memory layout
+ */
+void VGJMPL(uint16_t vg_jmp_destination) {
+    //  VGJMPL:	LSR
+    //  AND I,0F		;BASE ADDRESS IS RELATIVE TO ZERO
+    //  ORA I,0E0
+    // Original asm did a fall through to next function
+    fixme_VGJMP1(vg_jmp_destination | 0xE000); // 0xE000 is the JMP instruction
+ }
+
+/**
+ * This function was part of VGJMPL but the label was also called from VGJSRL hence this split to keep the instruction flow.
+ *
+ * @note    ASM not ported but reimplemented to fit new memory layout
+ */
+ void fixme_VGJMP1(uint16_t vg_instruction) {
+    //  VGJMP1:	LDY I,01
+    //  STA NY,VGLIST
+    //  DEY
+    //  TXA
+    //  ROR
+    //  STA NY,VGLIST		;SAVE MSB + OPCODE
+    vg_memory_put(0, vg_instruction & 0xFF);
+    vg_memory_put(1, vg_instruction >> 8);
+    //  INY
+    VGADD(1);
+    //TODO is this really a conditional jump or is this a size optimization of an unconditional jump ?
+    //  BNE VGADD		;UPDATE VECTOR POINTER
+}
+
+/**
+ * VGJSRL - ADD JSRL TO VECTOR LIST
+ * ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
+ *          (A) = MSB OF ADDRESS
+ *          (X) = LSB OF ADDRESS
+ * EXIT     (VGLIST,VGLIST+1) = NEW VECTOR LIST ADDRESS
+ * USES     A,Y,(VGLIST,VGLIST+1)
+ *
+ * @note    ASM not ported but reimplemented to fit new memory layout
+ */
+ void VGJSRL(uint16_t vg_jsr_destination) {
+    //  VGJSRL:	LSR
+    //  AND I,0F		;BASE ADDRESS IS RELATIVE
+    //  ORA I,0C0
+    //TODO is this really a conditional jump or is this a size optimization of an unconditional jump ?
+    //  BNE VGJMP1		;MOVE INTO VECTOR LIST
+    fixme_VGJMP1(vg_jsr_destination | 0xC000); // 0xC000 is the JSR instruction
+ }
+
+/**
+ * todo_VGSABS - SHORT FORM VGLABS CALL
+ * ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
+ *   	    (A) = X POSITION/4
+ *   	    (X) = Y POSITION/4
+ *   	    (VGSIZE)=SCALE FACTOR (0,10,20,...F0)
+ *   EXIT	(VGLIST,VGLIST+1) = NEW VECTOR LIST ADDRESS
+ *   USES	A,X,Y,(VGLIST,VGLIST+1),(XCOMP,XCOMP+3)
+ *
  * @param A_x
  * @param X_y
  *
- * @note
- *   ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
- *   	(A) = X POSITION/4
- *   	(X) = Y POSITION/4
- *   	(VGSIZE)=SCALE FACTOR (0,10,20,...F0)
- *   EXIT	(VGLIST,VGLIST+1) = NEW VECTOR LIST ADDRESS
- *   USES	A,X,Y,(VGLIST,VGLIST+1),(XCOMP,XCOMP+3)
  */
-void VGSABS(uint8_t A_x, uint8_t X_y) {
+void todo_VGSABS(uint8_t A_x, uint8_t X_y) {
     //TODO: Remember to implement
 
     //  VGSABS:	LDY I,0
     //  STY XCOMP+1
     //  STY XCOMP+3
     //  ASL
-    //          ROL XCOMP+1
+    //  ROL XCOMP+1
     //  ASL
-    //          ROL XCOMP+1
+    //  ROL XCOMP+1
     //  STA XCOMP
     //  TXA			;Y COMPONENT/4
     //  ASL
-    //          ROL XCOMP+3
+    //  ROL XCOMP+3
     //  ASL
-    //          ROL XCOMP+3
+    //  ROL XCOMP+3
     //  STA XCOMP+2
     //  LDX I,XCOMP
     /* TODO: Call VGLABS as it is positioned below in original assembly */
@@ -457,6 +479,7 @@ void VGADD(uint8_t Y_delta) {
  * USES     A,X,Y,(VGLIST,VGLIST+1)
  */
 void VGWAIT(uint8_t A_timer) {
+    assert(A_timer % 0x10 == 0);
     //  VGWAIT:	LDX I,0			;NO INTENSITY
     //  ;	JMP VGDOT
     VGDOT(A_timer, 0);

@@ -7,8 +7,6 @@
 #include <stdbool.h>
 #include <assert.h>
 
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-
 #define BIT_7 0x80
 
 // NOBJ	=27.			        ;NUMBER OF ASTEROIDS
@@ -17,6 +15,68 @@
 //                              ;PLUS 2 SAUCER TORPEDOES
 //                              ;PLUS 4 SHIP TORPEDOES
 #define NOBJ 27
+
+#define JSRL (0xC000)
+
+// Offsets below are all relative to the start of VECRAM
+#define SHIP0  ((0x0A90 - 0x0800 + 0x1000) / 2)
+#define SHIP1  ((0x0AA8 - 0x0800 + 0x1000) / 2)
+#define SHIP2  ((0x0ACC - 0x0800 + 0x1000) / 2)
+#define SHIP3  ((0x0AF0 - 0x0800 + 0x1000) / 2)
+#define SHIP4  ((0x0B14 - 0x0800 + 0x1000) / 2)
+#define SHIP5  ((0x0B36 - 0x0800 + 0x1000) / 2)
+#define SHIP6  ((0x0B5A - 0x0800 + 0x1000) / 2)
+#define SHIP7  ((0x0B7E - 0x0800 + 0x1000) / 2)
+#define SHIP8  ((0x0BA2 - 0x0800 + 0x1000) / 2)
+#define SHIP9  ((0x0BC6 - 0x0800 + 0x1000) / 2)
+#define SHIP10 ((0x0BEA - 0x0800 + 0x1000) / 2)
+#define SHIP11 ((0x0C0E - 0x0800 + 0x1000) / 2)
+#define SHIP12 ((0x0C32 - 0x0800 + 0x1000) / 2)
+#define SHIP13 ((0x0C56 - 0x0800 + 0x1000) / 2)
+#define SHIP14 ((0x0C7A - 0x0800 + 0x1000) / 2)
+#define SHIP15 ((0x0C9E - 0x0800 + 0x1000) / 2)
+#define SHIP16 ((0x0CC2 - 0x0800 + 0x1000) / 2)
+#define SHIP17 ((0x0CDA - 0x0800 + 0x1000) / 2)
+
+#define CHAR_SPACE ((0x0E58 - 0x0800 + 0x1000) / 2)
+#define CHAR_0     ((0x0DBA - 0x0800 + 0x1000) / 2)
+#define CHAR_1     ((0x0E5C - 0x0800 + 0x1000) / 2)
+#define CHAR_2     ((0x0E64 - 0x0800 + 0x1000) / 2)
+#define CHAR_3     ((0x0E74 - 0x0800 + 0x1000) / 2)
+#define CHAR_4     ((0x0E82 - 0x0800 + 0x1000) / 2)
+#define CHAR_5     ((0x0E90 - 0x0800 + 0x1000) / 2)
+#define CHAR_6     ((0x0E9E - 0x0800 + 0x1000) / 2)
+#define CHAR_7     ((0x0EAC - 0x0800 + 0x1000) / 2)
+#define CHAR_8     ((0x0EB6 - 0x0800 + 0x1000) / 2)
+#define CHAR_9     ((0x0EC6 - 0x0800 + 0x1000) / 2)
+#define CHAR_A     ((0x0CF0 - 0x0800 + 0x1000) / 2)
+#define CHAR_B     ((0x0D00 - 0x0800 + 0x1000) / 2)
+#define CHAR_C     ((0x0D1A - 0x0800 + 0x1000) / 2)
+#define CHAR_D     ((0x0D26 - 0x0800 + 0x1000) / 2)
+#define CHAR_E     ((0x0D36 - 0x0800 + 0x1000) / 2)
+#define CHAR_F     ((0x0D46 - 0x0800 + 0x1000) / 2)
+#define CHAR_G     ((0x0D54 - 0x0800 + 0x1000) / 2)
+#define CHAR_H     ((0x0D66 - 0x0800 + 0x1000) / 2)
+#define CHAR_I     ((0x0D74 - 0x0800 + 0x1000) / 2)
+#define CHAR_J     ((0x0D82 - 0x0800 + 0x1000) / 2)
+#define CHAR_K     ((0x0D8E - 0x0800 + 0x1000) / 2)
+#define CHAR_L     ((0x0D9A - 0x0800 + 0x1000) / 2)
+#define CHAR_M     ((0x0DA4 - 0x0800 + 0x1000) / 2)
+#define CHAR_N     ((0x0DB0 - 0x0800 + 0x1000) / 2)
+#define CHAR_O     ((0x0DBA - 0x0800 + 0x1000) / 2)
+#define CHAR_P     ((0x0DC6 - 0x0800 + 0x1000) / 2)
+#define CHAR_Q     ((0x0DD4 - 0x0800 + 0x1000) / 2)
+#define CHAR_R     ((0x0DE6 - 0x0800 + 0x1000) / 2)
+#define CHAR_S     ((0x0DF6 - 0x0800 + 0x1000) / 2)
+#define CHAR_T     ((0x0E04 - 0x0800 + 0x1000) / 2)
+#define CHAR_U     ((0x0E10 - 0x0800 + 0x1000) / 2)
+#define CHAR_V     ((0x0E1C - 0x0800 + 0x1000) / 2)
+#define CHAR_W     ((0x0E26 - 0x0800 + 0x1000) / 2)
+#define CHAR_X     ((0x0E34 - 0x0800 + 0x1000) / 2)
+#define CHAR_Y     ((0x0E3E - 0x0800 + 0x1000) / 2)
+#define CHAR_Z     ((0x0E4C - 0x0800 + 0x1000) / 2)
+
+extern uint16_t VGMSGA[];
 
 typedef struct {
     uint8_t VGSIZE;             //	VGSIZE:     .BLKB 1			;SCALING SIZE (0,10,20,...,F0)
@@ -167,15 +227,19 @@ typedef struct {
 
 extern MEMORY memory;
 
+int32_t max(int32_t a, int32_t b);
+
+int32_t min(int32_t a, int32_t b);
+
 void io_setOUT1(uint8_t out1);
 
-void wait_for_HALT();
+void todo_wait_for_HALT();
 
-void trigger_nmi();
+void _trigger_nmi();
 
-void io_startGOADD();
+void todo_io_startGOADD();
 
-void io_pollWTDOG();
+void todo_io_pollWTDOG();
 
 
 /**
