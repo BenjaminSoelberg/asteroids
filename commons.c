@@ -130,3 +130,13 @@ void vg_memory_put(uint8_t Y_delta, uint8_t A_value) {
     memory.VECMEM[index] = A_value;
 
 }
+/**
+ * Places an word in VECRAM at index VGLIST + delta
+ *
+ * @param Y_delta
+ * @param A_value
+ */
+void vg_memory_put16(uint8_t Y_delta, uint16_t A_value) {
+    uint16_t index = memory.page0.VGLIST_16 + Y_delta;
+    memory.VECMEM[index] = A_value;
+}

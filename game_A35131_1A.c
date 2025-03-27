@@ -242,7 +242,7 @@ void START() {
             //    LDA A,VECRAM+1		;SWITCH VECTOR BUFFERS
             //    EOR I,02
             //    STA A,VECRAM+1		;CHANGE JMPL TO STARTING BUFFER
-            uint8_t temp = memory.VECMEM[1] ^= 0x02;
+            uint8_t framebuffer_index = memory.VECMEM[1] ^= 0x02;
 
             //    STA A,GOADD		;START VECTOR GENERATOR
             todo_io_startGOADD();
@@ -262,7 +262,7 @@ void START() {
             //    12$:	LDA I,VECRAM&0FF+2
             //    STA VGLIST
             //    STX VGLIST+1		;RESET VECTOR LIST POINTER
-            memory.page0.VGLIST_16 = (temp & 0x02) ? 0x0002 : 0x0402; // Frame buffer 0 or 1
+            memory.page0.VGLIST_16 = (framebuffer_index & 0x02) ? 0x0002 : 0x0402; // Frame buffer, index = 1 -> 0 and index = 0 -> 1
 
             //    JSR CHKST		;CHECK FOR START
             if (todo_CHKST()) {

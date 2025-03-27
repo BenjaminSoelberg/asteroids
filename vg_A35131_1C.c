@@ -6,9 +6,11 @@ void VGDOT(uint8_t A_timer, uint8_t X_intensity);
 
 void fixme_VGJMP1(uint16_t vg_instruction);
 
-void todo_VGLABS(uint16_t x, uint16_t y);
+void VGLABS(uint16_t x, uint16_t y);
 
-    //  .SBTTL VECUT-VECTOR GENERATION UTILITY
+void VGHAL1(uint8_t opcode);
+
+//  .SBTTL VECUT-VECTOR GENERATION UTILITY
 //  .RADIX 16
 //
 //  ;ZERO PAGE GLOBALS
@@ -151,12 +153,16 @@ void todo_VGLABS(uint16_t x, uint16_t y);
  */
 void VGHALT() {
     //  VGHALT:	LDA I,0B0		;BXXX IS HALT
+    VGHAL1(0xB0);
+}
+
+void VGHAL1(uint8_t opcode) {
     //  VGHAL1:	LDY I,0
     //  STA NY,VGLIST
-    vg_memory_put(0, 0xB0);
+    vg_memory_put(0, opcode);
     //  INY
     //  STA NY,VGLIST
-    vg_memory_put(1, 0xB0);
+    vg_memory_put(1, opcode);
     //  BNE VGADD		;UPDATE VECTOR LIST
     VGADD(1);
 }
@@ -227,14 +233,14 @@ void VGJMPL(uint16_t vg_jmp_destination) {
     //  ORA I,0E0
     // Original asm did a fall through to next function
     fixme_VGJMP1(vg_jmp_destination & 0x0FFF | 0xE000); // 0xE000 is the JMP instruction
- }
+}
 
 /**
  * This function was part of VGJMPL but the label was also called from VGJSRL hence this split to keep the instruction flow.
  *
  * @note    ASM not ported but reimplemented to fit new memory layout
  */
- void fixme_VGJMP1(uint16_t vg_instruction) {
+void fixme_VGJMP1(uint16_t vg_instruction) {
     //  VGJMP1:	LDY I,01
     //  STA NY,VGLIST
     //  DEY
@@ -259,17 +265,17 @@ void VGJMPL(uint16_t vg_jmp_destination) {
  *
  * @note    ASM not ported but reimplemented to fit new memory layout
  */
- void VGJSRL(uint16_t vg_jsr_destination) {
+void VGJSRL(uint16_t vg_jsr_destination) {
     //  VGJSRL:	LSR
     //  AND I,0F		;BASE ADDRESS IS RELATIVE
     //  ORA I,0C0
     //TODO is this really a conditional jump or is this a size optimization of an unconditional jump ?
     //  BNE VGJMP1		;MOVE INTO VECTOR LIST
-    fixme_VGJMP1(vg_jsr_destination & 0x0FFF| 0xC000); // 0xC000 is the JSR instruction
- }
+    fixme_VGJMP1(vg_jsr_destination & 0x0FFF | 0xC000); // 0xC000 is the JSR instruction
+}
 
 /**
- * VGSABS - SHORT FORM todo_VGLABS CALL
+ * VGSABS - SHORT FORM VGLABS CALL
  * ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
  *   	    (A) = X POSITION/4
  *   	    (X) = Y POSITION/4
@@ -300,11 +306,11 @@ void VGSABS(uint8_t A_x, uint8_t X_y) {
     //memory.page0.XCOMP_16[1] = X_y << 2;
     //  LDX I,XCOMP
     //  ;	JMP VGLABS		;LABS OF STARTING POSITION
-    todo_VGLABS((uint16_t) A_x << 2, (uint16_t) X_y << 2);
+    VGLABS((uint16_t) A_x << 2, (uint16_t) X_y << 2);
 }
 
 /**
- * todo_VGLABS - ADD LABS INTO VECTOR LIST
+ * VGLABS - ADD LABS INTO VECTOR LIST
  *
  * ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
  *          (X) = ZERO PAGE ADDRESS OF (X LSB, X MSB, Y LSB, Y MSB)
@@ -314,10 +320,11 @@ void VGSABS(uint8_t A_x, uint8_t X_y) {
  *
  * USES     A,Y,(VGLIST,VGLIST+1)
  *
+ * @note The original function uses a zero page pointer in X where this function has explicit x and y arguments.
+ * @param x
+ * @param y
  */
-void todo_VGLABS(uint16_t x, uint16_t y) {
-    //TODO: Remember to implement
-
+void VGLABS(uint16_t x, uint16_t y) {
     //  VGLABS:	LDA ZX,2
     //  LDY I,0
     //  STA NY,VGLIST		;Y LSB
@@ -335,7 +342,9 @@ void todo_VGLABS(uint16_t x, uint16_t y) {
     //  INY
     //  STA NY,VGLIST		;X MSB
     //  ;	JMP VGADD
-    //TODO: Call VGADD
+    vg_memory_put16(0, y & 0x0FFF | 0xA000);
+    vg_memory_put16(2, x & 0x0FFF | (memory.page0.VGSIZE << 8));
+    VGADD(3);
 }
 
 /**
@@ -358,17 +367,21 @@ void VGADD(uint8_t Y_delta) {
     //  10$:	RTS
 }
 
-//  .SBTTL VGRTSL - ADD RTSL TO VECTOR LIST
-//  ;VGRTSL - ADD RTSL TO VECTOR LIST
-//  ;
-//  ;ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
-//  ;EXIT	(VGLIST,VGLIST+1) = NEW VECTOR LIST ADDRESS
-//  ;USES	A,Y,(VGLIST,VGLIST+1)
-//
-//  VGRTSL:	LDA I,0D0		;DXXX IS RTSL
-//          JMP VGHAL1
-//
-//
+/**
+ * VGRTSL - ADD RTSL TO VECTOR LIST
+ *
+ * ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
+ *
+ * EXIT     (VGLIST,VGLIST+1) = NEW VECTOR LIST ADDRESS
+ *
+ * USES     A,Y,(VGLIST,VGLIST+1)
+ */
+ void VGRTSL() {
+    //  VGRTSL:	LDA I,0D0		;DXXX IS RTSL
+    //  JMP VGHAL1
+    VGHAL1(0xD0);
+ }
+
 //  .IIF NDF,VGVCTR,VGVCTR=.
 //  .IF EQ,VGVCTR-.
 //  .SBTTL VGVCTR - ADD VCTR TO VECTOR LIST
