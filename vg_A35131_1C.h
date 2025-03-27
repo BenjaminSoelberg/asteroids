@@ -4,7 +4,7 @@
 
 #include "commons.h"
 
-void todo_VGSABS(uint8_t A_x, uint8_t X_y);
+void VGSABS(uint8_t A_x, uint8_t X_y);
 
 void VGHALT();
 

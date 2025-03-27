@@ -6,7 +6,9 @@ void VGDOT(uint8_t A_timer, uint8_t X_intensity);
 
 void fixme_VGJMP1(uint16_t vg_instruction);
 
-//  .SBTTL VECUT-VECTOR GENERATION UTILITY
+void todo_VGLABS(uint16_t x, uint16_t y);
+
+    //  .SBTTL VECUT-VECTOR GENERATION UTILITY
 //  .RADIX 16
 //
 //  ;ZERO PAGE GLOBALS
@@ -267,7 +269,7 @@ void VGJMPL(uint16_t vg_jmp_destination) {
  }
 
 /**
- * todo_VGSABS - SHORT FORM VGLABS CALL
+ * VGSABS - SHORT FORM todo_VGLABS CALL
  * ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
  *   	    (A) = X POSITION/4
  *   	    (X) = Y POSITION/4
@@ -279,9 +281,7 @@ void VGJMPL(uint16_t vg_jmp_destination) {
  * @param X_y
  *
  */
-void todo_VGSABS(uint8_t A_x, uint8_t X_y) {
-    //TODO: Remember to implement
-
+void VGSABS(uint8_t A_x, uint8_t X_y) {
     //  VGSABS:	LDY I,0
     //  STY XCOMP+1
     //  STY XCOMP+3
@@ -290,44 +290,53 @@ void todo_VGSABS(uint8_t A_x, uint8_t X_y) {
     //  ASL
     //  ROL XCOMP+1
     //  STA XCOMP
+    //memory.page0.XCOMP_16[0] = A_x << 2;
     //  TXA			;Y COMPONENT/4
     //  ASL
     //  ROL XCOMP+3
     //  ASL
     //  ROL XCOMP+3
     //  STA XCOMP+2
+    //memory.page0.XCOMP_16[1] = X_y << 2;
     //  LDX I,XCOMP
-    /* TODO: Call VGLABS as it is positioned below in original assembly */
     //  ;	JMP VGLABS		;LABS OF STARTING POSITION
+    todo_VGLABS((uint16_t) A_x << 2, (uint16_t) X_y << 2);
 }
 
-//
-//  .SBTTL VGLABS - ADD LABS INTO VECTOR LIST
-//  ;VGLABS - ADD LABS INTO VECTOR LIST
-//  ;
-//  ;ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
-//  ;	(X) = ZERO PAGE ADDRESS OF (X LSB, X MSB, Y LSB, Y MSB)
-//  ;	(VGSIZE)=SCALE FACTOR (0,10,20,...F0)
-//  ;EXIT	(VGLIST,VGLIST+1) = NEW VECTOR ADDRESS LIST
-//  ;USES	A,Y,(VGLIST,VGLIST+1)
-//
-//  VGLABS:	LDA ZX,2
-//  LDY I,0
-//  STA NY,VGLIST		;Y LSB
-//  LDA ZX,3
-//  AND I,0F
-//  ORA I,0A0
-//  INY
-//          STA NY,VGLIST		;Y MSB+OPCODE
-//          LDA ZX,0
-//  INY
-//          STA NY,VGLIST		;X LSB
-//  LDA ZX,1
-//  AND I,0F
-//  ORA VGSIZE		;ADD SCALE TO DETERMIN SIZE
-//          INY
-//  STA NY,VGLIST		;X MSB
-//  ;	JMP VGADD
+/**
+ * todo_VGLABS - ADD LABS INTO VECTOR LIST
+ *
+ * ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
+ *          (X) = ZERO PAGE ADDRESS OF (X LSB, X MSB, Y LSB, Y MSB)
+ *          (VGSIZE)=SCALE FACTOR (0,10,20,...F0)
+ *
+ * EXIT     (VGLIST,VGLIST+1) = NEW VECTOR ADDRESS LIST
+ *
+ * USES     A,Y,(VGLIST,VGLIST+1)
+ *
+ */
+void todo_VGLABS(uint16_t x, uint16_t y) {
+    //TODO: Remember to implement
+
+    //  VGLABS:	LDA ZX,2
+    //  LDY I,0
+    //  STA NY,VGLIST		;Y LSB
+    //  LDA ZX,3
+    //  AND I,0F
+    //  ORA I,0A0
+    //  INY
+    //  STA NY,VGLIST		;Y MSB+OPCODE
+    //  LDA ZX,0
+    //  INY
+    //  STA NY,VGLIST		;X LSB
+    //  LDA ZX,1
+    //  AND I,0F
+    //  ORA VGSIZE		;ADD SCALE TO DETERMIN SIZE
+    //  INY
+    //  STA NY,VGLIST		;X MSB
+    //  ;	JMP VGADD
+    //TODO: Call VGADD
+}
 
 /**
  * VGADD - ADD Y+1 TO VECTOR LIST ADDRESS

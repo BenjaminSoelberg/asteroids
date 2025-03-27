@@ -86,7 +86,10 @@ typedef struct {
         uint8_t _VGLIST[2];     //	VGLIST:     .BLKB 2			;VECTOR LIST POINTER
         uint16_t VGLIST_16;
     } __attribute__((packed));
-    uint8_t XCOMP[4];           //	XCOMP:      .BLKB 4			;X COMPONENT FOR VECTORS
+    union {
+        uint8_t XCOMP[4];       //	XCOMP:      .BLKB 4			;X COMPONENT FOR VECTORS
+        uint16_t XCOMP_16[2];
+    } __attribute__((packed));
     uint8_t TEMP1[2];           //	TEMP1:      .BLKB 2			;SCRATCH
     uint8_t TEMP2[2];           //	TEMP2:      .BLKB 2
     uint8_t TEMP3[8];           //	TEMP3:      .BLKB 8			;8 CKSUMS IN SELF TEST

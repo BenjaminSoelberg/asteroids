@@ -314,7 +314,7 @@ void START() {
             //    LDA I,1023./8
             //    TAX
             //    JSR VGSABS		;POSITION BEAM FOR MINIMUM CURRENT DRAW
-            todo_VGSABS(1023 / 8, 1023 / 8);
+            VGSABS(1023 / 8, 1023 / 8);
 
             //    JSR RAND		;KEEP RANDOM NUMBERS COMING
             todo_RAND(); // TODO: Why... just to massage the PRNG ?
@@ -340,7 +340,7 @@ void START() {
 }
 
 /**
- * CHKST	-CHECK FOR START/END OF GAME
+ * CHKST - CHECK FOR START/END OF GAME
  * EXIT	    (C)=SET IF STARTING A NEW GAME
  */
 bool todo_CHKST() {
@@ -1351,7 +1351,7 @@ void LIVES(uint8_t A_x, uint8_t Y_lives) {
         //  	STY VGSIZE
         memory.page0.VGSIZE = 0xE0;
         //  	JSR VGSABS		;POSITION BEAM AND RESET SCALE FACTOR
-        todo_VGSABS(A_x, 852 / 4);
+        VGSABS(A_x, 852 / 4);
         for (uint8_t i = 0; i < Y_lives; i++) {
             //  10$:	LXL SHIP17		;LSB OF SHIP PICTURE ROUTINE
             //  	LAH SHIP17
@@ -1848,14 +1848,14 @@ void PARAMS() {
     //  	LDA I,0
     //  	TAX
     //  	JSR VGSABS		;PREVENT SPORT KILL FROM BLANKING OVER PICTURE
-    todo_VGSABS(0, 0);
+    VGSABS(0, 0);
     //  	LDA I,60
     //  	JSR VGWAIT
     VGWAIT(0x60);
     //  	LDA I,100./4
     //  	LDX I,876./4
     //  	JSR VGSABS		;POSITION BEAM
-    todo_VGSABS(100 / 4, 876 / 4);
+    VGSABS(100 / 4, 876 / 4);
     //  	LDA I,60
     //  	JSR VGWAIT		;WAIT FOR BEAM
     VGWAIT(0x60);
@@ -1909,7 +1909,7 @@ void PARAMS() {
     //  	LDA I,480./4
     //  	LDX I,876./4
     //  	JSR VGSABS		;POSITION BEAM
-    todo_VGSABS(480 / 4, 876 / 4);
+    VGSABS(480 / 4, 876 / 4);
     //  	LDA I,50
     //  	JSR VGWAIT		;WAIT FOR BEAM
     VGWAIT(0x50);
@@ -1928,7 +1928,7 @@ void PARAMS() {
     //  	LDA I,768./4
     //  	LDX I,876./4
     //  	JSR VGSABS		;POSITION BEAM
-    todo_VGSABS(768 / 4, 876 / 4);
+    VGSABS(768 / 4, 876 / 4);
     //  	LDA I,50
     //  	JSR VGWAIT		;WAIT FOR BEAM
     VGWAIT(0x50);
