@@ -35,9 +35,11 @@ uint8_t todo_RAND();
 
 void NEWAST();
 
-void todo_DIGITS(void *A_digits_page0_ptr, uint8_t Y_length, uint8_t X_intensity, bool C_zero_suppression);
+void DIGITS(const uint8_t *A_digits_ptr, uint8_t _2Y_length, uint8_t X_intensity, bool C_zero_suppression);
 
 void todo_HEX(uint8_t A_digit, uint8_t TEMP4_2_intensity);
+
+void todo_HEXZ(uint8_t A_digit, uint8_t TEMP4_2_intensity, bool C_zero_suppression);
 
 //      .TITLE ASTROD (21503)
 //  	.ASECT
@@ -1892,7 +1894,7 @@ void PARAMS() {
     //  	LDY I,02
     //  	SEC
     //  	JSR DIGITS		;DISPLAY PLAYER 1 SCORE
-    todo_DIGITS(&memory.page0.SCORE, 2, intensity, true);
+    DIGITS(&memory.page0.SCORE, 2, intensity, true);
 
     //  	LDA I,0
     //  	JSR HEX			;ADD EXTRA ZERO TO SCORE
@@ -1918,7 +1920,7 @@ void PARAMS() {
     //  	SEC
     //  	JSR DIGITS		;DISPLAY HIGH SCORE
     //TODO: It seems that X is zero here (according to VGWAIT), but I would expect that it ment no intensity, so can that be true?...)
-    todo_DIGITS(&memory.page0.HSCORE, 2, 0x00, true);
+    DIGITS(&memory.page0.HSCORE, 2, 0x00, true);
     //  	LDA I,0
     //  	JSR VGHEX		;ADD A ZERO TO SCORE
     VGHEX(0);
@@ -1967,7 +1969,7 @@ void PARAMS() {
         //  	LDY I,02
         //  	SEC			;ZERO SUPPRESS
         //  	JSR DIGITS		;DISPLAY SCORE FOR PLAYER 2
-        todo_DIGITS(&memory.page0.SCORE[2], 2, intensity, true);
+        DIGITS(&memory.page0.SCORE[2], 2, intensity, true);
         //  	LDA I,0
         //  	JSR HEX			;ADD A ZERO TO SCORE
         todo_HEX(0, intensity);
@@ -2624,7 +2626,7 @@ void todo_UPDATE() {
 //  	.BYTE 26.,28.,29.,31.	;C-F
 
 /**
- * todo_DIGITS - DISPLAY 2Y DIGIT NUMBERS
+ * DIGITS - DISPLAY 2Y DIGIT NUMBERS
  *
  * ENTRY	(C) = CARRY SET FOR ZERO SUPPRESSION
  *      	(A) = ADDRESS OF (Y) ZERO PAGE LOCATIONS CONTAINING NUMBER (LSB TO MSB)
@@ -2632,14 +2634,12 @@ void todo_UPDATE() {
  *      	(Y) = NUMBER OF ZERO PAGE LOCATIONS TO USE (1 TO 256).
  * USES     A,X,Y (TEMP4,TEMP4+2)
  *
- * @param A_digits_page0_ptr
- * @param Y_length
+ * @param A_digits_ptr
+ * @param _2Y_length
  * @param X_intensity
  * @param C_zero_suppression
  */
-void todo_DIGITS(void *A_digits_page0_ptr, uint8_t Y_length, uint8_t X_intensity, bool C_zero_suppression) {
-    // TODO: Remember to implement
-
+void DIGITS(const uint8_t *A_digits_ptr, uint8_t _2Y_length, uint8_t X_intensity, bool C_zero_suppression) {
     //  DIGITS:	PHP			;SAVE INPU PARAMEERS
     //  	STX TEMP4+2
     //  	DEY
@@ -2668,6 +2668,13 @@ void todo_DIGITS(void *A_digits_page0_ptr, uint8_t Y_length, uint8_t X_intensity
     //  	DEC TEMP4+1
     //  	BPL 10$			;LOOP FOR EACH SET OF DIGITS
     //  	RTS
+    uint8_t number_of_digits = _2Y_length * 2;
+    for (uint8_t i = 0; i < number_of_digits; i++) {
+        uint8_t digit = i % 2 == 0 ? A_digits_ptr[i / 2] >> 4 : A_digits_ptr[i / 2] & 0x0F;
+        // Zero suppress all digits except the last one if needed
+        bool zero_suppression = C_zero_suppression && i < number_of_digits - 1;
+        todo_HEXZ(digit, X_intensity, zero_suppression);
+    }
 }
 
 //  ;DIVIDE-4 BIT RESULT DIVIDE
@@ -2701,7 +2708,7 @@ void todo_DIGITS(void *A_digits_page0_ptr, uint8_t Y_length, uint8_t X_intensity
  * EXIT     (C)=CLEAR IF NO ZERO SUPPRESSION
  */
 void todo_HEXZ(uint8_t A_digit, uint8_t TEMP4_2_intensity, bool C_zero_suppression) {
-    //TODO: Rememb er to implement
+    //TODO: Remember er to implement
 
     //  HEXZ:	BCC HEX			;NO ZERO-SUPPRESSION
     //  AND I,0F
