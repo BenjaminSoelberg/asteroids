@@ -1917,7 +1917,7 @@ void PARAMS() {
     //  	LDY I,02
     //  	SEC
     //  	JSR DIGITS		;DISPLAY HIGH SCORE
-    //TODO: It seems that X is zero here (according to VGWAIT), but I would expect that it ment no intensity, so can that be true...)
+    //TODO: It seems that X is zero here (according to VGWAIT), but I would expect that it ment no intensity, so can that be true?...)
     todo_DIGITS(&memory.page0.HSCORE, 2, 0x00, true);
     //  	LDA I,0
     //  	JSR VGHEX		;ADD A ZERO TO SCORE

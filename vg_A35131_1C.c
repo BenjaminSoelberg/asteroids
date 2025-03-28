@@ -164,11 +164,10 @@ void VGHAL1(uint8_t opcode) {
     //  STA NY,VGLIST
     vg_memory_put(1, opcode);
     //  BNE VGADD		;UPDATE VECTOR LIST
+    /* BNE is effectively a JMP as INY clears the Z flag, this must be a size optimization. */
     VGADD(1);
 }
 
-//
-//
 //  .IIF NDF,VGHEXZ,VGHEXZ=.
 //  .IF EQ,VGHEXZ-.
 //  .SBTTL VGHEXZ - DISPLAY DIGIT WITH ZERO SUPPRESSION
@@ -206,11 +205,10 @@ void VGHEX(uint8_t A_digit) {
     //  TAX
     //  LDA AX,VGMSGA
     //  STA NY,VGLIST
-    vg_memory_put(0, VGMSGA[A_digit] & 0xFF);
     //  LDA AX,VGMSGA+1		;COPY JSRL TO CHARACTER ROUTINE
     //  INY
     //  STA NY,VGLIST
-    vg_memory_put(1, VGMSGA[A_digit] >> 8);
+    vg_memory_put16(0, VGMSGA[A_digit]);
     //  JSR VGADD		;UPDATE VECTOR LIST POINTER
     VGADD(1);
     //  PLP			;RESTORE C FLAG
