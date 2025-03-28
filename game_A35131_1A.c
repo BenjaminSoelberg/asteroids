@@ -2671,9 +2671,9 @@ void DIGITS(const uint8_t *A_digits_ptr, uint8_t _2Y_length, uint8_t X_intensity
     uint8_t number_of_digits = _2Y_length * 2;
     for (uint8_t i = 0; i < number_of_digits; i++) {
         uint8_t digit = i % 2 == 0 ? A_digits_ptr[i / 2] >> 4 : A_digits_ptr[i / 2] & 0x0F;
-        // Zero suppress all digits except the last one if needed
-        bool zero_suppression = C_zero_suppression && i < number_of_digits - 1;
-        todo_HEXZ(digit, X_intensity, zero_suppression);
+        // Zero suppress all leading zero digits except the last one if needed
+        C_zero_suppression = C_zero_suppression && digit == 0 && i < number_of_digits - 1;
+        todo_HEXZ(digit, X_intensity, C_zero_suppression);
     }
 }
 
