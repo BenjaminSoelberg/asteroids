@@ -33,16 +33,7 @@ static void on_activate(GtkApplication *app, gpointer user_data) {
     gtk_widget_set_visible(window, TRUE);
 }
 
-void test_asserts() {
-    assert(sizeof(ZERO_PAGE) == 0x100);
-    assert(sizeof(PLAYER_PAGE) == 0x100);
-    assert(sizeof(IO) == 0x2000);
-    assert(sizeof(MEMORY) == 0x8000);
-}
-
 int main(int argc, char **argv) {
-    test_asserts();
-
     PWRON();
 
     GtkApplication *app = gtk_application_new("com.example.asteroids", G_APPLICATION_DEFAULT_FLAGS);

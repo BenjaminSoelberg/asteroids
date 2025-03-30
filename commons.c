@@ -120,23 +120,30 @@ void io_set_TONE(uint8_t value) {
 }
 
 /**
- * Places an byte in VECRAM at index VGLIST + delta
+ * Places a byte in VECRAM at index VGLIST + delta
  *
  * @param Y_delta
  * @param A_value
  */
 void vg_memory_put(uint8_t Y_delta, uint8_t A_value) {
     uint16_t index = memory.page0.VGLIST_16 + Y_delta;
+    assert(index < sizeof memory.VECMEM_16);
     memory.VECMEM[index] = A_value;
 }
 
 /**
- * Places an word in VECRAM at index VGLIST + delta
+ * Places a word in VECRAM at index VGLIST + delta
+ *
+ * @note Indexes are asserted to be on a word boundary.
  *
  * @param Y_delta
- * @param A_value
+ * @param AX_value
  */
-void vg_memory_put16(uint8_t Y_delta, uint16_t A_value) {
-    uint16_t index = memory.page0.VGLIST_16 + Y_delta;
-    memory.VECMEM[index] = A_value;
+void vg_memory_put16(uint8_t Y_delta, uint16_t AX_value) {
+    // I don't expect any word writes across word boundaries.
+    assert(memory.page0.VGLIST_16 % 2 == 0); // Assert that no out of word bound writes
+    assert(Y_delta % 2 == 0); // Assert that no out of word bound writes
+
+    uint16_t index = memory.page0.VGLIST_16 + (Y_delta >> 1);
+    memory.VECMEM_16[index] = AX_value;
 }
