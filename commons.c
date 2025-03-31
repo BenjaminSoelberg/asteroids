@@ -144,6 +144,6 @@ void vg_memory_put16(uint8_t Y_delta, uint16_t AX_value) {
     assert(memory.page0.VGLIST_16 % 2 == 0); // Assert that no out of word bound writes
     assert(Y_delta % 2 == 0); // Assert that no out of word bound writes
 
-    uint16_t index = memory.page0.VGLIST_16 + (Y_delta >> 1);
+    uint16_t index = (memory.page0.VGLIST_16 + Y_delta) >> 1;
     memory.VECMEM_16[index] = AX_value;
 }

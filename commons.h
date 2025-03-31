@@ -204,7 +204,7 @@ typedef struct {
     IO io;                                              // 0x2000 - 0x3FFF
     union {
         uint8_t VECMEM[0x5FFF - 0x4000 + 1];            // 0x4000 - 0x5FFF All the vector memory
-        uint8_t VECMEM_16[(0x5FFF - 0x4000 + 1) / 2];
+        uint16_t VECMEM_16[(0x5FFF - 0x4000 + 1) / 2];
     };
 } __attribute__((packed)) MEMORY;
 
