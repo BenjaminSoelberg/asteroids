@@ -1,6 +1,7 @@
 #include "boot_A35131_1E.h"
 
 #include "game_A35131_1A.h"
+#include "dvg_rom.h"
 
 void todo_STEST();
 //TODO: Remember to implement
@@ -69,6 +70,8 @@ _Noreturn void PWRON() {
     //	BNE 10$			;ALL OF ZERO PAGE
     /** We just clear the whole memory **/
     memset(&memory, 0, sizeof(memory));
+    /** Copy the vector rom into vector memory **/
+    memcpy(&memory.VECMEM[0x1000], dvg_rom,2048);
 
     //	LDY A,STSTSW
     //	BMI STEST		;IF SELF TEST SWITCH ON

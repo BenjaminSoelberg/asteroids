@@ -6,7 +6,7 @@
 
 // Custom draw function using Cairo
 static void draw_callback(GtkDrawingArea *area, cairo_t *cr, int width, int height, gpointer data) {
-    dvg_run(cr, 0x400);
+    dvg_run(cr, 0x0002);
 }
 
 // Application activation function

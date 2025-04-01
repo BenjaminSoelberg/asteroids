@@ -24,7 +24,6 @@
 #define DVG_MAX_SP 3
 
 #define DVG_MIN_PC 0x0
-#define DVG_ROM_START 0x400
 #define DVG_MAX_PC 0xFFF
 
 #define DVG_PC_MASK 0xFFF

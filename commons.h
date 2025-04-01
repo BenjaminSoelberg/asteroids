@@ -198,13 +198,13 @@ typedef struct {
 } __attribute__((packed)) IO;
 
 typedef struct {
-    ZERO_PAGE page0;                                    // 0x0000 - 0x00FF
-    PLAYER_PAGE currentPlayer;                          // 0x0200 - 0x02FF
-    PLAYER_PAGE otherPlayer;                            // 0x0300 - 0x03FF
-    IO io;                                              // 0x2000 - 0x3FFF
+    ZERO_PAGE page0;
+    PLAYER_PAGE currentPlayer;
+    PLAYER_PAGE otherPlayer;
+    IO io;
     union {
-        uint8_t VECMEM[0x5FFF - 0x4000 + 1];            // 0x4000 - 0x5FFF All the vector memory
-        uint16_t VECMEM_16[(0x5FFF - 0x4000 + 1) / 2];
+        uint8_t VECMEM[8192];            // 0x4000 - 0x5FFF All the vector memory
+        uint16_t VECMEM_16[4096];
     };
 } __attribute__((packed)) MEMORY;
 
