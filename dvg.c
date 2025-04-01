@@ -38,7 +38,7 @@ void dvg_draw_to(cairo_t *cr, int16_t delta_x, int16_t delta_y, uint8_t brightne
 
     if (brightness > DVG_MIN_BRIGHTNESS) {
         cairo_set_source_rgb(cr, 1.0 / DVG_MAX_BRIGHTNESS * brightness, 1.0 / DVG_MAX_BRIGHTNESS * brightness, 1.0 / DVG_MAX_BRIGHTNESS * brightness);
-        cairo_set_line_width(cr, 4);
+        cairo_set_line_width(cr, 2);
 
         cairo_move_to(cr, x, DVG_MAX_Y - y);
         cairo_line_to(cr, new_x, DVG_MAX_Y - new_y);
@@ -109,7 +109,7 @@ void dvg_parse_jsr(uint16_t word) {
     assert(new_pc >= DVG_MIN_PC);
     assert(new_pc <= DVG_MAX_PC);
 
-    printf("0x%04X JSR 0x%04X\n", current_pc, new_pc);
+    printf("0x%04X JSR sp=0x%02X 0x%04X\n", current_pc, new_sp, new_pc);
 
     stack[sp] = pc;
     sp = new_sp;

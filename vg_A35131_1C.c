@@ -229,7 +229,7 @@ void VGJMPL(uint16_t vg_jmp_destination) {
     //  VGJMPL:	LSR
     //  AND I,0F		;BASE ADDRESS IS RELATIVE TO ZERO
     //  ORA I,0E0
-    // Original asm did a fall through to next function
+    /* Original asm did a fall through to next function */
     fixme_VGJMP1(vg_jmp_destination & 0x0FFF | 0xE000); // 0xE000 is the JMP instruction
 }
 
@@ -361,7 +361,7 @@ void VGADD(uint8_t Y_delta) {
     //  STA VGLIST
     //  BCC 10$
     //  INC VGLIST+1
-    memory.page0.VGLIST_16 += Y_delta + 1;
+    memory.page0.VGLIST_16 += (uint8_t) (Y_delta + 1);
     //  10$:	RTS
 }
 
