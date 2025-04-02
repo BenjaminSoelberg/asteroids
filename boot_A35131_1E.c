@@ -85,9 +85,9 @@ _Noreturn void PWRON() {
     //	STA A,VECRAM+1
     //	LDA I,0B0		;HALT FOR FIRST TIME THRU
     //	STA A,VECRAM+3
-    memory.VECMEM[0] = 0x01; //TODO or is it 0 ?
+    memory.VECMEM[0] = 0x01; //TODO is it 1 or 0 ?
     memory.VECMEM[1] = 0xE2;
-    memory.VECMEM[1] = 0xB0;
+    memory.VECMEM[3] = 0xB0;
 
     //	STA Z,UPDFLG		;FLAG THAT WE ARE NOT GETTING HIGH SCORE INITIALS
     //	STA Z,UPDFLG+1
