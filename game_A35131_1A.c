@@ -2111,19 +2111,28 @@ void PARAMS() {
  */
 bool todo_SCORES() {
     //TODO: Remember to implement
-    return true;
 
     //  SCORES:	LDA NPLAYR
     //  	BEQ 10$			;IF END OF GAME
     //  90$:	CLC
     //  	RTS
     //
+    if (memory.page0.NPLAYR != 0) {
+        return false;
+    }
     //  10$:	LDA FRAME+1
     //  	AND I,04
     //  	BNE 90$			;NOT TIME TO DISPLAY TABLE
+    if ((memory.page0.FRAME_16 >> 8 & 0x04) != 0) {
+        return false;
+    }
     //  	LDA HSCORE
     //  	ORA HSCORE+1
     //  	BEQ 90$			;IF NO HIGH SCORES
+    if ((memory.page0.HSCORE[0] | memory.page0.HSCORE[1]) == 0) {
+        return false;
+    }
+
     //  	LDY I,0
     //  	JSR VGMSG		;DISPLAY "HIGH SCORE" MESSAGE
     //  	LDX I,0			;INDEX FOR HIGH SCORE TABLE
