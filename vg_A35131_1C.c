@@ -1,7 +1,5 @@
 #include "vg_A35131_1C.h"
 
-void VGADD(uint8_t Y_delta);
-
 void VGDOT(uint8_t A_timer, uint8_t X_intensity);
 
 void fixme_VGJMP1(uint16_t vg_instruction);
@@ -9,6 +7,8 @@ void fixme_VGJMP1(uint16_t vg_instruction);
 void VGLABS(uint16_t x, uint16_t y);
 
 void VGHAL1(uint8_t opcode);
+
+bool ok_VGHEX1(uint8_t A_digit, bool C);
 
 //  .SBTTL VECUT-VECTOR GENERATION UTILITY
 //  .RADIX 16
@@ -170,23 +170,39 @@ void VGHAL1(uint8_t opcode) {
 
 //  .IIF NDF,VGHEXZ,VGHEXZ=.
 //  .IF EQ,VGHEXZ-.
-//  .SBTTL VGHEXZ - DISPLAY DIGIT WITH ZERO SUPPRESSION
-//  ;VGHEXZ - DISPLAY DIGIT WITH ZERO SUPPRESSION
-//  ;
-//  ;THIS ROUTINE WILL DISPLAY A DIGIT USING THE DEFAULT CHARACTER SIZE.
-//  ;NO ATTEMPT IS MADE TO USE THE VARIABLE VGSIZE.
-//  ;
-//  ;ENTRY	(A) = LOWER 4 BITS TO BE DISPLAYED
-//  ;	(C) = CLEAR IF NO ZERO SUPPRESSION
-//  ;EXIT	(C) = CLEARED IF NON-ZERO DIGIT DISPLAYED
-//  ;USES	A,X,Y,(VGLIST,VGLIST+1)
-//
-//  BCC VGHEX		;IF NO ZERO SUPPRESSION
-//  AND I,0F
-//  BEQ VGHEX1		;LEAVE C SET
+/**
+ * VGHEXZ - DISPLAY DIGIT WITH ZERO SUPPRESSION
+ *          THIS ROUTINE WILL DISPLAY A DIGIT USING THE DEFAULT C
+ *          NO ATTEMPT IS MADE TO USE THE VARIABLE VGSIZE.
+ * ENTRY	(A) = LOWER 4 BITS TO BE DISPLAYED
+ *          (C) = CLEAR IF NO ZERO SUPPRESSION
+ * EXIT     (C) = CLEARED IF NON-ZERO DIGIT DISPLAYED
+ * USES     A,X,Y,(VGLIST,VGLIST+1)
+ *
+ * @param A_digit
+ * @param C_zero_suppression
+ * @return false if non-zero digit displayed
+ */
+//TODO: It seems C_zero_suppression = true is not working or did I misread the asm ?
+//TODO: Also the doc statement "CLEARED IF NON-ZERO DIGIT DISPLAYED" seems to be untrue as well
+bool VGHEXZ(uint8_t A_digit, bool C_zero_suppression) {
+    if (!C_zero_suppression) {
+        //  BCC VGHEX		;IF NO ZERO SUPPRESSION
+        return ok_VGHEX(A_digit);
+    } else {
+        //  AND I,0F
+        A_digit &= 0x0F;
+        //  BEQ VGHEX1		;LEAVE C SET
+        if (A_digit == 0) {
+            return ok_VGHEX1(A_digit, C_zero_suppression);
+        } else {
+            return ok_VGHEX(A_digit);
+        }
+    }
+}
 
 /**
- * VGHEX - DISPLAY DIGIT
+ * ok_VGHEX - DISPLAY DIGIT
  *          THIS ROUTINE WILL DISPLAY A DIGIT USING THE DEFAULT CHARACTER SIZE.
  *          NO ATTEMPT IS MADE TO USE THE VARIABLE VGSIZE.
  * ENTRY	(VGLIST,VGLIST+1) = VECTOR LIST ADDRESS
@@ -194,11 +210,19 @@ void VGHAL1(uint8_t opcode) {
  * EXIT     (VGLIST,VGLIST+1) = NEW VECTOR LIST ADDRESS
  * 	        (C) = 0
  * USES     A,X,Y,(VGLIST,VGLIST+1)
+ *
+ * @param A_digit
+ * @return C always false
  */
-void VGHEX(uint8_t A_digit) {
+bool ok_VGHEX(uint8_t A_digit) {
     //  VGHEX:	AND I,0F
     //  CLC
     //  ADC I,01		;CLEARS C BIT
+    /* Original asm did a fall through to next function */
+    return ok_VGHEX1((A_digit & 0x0F) + 1, false);
+}
+
+bool ok_VGHEX1(uint8_t A_digit, bool C) {
     //  VGHEX1:	PHP			;SAVE C FLAG
     //  ASL
     //  LDY I,0
@@ -213,6 +237,7 @@ void VGHEX(uint8_t A_digit) {
     VGADD(1);
     //  PLP			;RESTORE C FLAG
     //  RTS
+    return C;
 }
 
 /**

@@ -35,12 +35,19 @@ uint8_t todo_RAND();
 
 void NEWAST();
 
-void DIGITS(const uint8_t *A_digits_ptr, uint8_t _2Y_length, uint8_t X_intensity, bool C_zero_suppression);
+void DIGITS(const uint8_t *A_digits_ptr, uint8_t _2Y_length, uint8_t X_intensity_delta, bool C_zero_suppression);
 
-void todo_HEX(uint8_t A_digit, uint8_t TEMP4_2_intensity);
+void HEX(uint8_t A_digit, uint8_t TEMP4_2_intensity_delta);
 
-void todo_HEXZ(uint8_t A_digit, uint8_t TEMP4_2_intensity, bool C_zero_suppression);
+bool HEXZ(uint8_t A_digit, uint8_t TEMP4_2_intensity_delta, bool C_zero_suppression);
 
+void HEX1(uint8_t A_digit, bool C_zero_suppression);
+
+uint16_t *todo_CPYVEC(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, uint8_t TEMP4_2_intensity_delta,
+                      const uint16_t *XA_vector_ptr);
+
+uint16_t *todo_COPY(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, uint8_t TEMP4_2_intensity_delta,
+                    const uint16_t *XA_vector_ptr, uint8_t Y_index);
 //      .TITLE ASTROD (21503)
 //  	.ASECT
 //  	.ENABLE AMA
@@ -205,30 +212,23 @@ void todo_NEWVEL();
 void START() {
     //REMOVE//DEBUG//TODO: Below will gives us 8 frames until a complete halt.. FIXME!
     memory.page0.SYNC = 0xFF; //REMOVE//DEBUG//TODO: Implement a real NMI interrupt every 4 ms and remove this line
-
     //TODO: Disassembly has this instruction enabled, find out why !!!!
     //            ;	JMP PWRON
-
     //    START:	JSR INIT1		;TURN OFF SOUNDS
     INIT1();
     //    JSR INIT		;INITIALIZE PLAYER 1 FOR START OF GAME
     INIT();
-
     /** START1 **/
     while (true) {
-
         //    START1:	JSR NEWAST		;START UP NEW ASTEROIDS
         NEWAST();
-
         /** START2 **/
         while (true) {
-
             //    START2:	LDA A,STSTSW		;NOTE NMI NOT ACTIVE IF STSTSW ON
             //    5$:	BMI 5$			;IN SELF TEST-WANT FOR WATCHDOG TO RESET SOUNDS
             if (memory.io.STSTSW & 0x80) {
                 _trigger_nmi();
             }
-
             //    LSR SYNC
             bool c = (memory.page0.SYNC & 1);
             memory.page0.SYNC = memory.page0.SYNC >> 1;
@@ -236,27 +236,21 @@ void START() {
             if (!c) {
                 continue;
             }
-
             //    10$:	LDA A,HALT
             //    BMI 10$			;WAIT FOR BEAM TO HALT
             todo_wait_for_HALT();
-
             //    LDA A,VECRAM+1		;SWITCH VECTOR BUFFERS
             //    EOR I,02
             //    STA A,VECRAM+1		;CHANGE JMPL TO STARTING BUFFER
             uint8_t framebuffer_index = memory.VECMEM[1] ^= 0x02;
-
             //    STA A,GOADD		;START VECTOR GENERATOR
             todo_io_startGOADD();
-
             //    STA A,WTDOG
             todo_io_pollWTDOG();
-
             //    INC FRAME		;INCREMENT FRAME COUNTER
             //    BNE 11$			;NO OVERFLOW
             //    INC FRAME+1
             memory.page0.FRAME_16 += 1;
-
             //    11$:	LDX I,VECRAM/100
             //    AND I,02
             //    BNE 12$			;USE LOWER BUFFER
@@ -264,73 +258,57 @@ void START() {
             //    12$:	LDA I,VECRAM&0FF+2
             //    STA VGLIST
             //    STX VGLIST+1		;RESET VECTOR LIST POINTER
-            memory.page0.VGLIST_16 = (framebuffer_index & 0x02) ? 0x0002 : 0x0402; // Frame buffer, index = 1 -> 0 and index = 0 -> 1
-
+            memory.page0.VGLIST_16 = (framebuffer_index & 0x02) ? 0x0002
+                                                                : 0x0402; // Frame buffer, index = 1 -> 0 and index = 0 -> 1
             //    JSR CHKST		;CHECK FOR START
             if (todo_CHKST()) {
                 //    BCS START		;START NEW GAME
                 return; // Avoids GOTO and while loop will call START again
             }
-
             //    JSR UPDATE		;UPDATE HIGH SCORE TABLES
             todo_UPDATE();
-
             //    JSR GETINT		;GET INITIALS FOR ANY NEW HIGH SCORE
             //    BPL 20$			;UPDATE IN PROGRESS
             if (todo_GETINT()) {
                 //    JSR SCORES		;DISPLAY HIGH SCORES
                 //    BCS 20$			;WE ARE DISPLAYING SCORE TABLE
                 if (todo_SCORES()) {
-
                     //    LDA GDELAY		;(NOT ENOUGH TIME FOR ASTEROIDS AND SCORE TABLES)
                     //    BNE 15$			;STARTING A NEW PLAYER
                     if (memory.page0.GDELAY == 0) {
-
                         //    JSR FIRE		;FIRE SHIPS TORPEDOS
                         todo_FIRE();
-
                         //    JSR HYPER		;CHECK FOR HYPERSPACE
                         todo_HYPER();
-
                         //    JSR MOVE		;MOVE SHIP BY CONTROLS
                         todo_MOVE();
-
                         //    JSR ENEMY		;LAUNCH ENEMY SAUCER AND TORPEDOS
                         todo_ENEMY();
                     }
-
                     //    15$:	JSR MOTION		;MOVE OBJECTS
                     todo_MOTION();
-
                     //    JSR COLIDE		;CHECK FOR COLLISIONS
                     todo_COLIDE();
                 }
             }
-
             //    20$:	JSR PARAMS		;DISPLAY SCORE AND OTHER PARAMETERS
             PARAMS();
-
             //    JSR SOUNDS		;GENERATE SOUNDS
             todo_SOUNDS();
-
             //    LDA I,1023./8
             //    TAX
             //    JSR VGSABS		;POSITION BEAM FOR MINIMUM CURRENT DRAW
             VGSABS(1023 / 8, 1023 / 8);
-
             //    JSR RAND		;KEEP RANDOM NUMBERS COMING
             todo_RAND(); // TODO: Why... just to massage the PRNG ?
-
             //    JSR VGHALT		;ADD HALT TO VECTOR LIST
             VGHALT();
-
             //    LDA RDELAY
             //    BEQ 30$			;NO DELAY TO DECREMENT
             //    DEC RDELAY
             if (memory.currentPlayer.RDELAY > 0) {
                 memory.currentPlayer.RDELAY--;
             }
-
             //    30$:	ORA NROCKS
             //    BNE START2			;LOOP FOR NEXT PASS
             if (memory.currentPlayer.NROCKS <= 0) {
@@ -654,57 +632,104 @@ void todo_COLIDE() {
 //  	LDA Y,YINC
 //  	STA X,YINC
 //  	RTS
-//  
-//  
-//  	.SBTTL CPYVEC-COPY AND MODIFY VECTORS
-//  ;CPYVEC-COPY AND MODIFY VECTORS (UP TO ONE PAGE WORTH)
-//  ;
-//  ;ENTRY	(TEMP1)=MASK FOR X SIGN (0 OR 4)
-//  ;	(TEMP1+1)=MASK FOR Y SIGN (0 OR 4)
-//  ;	(TEMP4+2)=VALUE TO BE ADDED TO INTENSITY (0,10,20...)
-//  ;	(A)=LSB OF VECTOR TABLE TO COPY
-//  ;	(X)=MSB OF VECTOR TABLE TO COPY
-//  ;EXIT	(VGLIST,VGLIST+1)=UPDATED VECTOR LIST POINTER
-//  ;	(TEMP2,TEMP2+1)=ADDRESS OF VECTOR TABLE
-//  ;	(Y)=INDEX-1 INTO PICTURE (AT RTSL-1)
-//  ;USES	(TEMP2,TEMP2+1),A,Y
-//  CPYVEC:	STA TEMP2
-//  	STX TEMP2+1		;SETUP INDIRECT POINTER
-//  	LDY I,0
-//  COPY:	INY
-//  	LDA NY,TEMP2
-//  	EOR TEMP1+1		;MASK SIGN TO MATCH Y
-//  	STA NY,VGLIST
-//  	DEY
-//  	CMP I,0F0
-//  	BCS 20$			;IF AN ALPH INSTRUCTION
-//  	CMP I,0A0
-//  	BCS 30$			;NOT A VECTOR INSTRUCTION-QUIT
-//  	LDA NY,TEMP2		;COPY REST
-//  	STA NY,VGLIST
-//  	INY
-//  	INY
-//  	LDA NY,TEMP2
-//  	STA NY,VGLIST
-//  	INY
-//  	LDA NY,TEMP2
-//  	EOR TEMP1		;MASK SIGN TO MATCH X
-//  	ADC TEMP4+2		;CHANGE INTENSITY
-//  	STA NY,VGLIST
-//  15$:	INY
-//  	BNE COPY		;ALWAYS (I HOPE)
-//  
-//  30$:	DEY			;USE INDEX
-//  	JMP VGADD		;UPDATE VECTOR LIST POINTER
-//  
-//  20$:	LDA NY,TEMP2		;ALPH INSTRUCTION
-//  	EOR TEMP1		;MASK FOR X SIGN
-//  	CLC
-//  	ADC TEMP4+2		;CHANGE INTENSITY
-//  	STA NY,VGLIST
-//  	INY
-//  	BNE 15$			;ALWAYS
-//  
+
+/**
+ * CPYVEC - COPY AND MODIFY VECTORS (UP TO ONE PAGE WORTH)
+ *
+ * ENTRY	(TEMP1)=MASK FOR X SIGN (0 OR 4)
+ *          (TEMP1+1)=MASK FOR Y SIGN (0 OR 4)
+ *          (TEMP4+2)=VALUE TO BE ADDED TO INTENSITY (0,10,20...)
+ *          (A)=LSB OF VECTOR TABLE TO COPY
+ *          (X)=MSB OF VECTOR TABLE TO COPY
+ *
+ * EXIT     (VGLIST,VGLIST+1)=UPDATED VECTOR LIST POINTER
+ *          (TEMP2,TEMP2+1)=ADDRESS OF VECTOR TABLE
+ *          (Y)=INDEX-1 INTO PICTURE (AT RTSL-1)
+ *
+ * USES     (TEMP2,TEMP2+1),A,Y
+ *
+ * @note    Only used for SHIPS which is an array of pointers to the different ship
+ *
+ */
+//TODO: Is the return type correct ???
+uint16_t *todo_CPYVEC(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, uint8_t TEMP4_2_intensity_delta, const uint16_t *XA_vector_ptr) {
+    //TODO: Remember to implement
+/*
+    memory.page0.TEMP2_16 = (uint16_t) XA_vector_table_ptr; //TODO: TEMP2 cant hold a pointer, see if we can get rid of the TEMP2 usage
+*/
+    //  CPYVEC:	STA TEMP2
+    //  	STX TEMP2+1		;SETUP INDIRECT POINTER
+    //  	LDY I,0
+    /* Original asm did a fall through to next function */
+    return todo_COPY(TEMP1_x_sign_mask, TEMP1_1_y_sign_mask, TEMP4_2_intensity_delta, XA_vector_ptr, 0x00);
+}
+
+uint16_t *todo_COPY(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, uint8_t TEMP4_2_intensity_delta, const uint16_t *XA_vector_ptr, uint8_t Y_index) {
+    //TODO: I think this is broken!
+    while (true) {
+        //  COPY:	INY
+        Y_index++;
+        //  	LDA NY,TEMP2
+        uint16_t vector = XA_vector_ptr[Y_index];
+        //  	EOR TEMP1+1		;MASK SIGN TO MATCH Y
+        vector ^= TEMP1_1_y_sign_mask << 8;
+        //  	STA NY,VGLIST
+        vg_memory_put(Y_index, vector >> 8);
+        //  	DEY
+        Y_index--;
+        //  	CMP I,0F0
+        //  	BCS 20$			;IF AN ALPH INSTRUCTION
+        if (vector < 0xF000) {
+            //  	CMP I,0A0
+            //  	BCS 30$			;NOT A VECTOR INSTRUCTION-QUIT
+            if (vector < 0xA000) { // VEC - 0x0000 -> 0x9FFF
+                //  	LDA NY,TEMP2		;COPY REST
+                //  	STA NY,VGLIST
+                vg_memory_put(Y_index, vector & 0xFF);
+                //  	INY
+                //  	INY
+                Y_index += 2;
+                //  	LDA NY,TEMP2
+                vector = XA_vector_ptr[Y_index];
+                //  	STA NY,VGLIST
+                vg_memory_put(Y_index, vector >> 8);
+                //  	INY
+                Y_index++;
+                //  	LDA NY,TEMP2
+                //  	EOR TEMP1		;MASK SIGN TO MATCH X
+                vector ^= TEMP1_x_sign_mask;
+                //  	ADC TEMP4+2		;CHANGE INTENSITY
+                vector += TEMP4_2_intensity_delta;
+                //  	STA NY,VGLIST
+                vg_memory_put(Y_index, vector & 0xFF);
+                //  15$:	INY
+                Y_index++;
+                //  	BNE COPY		;ALWAYS (I HOPE)
+                continue;
+            } else {
+                //  30$:	DEY			;USE INDEX
+                Y_index--;
+                //  	JMP VGADD		;UPDATE VECTOR LIST POINTER
+                VGADD(Y_index);
+                break;
+            }
+        } else { // 0xFXXX - SVEC
+            //  20$:	LDA NY,TEMP2		;ALPH INSTRUCTION
+            //  	EOR TEMP1		;MASK FOR X SIGN
+            vector ^= TEMP1_x_sign_mask;
+            //  	CLC
+            //  	ADC TEMP4+2		;CHANGE INTENSITY
+            vector += TEMP4_2_intensity_delta;
+            //  	STA NY,VGLIST
+            vg_memory_put(Y_index, vector & 0xFF);
+            //  	INY
+            Y_index++;
+            //  	BNE 15$			;ALWAYS
+            Y_index++; // See 15$
+        }
+    }
+}
+
 //  	.SBTTL DSTRCT-DESTRUCTION DURING COLLISION
 //  ;DSTRCT-DESTRUCTION DURING COLLISION
 //  ;
@@ -1238,14 +1263,12 @@ void INIT() {
     //  INIT:	LDA I,02		;STARTING NUMBER OF ROCKS-2 (ADDS 2 IN START LOOP)
     //  	STA SROCKS
     memory.currentPlayer.SROCKS = 0x02;
-
     //  	LDX I,03
     //  	LSR OPTN3
     //  	BCS 10$			;IF HARD GAME
     //  	INX			;IF EASY GAME
     //  10$:	STX NHITS
     memory.page0.NHITS = memory.io.OPTN3 & 1 ? 0x03 : 0x04;
-
     //  	LDA I,0
     //  	LDX I,04
     //  30$:	STA X,OBJ+NOBJ
@@ -1259,7 +1282,6 @@ void INIT() {
         memory.currentPlayer.OBJ[NOBJ + 4 + x];
         memory.page0.SCORE[x - 1];
     }
-
     //  	STA NROCKS		;CLEAR NUMBER OF ROCKS
     memory.currentPlayer.NROCKS = 0;
     //  	RTS
@@ -1675,18 +1697,15 @@ void NEWAST() {
     //  	LDA RDELAY
     //  	BNE 65$			;DELAY FIRST - CLEAR OLD ROCKS IF ANY
     if (memory.currentPlayer.RDELAY == 0) {
-
         //  	LDA OBJ+NOBJ+1
         //  	BNE 90$			;NOT WHILE SAUCER IS THERE
         if (memory.currentPlayer.OBJ[NOBJ + 1] > 0) {
             return;
         }
-
         //  	STA XINC+NOBJ+1		;CLEAR SPEED OF SAUCER
         //  	STA YINC+NOBJ+1
         memory.currentPlayer.XINC[NOBJ + 1] = 0;
         memory.currentPlayer.YINC[NOBJ + 1] = 0;
-
         //  	INC DIFCTY
         //  	LDA DIFCTY
         //  	CMP I,11.
@@ -1695,7 +1714,6 @@ void NEWAST() {
         if (memory.currentPlayer.DIFCTY < 11) {
             memory.currentPlayer.DIFCTY++;
         }
-
         //  2$:	LDA SROCKS
         //  	CLC
         //  	ADC I,02
@@ -1707,11 +1725,9 @@ void NEWAST() {
         //  	STA TEMP1
         memory.currentPlayer.NROCKS = memory.currentPlayer.SROCKS = memory.page0.TEMP1[0] =
                 min(memory.currentPlayer.SROCKS + 2, 11);
-
         /** Get random bits to build up rocks */
         //  	LDY I,NOBJ+1
         uint8_t y = NOBJ + 1;
-
         do {
             //  10$:	JSR RAND		;RANDOM NUMBER
             //  	AND I,18		;PICTURE NUMBER
@@ -1727,7 +1743,6 @@ void NEWAST() {
             //  	AND I,1F
             bool c = a & 1;
             a = (a >> 1) & 0x1f;
-
             //  	BCC 50$			;START ON X ARIS
             if (c) {
                 //  	CMP I,18		;START ON Y AXIS
@@ -1759,16 +1774,13 @@ void NEWAST() {
             //  	BNE 10$			;LOOP FOR EACH NEW ROCK
             //TODO: is this correct or am i missing one ? also, remove the usage of TEMP1
         } while (--memory.page0.TEMP1[0] > 0);
-
         //  	LDA I,7F
         //  	STA EDELAY		;SAUCER SHOULD WAIT
         memory.currentPlayer.EDELAY = 0x7F;
-
         //  	LDA I,30
         //  	STA THUMP3		;RESET THUMP SOUND
         memory.currentPlayer.THUMP3 = 0x30;
     }
-
     //  65$:	LDA I,0
     //  70$:	STA X,OBJ		;CLEAR REST OF OBJECTS
     //  	DEX
@@ -1862,7 +1874,7 @@ void PARAMS() {
     //  	JSR VGWAIT		;WAIT FOR BEAM
     VGWAIT(0x60);
     //  	LDX I,0
-    uint8_t intensity = 0x00;
+    uint8_t intensity_delta = 0x00;
     //  	LDA NPLAYR
     //  	CMP I,02
     //  	BNE 10$			;IF NOT 2 PLAYER GAME
@@ -1871,7 +1883,7 @@ void PARAMS() {
         //  	BNE 10$			;IF PLAYER 2 UP
         if (memory.page0.PLAYR == 0) {
             //  	LDX I,20		;INTENSITY CHANGE FOR VECTORS
-            intensity = 0x20;
+            intensity_delta = 0x20;
             //  	LDA OBJ+NOBJ
             //  	ORA RENTRY
             //  	BNE 10$			;IF HE HAS APPEARED
@@ -1894,11 +1906,11 @@ void PARAMS() {
     //  	LDY I,02
     //  	SEC
     //  	JSR DIGITS		;DISPLAY PLAYER 1 SCORE
-    DIGITS(&memory.page0.SCORE, 2, intensity, true);
+    DIGITS(memory.page0.SCORE, 2, intensity_delta, true);
 
     //  	LDA I,0
     //  	JSR HEX			;ADD EXTRA ZERO TO SCORE
-    todo_HEX(0, intensity);
+    HEX(0, intensity_delta);
 
     _20$:
     //  20$:	LDA I,160./4
@@ -1920,10 +1932,10 @@ void PARAMS() {
     //  	SEC
     //  	JSR DIGITS		;DISPLAY HIGH SCORE
     //TODO: It seems that X is zero here (according to VGWAIT), but I would expect that it ment no intensity, so can that be true?...)
-    DIGITS(&memory.page0.HSCORE, 2, 0x00, true);
+    DIGITS(memory.page0.HSCORE, 2, 0x00, true);
     //  	LDA I,0
     //  	JSR VGHEX		;ADD A ZERO TO SCORE
-    VGHEX(0);
+    ok_VGHEX(0);
     //  	LDA I,10
     //  	STA VGSIZE		;MEDIUM SIZE CHARACTERS
     memory.page0.VGSIZE = 0x10;
@@ -1935,7 +1947,7 @@ void PARAMS() {
     //  	JSR VGWAIT		;WAIT FOR BEAM
     VGWAIT(0x50);
     //  	LDX I,0
-    intensity = 0;
+    intensity_delta = 0;
     //  	LDA NPLAYR
     //  	CMP I,01
     //  	BEQ 90$			;NO PLAYER 2 IN 1 PLAYER GAME
@@ -1946,7 +1958,7 @@ void PARAMS() {
             //  	BEQ 30$			;NOT PLAYER 2 UP
             if (memory.page0.PLAYR != 0) {
                 //  	LDX I,20		;INTENSITY CHANGE FOR DIGITS
-                intensity = 0x20;
+                intensity_delta = 0x20;
                 //  	LDA OBJ+NOBJ
                 //  	ORA RENTRY
                 //  	BNE 30$			;IF HE HAS APPEARED
@@ -1969,10 +1981,10 @@ void PARAMS() {
         //  	LDY I,02
         //  	SEC			;ZERO SUPPRESS
         //  	JSR DIGITS		;DISPLAY SCORE FOR PLAYER 2
-        DIGITS(&memory.page0.SCORE[2], 2, intensity, true);
+        DIGITS(&memory.page0.SCORE[2], 2, intensity_delta, true);
         //  	LDA I,0
         //  	JSR HEX			;ADD A ZERO TO SCORE
-        todo_HEX(0, intensity);
+        HEX(0, intensity_delta);
         _40:
         //  40$:	LDA I,828./4
         //  	LDY HITS+1
@@ -2636,10 +2648,10 @@ void todo_UPDATE() {
  *
  * @param A_digits_ptr
  * @param _2Y_length
- * @param X_intensity
+ * @param X_intensity_delta
  * @param C_zero_suppression
  */
-void DIGITS(const uint8_t *A_digits_ptr, uint8_t _2Y_length, uint8_t X_intensity, bool C_zero_suppression) {
+void DIGITS(const uint8_t *A_digits_ptr, uint8_t _2Y_length, uint8_t X_intensity_delta, bool C_zero_suppression) {
     //  DIGITS:	PHP			;SAVE INPU PARAMEERS
     //  	STX TEMP4+2
     //  	DEY
@@ -2673,7 +2685,7 @@ void DIGITS(const uint8_t *A_digits_ptr, uint8_t _2Y_length, uint8_t X_intensity
         uint8_t digit = i % 2 == 0 ? A_digits_ptr[i / 2] >> 4 : A_digits_ptr[i / 2] & 0x0F;
         // Zero suppress all leading zero digits except the last one if needed
         C_zero_suppression = C_zero_suppression && digit == 0 && i < number_of_digits - 1;
-        todo_HEXZ(digit, X_intensity, C_zero_suppression);
+        HEXZ(digit, X_intensity_delta, C_zero_suppression);
     }
 }
 
@@ -2707,45 +2719,59 @@ void DIGITS(const uint8_t *A_digits_ptr, uint8_t _2Y_length, uint8_t X_intensity
  *
  * EXIT     (C)=CLEAR IF NO ZERO SUPPRESSION
  */
-void todo_HEXZ(uint8_t A_digit, uint8_t TEMP4_2_intensity, bool C_zero_suppression) {
-    //TODO: Remember er to implement
-
+bool HEXZ(uint8_t A_digit, uint8_t TEMP4_2_intensity_delta, bool C_zero_suppression) {
     //  HEXZ:	BCC HEX			;NO ZERO-SUPPRESSION
-    //  AND I,0F
-    //  BEQ HEX1		;USE BLANK
-    //TODO: if HEX1 then not call HEX (original asm fall through)
+    if (!C_zero_suppression) {
+        HEX(A_digit, TEMP4_2_intensity_delta);
+    } else {
+        //  AND I,0F
+        A_digit &= 0x0F;
+        //  BEQ HEX1		;USE BLANK
+        if (A_digit == 0) {
+            HEX1(A_digit, C_zero_suppression);
+        } else {
+            /* Original asm did a fall through to next function */
+            HEX(A_digit, TEMP4_2_intensity_delta);
+        }
+    }
+    return C_zero_suppression;
 }
 
-void todo_HEX(uint8_t A_digit, uint8_t TEMP4_2_intensity) {
-    //TODO: Remember er to implement
-
+void HEX(uint8_t A_digit, uint8_t TEMP4_2_intensity_delta) {
     //  HEX:	LDX TEMP4+2
     //  BEQ HEX1		;USE JSRL TO CHARACTER ROUTINES
-    //  AND I,0F
-    //  CLC
-    //  ADC I,01		;SKIP OVER BLANK IN
+    if (TEMP4_2_intensity_delta == 0) {
+        HEX1(A_digit, false);
+    } else {
+        //  AND I,0F
+        //  CLC
+        //  ADC I,01		;SKIP OVER BLANK IN
+        A_digit = (A_digit & 0x0F) + 1;
+        //  PHP			;SAVE CARRY
+        //  ASL
+        //  TAY
+        //  LDA AY,VGMSGA
+        //  ASL
+        //  STA TEMP2
+        //  LDA AY,VGMSGA+1
+        //  ROL
+        //  AND I,1F
+        //  ORA I,40		;ADDRESS IS 4000-5FFF
+        //  STA TEMP2+1
+        /* Above will take the word address of the char and convert it to a byte address and store it in TEMP2 */
+        //  LDY I,0
+        //  STY TEMP1
+        //  STY TEMP1+1
+        //  JSR COPY		;COPY VECTORS WITH INTENSITY CHANGE
+        todo_COPY(0, 0, TEMP4_2_intensity_delta, &VGMSGA[A_digit], 0);
+        //  PLP
+        //  RTS
+    }
+}
 
-    //TODO: add 1 to A_digit as 0 index is blank
-
-    //  PHP			;SAVE CARRY
-    //  ASL
-    //  TAY
-    //  LDA AY,VGMSGA
-    //  ASL
-    //  STA TEMP2
-    //  LDA AY,VGMSGA+1
-    //  ROL
-    //  AND I,1F
-    //  ORA I,40		;ADDRESS IS 4000-5FFF
-    //  STA TEMP2+1
-    //  LDY I,0
-    //  STY TEMP1
-    //  STY TEMP1+1
-    //  JSR COPY		;COPY VECTORS WITH INTENSITY CHANGE
-    //  PLP
-    //  RTS
-    //
+void HEX1(uint8_t A_digit, bool C_zero_suppression) {
     //  HEX1:	JMP VGHEXZ
+    VGHEXZ(A_digit, C_zero_suppression);
 }
 
 /**

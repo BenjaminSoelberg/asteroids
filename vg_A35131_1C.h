@@ -14,6 +14,10 @@ void VGJMPL(uint16_t vg_jsr_destination);
 
 void VGJSRL(uint16_t vg_jsr_destination);
 
-void VGHEX(uint8_t A_digit);
+bool ok_VGHEX(uint8_t A_digit);
+
+bool VGHEXZ(uint8_t A_digit, bool C_zero_suppression);
+
+void VGADD(uint8_t Y_delta);
 
 #undef ASTEROIDS_VG_A35131_1C_H
