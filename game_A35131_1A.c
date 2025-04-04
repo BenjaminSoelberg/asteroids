@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include "game_A35131_1A.h"
 
+#include "msg_A35131_1B.h"
 #include "vg_A35131_1C.h"
 
 void INIT();
@@ -2135,6 +2136,7 @@ bool todo_SCORES() {
 
     //  	LDY I,0
     //  	JSR VGMSG		;DISPLAY "HIGH SCORE" MESSAGE
+    VGMSG(0x00);
     //  	LDX I,0			;INDEX FOR HIGH SCORE TABLE
     //  	STX TEMP3+3		;INDEX FOR TABLE OF INITIALS
     //  	LDA I,01

@@ -1,7 +1,13 @@
-#include <stdlib.h>
 #include "msg_A35131_1B.h"
 
-//  .TITLE ASTMSG-ASTEROID MESSAGES
+#include "vg_A35131_1C.h"
+
+static const uint8_t VGMSGS[11][2];
+static const char *VGMSGT[4][11];
+
+uint8_t char_to_index(char ch);
+
+    //  .TITLE ASTMSG-ASTEROID MESSAGES
 //  .CSECT
 //  .RADIX 16
 //  .LIST MEB			;LIST ASCIN EXPANSION
@@ -73,83 +79,114 @@
 //  .IIF EQ,..N-2,.WORD <..1*^H800>+<..2*^H40>
 //  .DSABL M68
 //  .ENDM
-//
-//
-//  .SBTTL VGMSG-VECTOR GENERATOR MESSAGE PROCESSOR
-//  ;VGMSG-VECTOR GENERATOR MESSAGE PROCESSOR
-//  ;
-//
-//  ;ENTRY	(Y)=MESSAGE NUMBER (0,1,2,...)
-//  ;USES	A,X,Y(TEMP1,TEMP1+1),TEMP2,(VGLIST,VGLIST+1)
-//  VGMSG:	LDA A,OPTN4
-//  AND I,03
-//  ASL
-//          TAX			;2*LANGUAGE (0,2,4,OR 6)
-//  LDA I,10
-//  STA VGSIZE		;ALL MESSAGES ARE MEDIUM SIZE
-//          LDA AX,VGMSGT+1
-//  STA TEMP1+1
-//  LDA AX,VGMSGT		;CARRY IS CLEAR FROM ASL ABOVE
-//  STA TEMP1		;TEMP1 SETUP NOW
-//          ADC NY,TEMP1		;RELATIVE ADDRESS TO START OF MESSAGE
-//  STA TEMP1
-//  BCC 10$			;NO OVERFLOW
-//  INC TEMP1+1
-//  10$:	TYA
-//          ASL
-//  TAY
-//          LDA AY,VGMSGS
-//          LDX AY,VGMSGS+1
-//  JSR VGSABS		;POSITION BEAM
-//  LDA I,70
-//  JSR VGWAIT		;WAIT FOR BEAM
-//          LDY I,0			;Y DOUBLES AS INDEX FOR VGLIST AND TEMP1
-//  LDX I,0
-//  20$:	LDA NX,TEMP1
-//  STA TEMP2
-//  LSR
-//          LSR			;2*INDEX
-//          JSR VGMSG1		;PUT OUT CHARACTER AND UPDATE TEMP1
-//  LDA NX,TEMP1
-//  ROL
-//          ROL TEMP2
-//          ROL
-//  LDA TEMP2
-//  ROL
-//          ASL
-//  JSR VGMSG2		;PUT OUT CHARACTER
-//          LDA NX,TEMP1
-//          STA TEMP2
-//          JSR VGMSG1		;PUT OUT CHARACTER AND UPDATE TEMP1
-//  LSR TEMP2
-//  BCC 20$			;NOT END OF LIST
-//  VGMSG0:	DEY
-//          JMP VGADD		;UPDATE VGLIST POINTER
-//
-//          VGMSG1:	INC TEMP1		;UPDATE INDIRECT POINTER TO CHARACTERS
-//          BNE VGMSG2		;NO OVERFLOW
-//  INC TEMP1+1
-//  VGMSG2:	AND I,3E
-//  BNE 5$			;NOT END OF LIST
-//  PLA
-//          PLA			;PURGE RTS
-//  BNE VGMSG0		;RETURN
-//
-//  5$:	CMP I,10.
-//  BCC 10$			;IF BLANK, 0,1 OR 2
-//  ADC I,13.		;SET CORRECT INDEX
-//  10$:	TAX
-//          LDA AX,VGMSGA-2		;10. FOR A, 12. FOR B, ....
-//  STA NY,VGLIST		;PUT JSRL INTO VECTOR LIST
-//          INY
-//  LDA AX,VGMSGA-1
-//  STA NY,VGLIST
-//  INY
-//          LDX I,0
-//  RTS
-//
-//
-//          VGMSGS:	.BYTE 400./4,728./4	;(X,Y)POSITIONS FOR START OF MESSAGE
+
+uint8_t char_to_index(char ch);
+
+/**
+ * VGMSG-VECTOR GENERATOR MESSAGE PROCESSOR
+ *
+ * ENTRY	(Y)=MESSAGE NUMBER (0,1,2,...)
+ *
+ * USES     A,X,Y(TEMP1,TEMP1+1),TEMP2,(VGLIST,VGLIST+1)
+ */
+void VGMSG(uint8_t Y_message_id) {
+    //  VGMSG:	LDA A,OPTN4
+    //  AND I,03
+    //  ASL
+    uint8_t language_id = memory.io.OPTN4 & 0x03;
+    //  TAX			;2*LANGUAGE (0,2,4,OR 6)
+    //  LDA I,10
+    //  STA VGSIZE		;ALL MESSAGES ARE MEDIUM SIZE
+    memory.page0.VGSIZE = 0x10;
+    //  LDA AX,VGMSGT+1
+    //  STA TEMP1+1
+    //  LDA AX,VGMSGT		;CARRY IS CLEAR FROM ASL ABOVE
+    //  STA TEMP1		;TEMP1 SETUP NOW
+    const char *message = VGMSGT[language_id][Y_message_id];
+    //  ADC NY,TEMP1		;RELATIVE ADDRESS TO START OF MESSAGE
+    //  STA TEMP1
+    //  BCC 10$			;NO OVERFLOW
+    //  INC TEMP1+1
+    //  10$:	TYA
+    //  ASL
+    //  TAY
+    //  LDA AY,VGMSGS
+    //  LDX AY,VGMSGS+1
+    //  JSR VGSABS		;POSITION BEAM
+    VGSABS(VGMSGS[Y_message_id][0], VGMSGS[Y_message_id][1]);
+    //  LDA I,70
+    //  JSR VGWAIT		;WAIT FOR BEAM
+    VGWAIT(0x70);
+    //  LDY I,0			;Y DOUBLES AS INDEX FOR VGLIST AND TEMP1
+    //  LDX I,0
+
+    uint8_t vg_index = 0;
+    while (*message) {
+        //  20$:	LDA NX,TEMP1
+        //  STA TEMP2
+        //  LSR
+        //  LSR			;2*INDEX
+        //  JSR VGMSG1		;PUT OUT CHARACTER AND UPDATE TEMP1
+        //  LDA NX,TEMP1
+        //  ROL
+        //  ROL TEMP2
+        //  ROL
+        //  LDA TEMP2
+        //  ROL
+        //  ASL
+        //  JSR VGMSG2		;PUT OUT CHARACTER
+        //  LDA NX,TEMP1
+        //  STA TEMP2
+        //  JSR VGMSG1		;PUT OUT CHARACTER AND UPDATE TEMP1
+        //  LSR TEMP2
+        //  BCC 20$			;NOT END OF LIST
+        //  VGMSG0:	DEY
+        //          JMP VGADD		;UPDATE VGLIST POINTER
+        //
+        //  VGMSG1:	INC TEMP1		;UPDATE INDIRECT POINTER TO CHARACTERS
+        //  BNE VGMSG2		;NO OVERFLOW
+        //  INC TEMP1+1
+        //  VGMSG2:	AND I,3E
+        //  BNE 5$			;NOT END OF LIST
+        //  PLA
+        //  PLA			;PURGE RTS
+        //  BNE VGMSG0		;RETURN
+        //
+        //  5$:	CMP I,10.
+        //  BCC 10$			;IF BLANK, 0,1 OR 2
+        //  ADC I,13.		;SET CORRECT INDEX
+        //  10$:	TAX
+        //  LDA AX,VGMSGA-2		;10. FOR A, 12. FOR B, ....
+        //  STA NY,VGLIST		;PUT JSRL INTO VECTOR LIST
+        //  INY
+        //  LDA AX,VGMSGA-1
+        //  STA NY,VGLIST
+        //  INY
+        //  LDX I,0
+        //  RTS
+        uint8_t index = char_to_index(*message);
+        vg_memory_put16(vg_index, VGMSGA[index]);
+        vg_index += 2;
+        message++;
+    }
+    VGADD(vg_index - 1);
+}
+
+uint8_t char_to_index(char ch) {
+    if (ch == 0x20) {
+        // Space
+        ch -= 0x20;
+    } else if (ch >= 0x41) {
+        // A-Z
+        ch -= 0x36;
+    } else {
+        // 0-9
+        ch -= 0x2F;
+    }
+    return ch;
+}
+
+//  VGMSGS:	.BYTE 400./4,728./4	;(X,Y)POSITIONS FOR START OF MESSAGE
 //  .BYTE 400./4,728./4
 //  .BYTE 50./4,680./4
 //  .BYTE 50./4,648./4
@@ -160,7 +197,18 @@
 //  .BYTE 320./4,228./4
 //  .BYTE 320./4,228./4
 //  .BYTE 320./4,228./4
-//
+static const uint8_t VGMSGS[11][2] = {{400 / 4, 728 / 4},
+                                      {400 / 4, 728 / 4},
+                                      {50 / 4,  680 / 4},
+                                      {50 / 4,  648 / 4},
+                                      {50 / 4,  616 / 4},
+                                      {50 / 4,  584 / 4},
+                                      {400 / 4, 792 / 4},
+                                      {400 / 4, 628 / 4},
+                                      {320 / 4, 228 / 4},
+                                      {320 / 4, 228 / 4},
+                                      {320 / 4, 228 / 4}};
+
 //  VGMSGT:	.WORD L0		;LANGUAGE TABLE POINTERS (SEE OPTSW 1)
 //  .WORD L1
 //  .WORD L2
@@ -211,4 +259,12 @@
 //  19$:	ASCIN	^/1 FICHA 1 JUEGO/
 //  20$:	ASCIN	^/2 FICHAS 1 JUEGO/
 //
+
+static const char *VGMSGT[4][11] = {
+        {"HIGH SCORES",     "PLAYER ",  "YOUR SCORE IS ONE OF THE TEN BEST",      "PLEASE ENTER YOUR INITIALS",         "PUSH ROTATE TO SELECT LETTER",            "PUSH HYPERSPACE WHEN LETTER IS CORRECT",   "PUSH START",            "GAME OVER",       "1 COIN 2 PLAYS",    "1 COIN 1 PLAY",    "2 COINS 1 PLAY"},
+        {"HOECHSTERGEBNIS", "SPIELER ", "IHR ERGEBNIS IST EINES DER ZEHN BESTEN", "BITTE GEBEN SIE IHRE INITIALEN EIN", "ZUR BUCHSTABENWAHL ROTATE DRUECKEN",      "WENN BUCHSTABE OK HYPERSPACE DRUECKEN",    "STARTKNOEPFE DRUECKEN", "SPIELENDE",       "1 MUENZE 2 SPIELE", "1 MUENZE 1 SPIEL", "2 MUENZEN 1 SPIEL"},
+        {"MEILLEUR SCORE",  "JOUER ",   "VOTRE SCORE EST UN DES 10 MEILLEURS",    "SVP ENTREZ VOS INITIALES",           "POUSSEZ ROTATE POUR VOS INITIALES",       "POUSSEZ HYPERSPACE QUAND LETTRE CORRECTE", "APPUYER SUR START",     "FIN DE PARTIE",   "1 PIECE 2 JOUEURS", "1 PIECE 1 JOUEUR", "2 PIECES 1 JOUEUR"},
+        {"RECORDS",         "JUGADOR ", "SU PUNTAJE ESTA ENTRE LOS DIEZ MEJORES", "POR FAVOR ENTRE SUS INICIALES",      "OPRIMA ROTATE PARA SELECCIONAR LA LETRA", "OPRIMA HYPERSPACE",                        "PULSAR START",          "JUEGO TERMINADO", "1 FICHA 2 JUEGOS",  "1 FICHA 1 JUEGO",  "2 FICHAS 1 JUEGO"}
+};
+
 //  .END

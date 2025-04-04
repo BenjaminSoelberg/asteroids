@@ -319,14 +319,12 @@ void VGSABS(uint8_t A_x, uint8_t X_y) {
     //  ASL
     //  ROL XCOMP+1
     //  STA XCOMP
-    //memory.page0.XCOMP_16[0] = A_x << 2;
     //  TXA			;Y COMPONENT/4
     //  ASL
     //  ROL XCOMP+3
     //  ASL
     //  ROL XCOMP+3
     //  STA XCOMP+2
-    //memory.page0.XCOMP_16[1] = X_y << 2;
     //  LDX I,XCOMP
     //  ;	JMP VGLABS		;LABS OF STARTING POSITION
     VGLABS((uint16_t) A_x << 2, (uint16_t) X_y << 2);
