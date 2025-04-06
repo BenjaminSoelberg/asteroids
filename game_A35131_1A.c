@@ -1874,20 +1874,20 @@ void PARAMS() {
     //  	LDA I,60
     //  	JSR VGWAIT		;WAIT FOR BEAM
     VGWAIT(0x60);
-    //  	LDX I,0
-    uint8_t intensity_delta = 0x00;
-    //  	LDA NPLAYR
-    //  	CMP I,02
-    //  	BNE 10$			;IF NOT 2 PLAYER GAME
+    //  LDX I,0
+    uint8_t X_intensity_delta = 0x00;
+    //  LDA NPLAYR
+    //  CMP I,02
+    //  BNE 10$			;IF NOT 2 PLAYER GAME
     if (memory.page0.NPLAYR == 2) {
         //  	LDA PLAYR
         //  	BNE 10$			;IF PLAYER 2 UP
         if (memory.page0.PLAYR == 0) {
-            //  	LDX I,20		;INTENSITY CHANGE FOR VECTORS
-            intensity_delta = 0x20;
-            //  	LDA OBJ+NOBJ
-            //  	ORA RENTRY
-            //  	BNE 10$			;IF HE HAS APPEARED
+            //  LDX I,20		;INTENSITY CHANGE FOR VECTORS
+            X_intensity_delta = 0x20;
+            //  LDA OBJ+NOBJ
+            //  ORA RENTRY
+            //  BNE 10$			;IF HE HAS APPEARED
             if ((memory.currentPlayer.OBJ[NOBJ] | memory.page0.RENTRY) == 0) {
                 //  	LDA SDELAY
                 //  	BMI 10$			;HE HAS DIED
@@ -1904,26 +1904,26 @@ void PARAMS() {
     }
 
     //  10$:	LDA I,SCORE
-    //  	LDY I,02
-    //  	SEC
-    //  	JSR DIGITS		;DISPLAY PLAYER 1 SCORE
-    DIGITS(memory.page0.SCORE, 2, intensity_delta, true);
+    //  LDY I,02
+    //  SEC
+    //  JSR DIGITS		;DISPLAY PLAYER 1 SCORE
+    DIGITS(memory.page0.SCORE, 2, X_intensity_delta, true);
 
-    //  	LDA I,0
-    //  	JSR HEX			;ADD EXTRA ZERO TO SCORE
-    HEX(0, intensity_delta);
+    //  LDA I,0
+    //  JSR HEX			;ADD EXTRA ZERO TO SCORE
+    HEX(0, X_intensity_delta);
 
     _20$:
     //  20$:	LDA I,160./4
     //  	LDY HITS
     //  	JSR LIVES		;DISPLAY NUMBER OF LIFES
     LIVES(160 / 4, memory.page0.HITS[0]);
-    //  	LDA I,00
-    //  	STA VGSIZE		;SMALL CHARACTERS
-    memory.page0.VGSIZE = 0;
-    //  	LDA I,480./4
-    //  	LDX I,876./4
-    //  	JSR VGSABS		;POSITION BEAM
+    //  LDA I,00
+    //  STA VGSIZE		;SMALL CHARACTERS
+    memory.page0.VGSIZE = 0x00;
+    //  LDA I,480./4
+    //  LDX I,876./4
+    //  JSR VGSABS		;POSITION BEAM
     VGSABS(480 / 4, 876 / 4);
     //  	LDA I,50
     //  	JSR VGWAIT		;WAIT FOR BEAM
@@ -1947,22 +1947,22 @@ void PARAMS() {
     //  	LDA I,50
     //  	JSR VGWAIT		;WAIT FOR BEAM
     VGWAIT(0x50);
-    //  	LDX I,0
-    intensity_delta = 0;
-    //  	LDA NPLAYR
-    //  	CMP I,01
-    //  	BEQ 90$			;NO PLAYER 2 IN 1 PLAYER GAME
+    //  LDX I,0
+    X_intensity_delta = 0;
+    //  LDA NPLAYR
+    //  CMP I,01
+    //  BEQ 90$			;NO PLAYER 2 IN 1 PLAYER GAME
     if (memory.page0.NPLAYR != 1) {
         //  	BCC 30$			;IF IN ATTRACT
         if (memory.page0.NPLAYR != 0) {
             //  	LDA PLAYR
             //  	BEQ 30$			;NOT PLAYER 2 UP
             if (memory.page0.PLAYR != 0) {
-                //  	LDX I,20		;INTENSITY CHANGE FOR DIGITS
-                intensity_delta = 0x20;
-                //  	LDA OBJ+NOBJ
-                //  	ORA RENTRY
-                //  	BNE 30$			;IF HE HAS APPEARED
+                //  LDX I,20		;INTENSITY CHANGE FOR DIGITS
+                X_intensity_delta = 0x20;
+                //  LDA OBJ+NOBJ
+                //  ORA RENTRY
+                //  BNE 30$			;IF HE HAS APPEARED
                 if ((memory.currentPlayer.OBJ[NOBJ] | memory.page0.RENTRY) == 0) {
                     //  	LDA SDELAY
                     //  	BMI 30$			;HE HAS DIED
@@ -1979,13 +1979,13 @@ void PARAMS() {
         }
 
         //  30$:	LDA I,SCORE+2
-        //  	LDY I,02
-        //  	SEC			;ZERO SUPPRESS
-        //  	JSR DIGITS		;DISPLAY SCORE FOR PLAYER 2
-        DIGITS(&memory.page0.SCORE[2], 2, intensity_delta, true);
-        //  	LDA I,0
-        //  	JSR HEX			;ADD A ZERO TO SCORE
-        HEX(0, intensity_delta);
+        //  LDY I,02
+        //  SEC			;ZERO SUPPRESS
+        //  JSR DIGITS		;DISPLAY SCORE FOR PLAYER 2
+        DIGITS(&memory.page0.SCORE[2], 2, X_intensity_delta, true);
+        //  LDA I,0
+        //  JSR HEX			;ADD A ZERO TO SCORE
+        HEX(0, X_intensity_delta);
         _40:
         //  40$:	LDA I,828./4
         //  	LDY HITS+1
@@ -2137,14 +2137,15 @@ bool todo_SCORES() {
     //  	LDY I,0
     //  	JSR VGMSG		;DISPLAY "HIGH SCORE" MESSAGE
     VGMSG(0x00);
-    //  	LDX I,0			;INDEX FOR HIGH SCORE TABLE
-    //  	STX TEMP3+3		;INDEX FOR TABLE OF INITIALS
-    //  	LDA I,01
-    //  	STA VGSIZE		;CHARACTER SIZE
-    //  	LDA I,668./4
-    //  	STA TEMP3+1		;STARTING Y FOR EACH LINE
-    //  	LDA I,10
-    //  	STA VGSIZE		;SET CHARACTER SIZE
+    //  LDX I,0			;INDEX FOR HIGH SCORE TABLE
+    //  STX TEMP3+3		;INDEX FOR TABLE OF INITIALS
+    //  LDA I,01
+    //  STA VGSIZE		;CHARACTER SIZE
+    /* The above seems like a bug as VGSIZE is set again just below and the value here is too low */
+    //  LDA I,668./4
+    //  STA TEMP3+1		;STARTING Y FOR EACH LINE
+    //  LDA I,10
+    //  STA VGSIZE		;SET CHARACTER SIZE
     //  20$:	LDA X,HSCORE
     //  	ORA X,HSCORE+1
     //  	BEQ 80$			;A ZERO ENDS LIST
