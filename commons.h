@@ -18,7 +18,7 @@
 
 #define JSRL (0xC000)
 
-// Offsets below are all relative to the start of VECRAM
+// Offsets below are all relative to the start of VECMEM
 #define SHIP0  ((0x0A90 - 0x0800 + 0x1000) / 2)
 #define SHIP1  ((0x0AA8 - 0x0800 + 0x1000) / 2)
 #define SHIP2  ((0x0ACC - 0x0800 + 0x1000) / 2)
@@ -75,6 +75,8 @@
 #define CHAR_X     ((0x0E34 - 0x0800 + 0x1000) / 2)
 #define CHAR_Y     ((0x0E3E - 0x0800 + 0x1000) / 2)
 #define CHAR_Z     ((0x0E4C - 0x0800 + 0x1000) / 2)
+
+#define ASTMSG     ((0x08A4 - 0x0800 + 0x1000) / 2)
 
 extern uint16_t VGMSGA[];
 
@@ -266,6 +268,24 @@ void io_set_SHPFIR(uint8_t value);
  * @param value 
  */
 void io_set_TONE(uint8_t value);
+
+/**
+ * NOISE RESET
+ * @param value
+ */
+void io_set_NRESET(uint8_t value);
+
+/**
+ * Checks if the START 1 button is pressed.
+  * @return true if pressed
+ */
+bool io_is_STRT1_pressed();
+
+/**
+ * Checks if the START 1 button is pressed.
+  * @return true if pressed
+ */
+bool io_is_STRT2_pressed();
 
 /**
  * Places an byte in VECRAM at index VGLIST + delta ( - 0x4000)

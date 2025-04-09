@@ -120,6 +120,30 @@ void io_set_TONE(uint8_t value) {
 }
 
 /**
+ * NOISE RESET
+ * @param value
+ */
+void io_set_NRESET(uint8_t value) {
+    // TODO: Remember to implement
+}
+
+/**
+ * Checks if the START 1 button is pressed.
+  * @return true if pressed
+ */
+bool io_is_STRT1_pressed() {
+    return ((int8_t)memory.io.STRT1) < 0;
+}
+
+/**
+ * Checks if the START 1 button is pressed.
+  * @return true if pressed
+ */
+bool io_is_STRT2_pressed() {
+    return ((int8_t)memory.io.STRT2) < 0;
+}
+
+/**
  * Places a byte in VECRAM at index VGLIST + delta
  *
  * @param Y_delta
