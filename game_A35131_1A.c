@@ -50,13 +50,15 @@ uint16_t *todo_CPYVEC(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, ui
 uint16_t *todo_COPY(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, uint8_t TEMP4_2_intensity_delta,
                     const uint16_t *XA_vector_ptr, uint8_t Y_index);
 
-bool todo_CHKST1();
+bool CHKST1();
 
-void todo_CHKST2();
+void CHKST2();
 
 void NEWSHP();
 
-    // .TITLE ASTROD (21503)
+void todo_RSAUCR();
+
+// .TITLE ASTROD (21503)
 // .ASECT
 // .ENABLE AMA
 // .RADIX 16
@@ -339,12 +341,12 @@ bool CHKST() {
         if (memory.page0.GDELAY == 0) {
             // BNE 60$			;STAY READY MODE
             // JMP CHKST1		;WE ARE NOT IN PLAYER READY MODE
-            return todo_CHKST1();
+            return CHKST1();
         } else {
             // 60$: DEC GDELAY
             memory.page0.GDELAY--;
             // JSR CHKST2		;DISPLAY PLAYER NUMBER MESSAGE
-            todo_CHKST2();
+            CHKST2();
             // 30$: CLC
             // RTS
             return false;
@@ -523,82 +525,129 @@ bool CHKST() {
     return false;
 }
 
-bool todo_CHKST1() {
-    // TODO: Remember to implement
-
+bool CHKST1() {
     // CHKST1:	LDA Z,FRAME
     // AND I,3F
     // BNE 70$			;ONLY EVERY 1 SECOND
-    // LDA THUMP3
-    // CMP I,08
-    // BEQ 70$			;AT FASTEST RATE NOW
-    // DEC THUMP3
+    if ((memory.page0.FRAME[0] & 0x3F) == 0) {
+        // LDA THUMP3
+        // CMP I,08
+        // BEQ 70$			;AT FASTEST RATE NOW
+        if (memory.currentPlayer.THUMP3 != 8) {
+            // DEC THUMP3
+            memory.currentPlayer.THUMP3--;
+        }
+    }
     // 70$: LDX PLAYR
     // LDA X,HITS
     // BNE 60$			;IF HE STILL IN GAME
-    // LDA OBJ+NOBJ+4
-    // ORA OBJ+NOBJ+5
-    // ORA OBJ+NOBJ+6
-    // ORA OBJ+NOBJ+7
-    // BNE 60$			;TORPEDO STILL ALIVE
-    // LDY I,7
-    // JSR VGMSG		;GAME OVER MESSAGE
-    // LDA NPLAYR
-    // CMP I,02
-    // BCC 60$			;1 PLAYER GAME
-    // JSR CHKST2		;DISPLAY PLAYER NUMBER
+    if (memory.page0.HITS[memory.page0.PLAYR] == 0) {
+        // LDA OBJ+NOBJ+4
+        // ORA OBJ+NOBJ+5
+        // ORA OBJ+NOBJ+6
+        // ORA OBJ+NOBJ+7
+        // BNE 60$			;TORPEDO STILL ALIVE
+        if ((memory.currentPlayer.OBJ[4] |
+             memory.currentPlayer.OBJ[5] |
+             memory.currentPlayer.OBJ[6] |
+             memory.currentPlayer.OBJ[7]) == 0) {
+            // LDY I,7
+            // JSR VGMSG		;GAME OVER MESSAGE
+            VGMSG(0x07);
+            // LDA NPLAYR
+            // CMP I,02
+            // BCC 60$			;1 PLAYER GAME
+            if (memory.page0.NPLAYR == 2) {
+                // JSR CHKST2		;DISPLAY PLAYER NUMBER
+                CHKST2();
+            }
+        }
+    }
+
     // 60$: LDA OBJ+NOBJ
     // BNE 80$			;IF SHIP ALIVE OR EXPLODING
+    if (memory.currentPlayer.OBJ[NOBJ] != 0) {
+        return false;
+    }
     // LDA SDELAY
     // CMP I,80
     // BNE 80$			;SHIP RETURNING TO LIFE
+    if (memory.currentPlayer.SDELAY != 0x80) {
+        return false;
+    }
     // LDA I,10
     // STA SDELAY		;RESET DELAY BEFORE ENTERING SHIP
+    memory.currentPlayer.SDELAY = 0x10;
     // LDX NPLAYR
+    uint8_t X_nplayr = memory.page0.NPLAYR;
     // LDA HITS
     // ORA HITS+1
     // BEQ 90$			;GAME IS ALL OVER
+    if ((memory.page0.HITS[0] | memory.page0.HITS[1]) == 0) {
+        goto _90;
+    }
     // JSR RSAUCR		;RESET SAUCER VALUES
+    todo_RSAUCR();
     // DEX
     // BEQ 80$			;ONE PLAYER NO MESSAGE NEEDED
+    if (X_nplayr - 1 == 0) {
+        return false;
+    }
     // LDA I,80
     // STA GDELAY		;DELAY BEFORE STARTING PLAYER
+    memory.page0.GDELAY = 0x80;
     // LDA PLAYR
     // EOR I,01
+    int X_playr = memory.page0.PLAYR ^ 0x01;
     // TAX			;1 TO 0 AND 0 TO 1
     // LDA X,HITS
     // BEQ 80$			;NO HITS FOR THIS PLAYER
+    if (memory.page0.HITS[0] == 0) {
+        return false;
+    }
     // STX PLAYR		;SET PLAYER NUMBER
+    memory.page0.PLAYR = X_playr;
     // LDA I,04
     // EOR LOUT1
+    int A_lout1 = memory.page0.LOUT1 ^ 0x04;
     // STA LOUT1
+    memory.page0.LOUT1 = A_lout1;
     // STA A,OUT1		;SET BANK FOR PLAYER
+    io_setOUT1(A_lout1);
     // TXA
     // ASL
     // STA PLAYR2
+    memory.page0.PLAYR2 = X_playr << 1;
     // 80$: CLC
     // RTS
-    //
+    return false;
+
+    _90:
     // 90$: STX LPLAYR		;SAVE NUMBER OF PLAYERS IN THIS GAME
+    memory.page0.LPLAYR[0] = X_nplayr;
     // LDA I,-1
     // STA NPLAYR		;FLAG TO UPDATE HIGH SCORES
+    memory.page0.NPLAYR = -1;
     // JSR INIT1		;TURN OFF SOUNDS
+    INIT1();
     // LDA I,03
     // ORA LOUT1		;TURN OFF LIGHTS
     // STA LOUT1		;LET NMI WRITE TO OUT1
+    memory.page0.LOUT1 |= 0x03;
     // CLC
     // RTS
+    return false;
 }
 
-void todo_CHKST2() {
-    // TODO: Remember to implement
-
+void CHKST2() {
     // CHKST2:	LDY I,1
     // JSR VGMSG		;DISPLAY "PLAYER" MESSAGE
+    VGMSG(0x01);
     // LDY PLAYR
     // INY
     // TYA			;1 OR 2
     // JSR VGHEX		;DISPLAY PLAYER NUMBER
+    ok_VGHEX(memory.page0.PLAYR + 1);
     // RTS
 }
 
@@ -746,7 +795,8 @@ void todo_COLIDE() {
  *
  */
 //TODO: Is the return type correct ???
-uint16_t *todo_CPYVEC(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, uint8_t TEMP4_2_intensity_delta, const uint16_t *XA_vector_ptr) {
+uint16_t *todo_CPYVEC(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, uint8_t TEMP4_2_intensity_delta,
+                      const uint16_t *XA_vector_ptr) {
     //TODO: Remember to implement
 /*
     memory.page0.TEMP2_16 = (uint16_t) XA_vector_table_ptr; //TODO: TEMP2 cant hold a pointer, see if we can get rid of the TEMP2 usage
@@ -758,7 +808,8 @@ uint16_t *todo_CPYVEC(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, ui
     return todo_COPY(TEMP1_x_sign_mask, TEMP1_1_y_sign_mask, TEMP4_2_intensity_delta, XA_vector_ptr, 0x00);
 }
 
-uint16_t *todo_COPY(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, uint8_t TEMP4_2_intensity_delta, const uint16_t *XA_vector_ptr, uint8_t Y_index) {
+uint16_t *todo_COPY(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, uint8_t TEMP4_2_intensity_delta,
+                    const uint16_t *XA_vector_ptr, uint8_t Y_index) {
     //TODO: I think this is broken!
     while (true) {
         // COPY:	INY
@@ -1601,13 +1652,15 @@ void todo_MOTION() {
     // JMP 13$
 }
 
-// RSAUCR:	LDA SEDLAY
-// STA EDELAY		;DELAY BEFORE RESTARTING
-// LDA I,0
-// STA OBJ+NOBJ+1		;CLEAR SAUCER
-// STA XINC+NOBJ+1		;STOP SPEED FOR NEWAST
-// STA YINC+NOBJ+1
-// RTS
+void todo_RSAUCR() {
+    // RSAUCR:	LDA SEDLAY
+    // STA EDELAY		;DELAY BEFORE RESTARTING
+    // LDA I,0
+    // STA OBJ+NOBJ+1		;CLEAR SAUCER
+    // STA XINC+NOBJ+1		;STOP SPEED FOR NEWAST
+    // STA YINC+NOBJ+1
+    // RTS
+}
 
 /**
  * MOVE-MOVE SHIP
