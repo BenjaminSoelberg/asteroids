@@ -244,7 +244,9 @@ void START() {
             memory.page0.SYNC = memory.page0.SYNC >> 1;
             // BCC START2			;WAIT FOR START OF FRAME
             if (!c) {
-                continue;
+                //TODO: Debug disabled. continue;
+                //TODO: Debug
+                return;
             }
             // 10$: LDA A,HALT
             // BMI 10$			;WAIT FOR BEAM TO HALT
