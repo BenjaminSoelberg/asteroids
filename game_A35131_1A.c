@@ -56,7 +56,7 @@ void CHKST2();
 
 void NEWSHP();
 
-void todo_RSAUCR();
+void RSAUCR();
 
 // .TITLE ASTROD (21503)
 // .ASECT
@@ -589,7 +589,7 @@ bool CHKST1() {
         goto _90;
     }
     // JSR RSAUCR		;RESET SAUCER VALUES
-    todo_RSAUCR();
+    RSAUCR();
     // DEX
     // BEQ 80$			;ONE PLAYER NO MESSAGE NEEDED
     if (X_nplayr - 1 == 0) {
@@ -1654,13 +1654,17 @@ void todo_MOTION() {
     // JMP 13$
 }
 
-void todo_RSAUCR() {
+void RSAUCR() {
     // RSAUCR:	LDA SEDLAY
     // STA EDELAY		;DELAY BEFORE RESTARTING
+    memory.currentPlayer.EDELAY = memory.currentPlayer.SDELAY;
     // LDA I,0
     // STA OBJ+NOBJ+1		;CLEAR SAUCER
+    memory.currentPlayer.OBJ[NOBJ+1] = 0x00;
     // STA XINC+NOBJ+1		;STOP SPEED FOR NEWAST
+    memory.currentPlayer.XINC[NOBJ+1] = 0x00;
     // STA YINC+NOBJ+1
+    memory.currentPlayer.YINC[NOBJ+1] = 0x00;
     // RTS
 }
 
