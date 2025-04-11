@@ -1425,9 +1425,9 @@ void INIT() {
     // BPL 30$			;CLEAR TORPEDOS AND SAUCER
     /** Clears 1 SHIP, 1 SAUCER, 2 SAUCER TORPEDOES & 4 SHIP TORPEDOES */
     for (int8_t x = 0x04; x >= 0; x--) {
-        memory.currentPlayer.OBJ[NOBJ + x];
-        memory.currentPlayer.OBJ[NOBJ + 4 + x];
-        memory.page0.SCORE[x - 1];
+        memory.currentPlayer.OBJ[NOBJ + x] = 0;
+        memory.currentPlayer.OBJ[NOBJ + 4 + x] = 0;
+        memory.page0.SCORE[x - 1] = 0;
     }
     // STA NROCKS		;CLEAR NUMBER OF ROCKS
     memory.currentPlayer.NROCKS = 0;
