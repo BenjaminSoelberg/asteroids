@@ -132,7 +132,7 @@ void io_set_NRESET(uint8_t value) {
   * @return true if pressed
  */
 bool io_is_STRT1_pressed() {
-    return ((int8_t)memory.io.STRT1) < 0;
+    return ((int8_t) memory.io.STRT1) < 0;
 }
 
 /**
@@ -140,7 +140,7 @@ bool io_is_STRT1_pressed() {
   * @return true if pressed
  */
 bool io_is_STRT2_pressed() {
-    return ((int8_t)memory.io.STRT2) < 0;
+    return ((int8_t) memory.io.STRT2) < 0;
 }
 
 /**

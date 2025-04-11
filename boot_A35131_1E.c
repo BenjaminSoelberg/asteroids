@@ -1,6 +1,5 @@
 #include "boot_A35131_1E.h"
 
-#include "game_A35131_1A.h"
 #include "dvg_rom.h"
 
 void todo_STEST();
@@ -71,7 +70,7 @@ _Noreturn void PWRON() {
     /** We just clear the whole memory **/
     memset(&memory, 0, sizeof(memory));
     /** Copy the vector rom into vector memory **/
-    memcpy(&memory.VECMEM[0x1000], dvg_rom,2048);
+    memcpy(&memory.VECMEM[0x1000], dvg_rom, 2048);
 
     //	LDY A,STSTSW
     //	BMI STEST		;IF SELF TEST SWITCH ON
@@ -85,9 +84,9 @@ _Noreturn void PWRON() {
     //	STA A,VECRAM+1
     //	LDA I,0B0		;HALT FOR FIRST TIME THRU
     //	STA A,VECRAM+3
-    memory.VECMEM[0] = 0x01; //TODO is it 1 or 0 ?
+    memory.VECMEM[0] = 0x01; // JMP 0x0201
     memory.VECMEM[1] = 0xE2;
-    memory.VECMEM[3] = 0xB0;
+    memory.VECMEM[3] = 0xB0; // HALT
 
     //	STA Z,UPDFLG		;FLAG THAT WE ARE NOT GETTING HIGH SCORE INITIALS
     //	STA Z,UPDFLG+1
@@ -124,10 +123,6 @@ _Noreturn void PWRON() {
     memory.page0.$CMODE = 0x02; //TODO: Debug line, remove prior to release. 1 coin 1 play
 
     //  JMP START		;START MAIN LINE OVER
-    /* Call to START has been moved to the main application */
-    //TODO: Debug disabled. while (true) { // Made into a while loop to simplify the logic and avoid GOTOs
-        START();
-    //TODO: Debug disabled.}
 }
 
 /**

@@ -397,11 +397,11 @@ void VGADD(uint8_t Y_delta) {
  *
  * USES     A,Y,(VGLIST,VGLIST+1)
  */
- void VGRTSL() {
+void VGRTSL() {
     //  VGRTSL:	LDA I,0D0		;DXXX IS RTSL
     //  JMP VGHAL1
     VGHAL1(0xD0);
- }
+}
 
 //  .IIF NDF,VGVCTR,VGVCTR=.
 //  .IF EQ,VGVCTR-.

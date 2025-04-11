@@ -3,15 +3,24 @@
 
 #include "dvg.h"
 #include "boot_A35131_1E.h"
+#include "game_A35131_1A.h"
 
 // Custom draw function using Cairo
 static void draw_callback(GtkDrawingArea *area, cairo_t *cr, int width, int height, gpointer data) {
+    static bool reinit = true;
+    if (reinit) {
+        START1();
+    }
+    reinit = !START2();
     dvg_run(cr, 0x0000);
 }
 
 // Application activation function
 static void on_activate(GtkApplication *app, gpointer user_data) {
     dvg_init();
+
+    PWRON();
+    START();
 
     // Create main application window
     GtkWidget *window = gtk_application_window_new(app);
@@ -34,8 +43,6 @@ static void on_activate(GtkApplication *app, gpointer user_data) {
 }
 
 int main(int argc, char **argv) {
-    PWRON();
-
     GtkApplication *app = gtk_application_new("com.example.asteroids", G_APPLICATION_DEFAULT_FLAGS);
     g_signal_connect(app, "activate", G_CALLBACK(on_activate), NULL);
 

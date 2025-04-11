@@ -16,7 +16,7 @@ void todo_ENEMY();
 
 void todo_FIRE();
 
-bool todo_GETINT();
+int8_t todo_GETINT();
 
 void todo_HYPER();
 
@@ -35,6 +35,8 @@ void todo_UPDATE();
 uint8_t todo_RAND();
 
 void NEWAST();
+
+void todo_NEWVEL();
 
 void DIGITS(const uint8_t *A_digits_ptr, uint8_t _2Y_length, uint8_t X_intensity_delta, bool C_zero_suppression);
 
@@ -213,122 +215,114 @@ void RSAUCR();
 // THUMP3:	.BLKB 1			;STARTING VALUE FOR THUMP2
 // DIFCTY:	.BLKB 1			;DIFFICULTY VALUE FOR STARTING SAUCERS
 
-void todo_NEWVEL();
-
 /**
  *  .SBTTL MAIN LINE LOOP
  *  .=6800
  */
 void START() {
-    //REMOVE//DEBUG//TODO: Below will gives us 8 frames until a complete halt.. FIXME!
-    memory.page0.SYNC = 0xFF; //REMOVE//DEBUG//TODO: Implement a real NMI interrupt every 4 ms and remove this line
-    //TODO: Disassembly has this instruction enabled, find out why !!!!
     // ;	JMP PWRON
-    // START:	JSR INIT1		;TURN OFF SOUNDS
+    // START: JSR INIT1		;TURN OFF SOUNDS
     INIT1();
     // JSR INIT		;INITIALIZE PLAYER 1 FOR START OF GAME
     INIT();
-    /** START1 **/
-    while (true) {
-        // START1:	JSR NEWAST		;START UP NEW ASTEROIDS
-        NEWAST();
-        /** START2 **/
-        while (true) {
-            // START2:	LDA A,STSTSW		;NOTE NMI NOT ACTIVE IF STSTSW ON
-            // 5$: BMI 5$			;IN SELF TEST-WANT FOR WATCHDOG TO RESET SOUNDS
-            if (memory.io.STSTSW & 0x80) {
-                _trigger_nmi();
-            }
-            // LSR SYNC
-            bool c = (memory.page0.SYNC & 1);
-            memory.page0.SYNC = memory.page0.SYNC >> 1;
-            // BCC START2			;WAIT FOR START OF FRAME
-            if (!c) {
-                //TODO: Debug disabled. continue;
-                //TODO: Debug
-                return;
-            }
-            // 10$: LDA A,HALT
-            // BMI 10$			;WAIT FOR BEAM TO HALT
-            todo_wait_for_HALT();
-            // LDA A,VECRAM+1		;SWITCH VECTOR BUFFERS
-            // EOR I,02
-            // STA A,VECRAM+1		;CHANGE JMPL TO STARTING BUFFER
-            uint8_t framebuffer_index = memory.VECMEM[1] ^= 0x02;
-            // STA A,GOADD		;START VECTOR GENERATOR
-            todo_io_startGOADD();
-            // STA A,WTDOG
-            todo_io_pollWTDOG();
-            // INC FRAME		;INCREMENT FRAME COUNTER
-            // BNE 11$			;NO OVERFLOW
-            // INC FRAME+1
-            memory.page0.FRAME_16 += 1;
-            // 11$: LDX I,VECRAM/100
-            // AND I,02
-            // BNE 12$			;USE LOWER BUFFER
-            // LDX I,VECRAM/100+04	;USE UPPER BUFFER
-            // 12$: LDA I,VECRAM&0FF+2
-            // STA VGLIST
-            // STX VGLIST+1		;RESET VECTOR LIST POINTER
-            memory.page0.VGLIST_16 = (framebuffer_index & 0x02) ? 0x0002
-                                                                : 0x0402; // Frame buffer, index = 1 -> 0 and index = 0 -> 1
-            // JSR CHKST		;CHECK FOR START
-            if (CHKST()) {
-                // BCS START		;START NEW GAME
-                return; // Avoids GOTO and while loop will call START again
-            }
-            // JSR UPDATE		;UPDATE HIGH SCORE TABLES
-            todo_UPDATE();
-            // JSR GETINT		;GET INITIALS FOR ANY NEW HIGH SCORE
-            // BPL 20$			;UPDATE IN PROGRESS
-            if (todo_GETINT()) {
-                // JSR SCORES		;DISPLAY HIGH SCORES
-                // BCS 20$			;WE ARE DISPLAYING SCORE TABLE
-                if (todo_SCORES()) {
-                    // LDA GDELAY		;(NOT ENOUGH TIME FOR ASTEROIDS AND SCORE TABLES)
-                    // BNE 15$			;STARTING A NEW PLAYER
-                    if (memory.page0.GDELAY == 0) {
-                        // JSR FIRE		;FIRE SHIPS TORPEDOS
-                        todo_FIRE();
-                        // JSR HYPER		;CHECK FOR HYPERSPACE
-                        todo_HYPER();
-                        // JSR MOVE		;MOVE SHIP BY CONTROLS
-                        todo_MOVE();
-                        // JSR ENEMY		;LAUNCH ENEMY SAUCER AND TORPEDOS
-                        todo_ENEMY();
-                    }
-                    // 15$: JSR MOTION		;MOVE OBJECTS
-                    todo_MOTION();
-                    // JSR COLIDE		;CHECK FOR COLLISIONS
-                    todo_COLIDE();
-                }
-            }
-            // 20$: JSR PARAMS		;DISPLAY SCORE AND OTHER PARAMETERS
-            PARAMS();
-            // JSR SOUNDS		;GENERATE SOUNDS
-            todo_SOUNDS();
-            // LDA I,1023./8
-            // TAX
-            // JSR VGSABS		;POSITION BEAM FOR MINIMUM CURRENT DRAW
-            VGSABS(1023 / 8, 1023 / 8);
-            // JSR RAND		;KEEP RANDOM NUMBERS COMING
-            todo_RAND(); // TODO: Why... just to massage the PRNG ?
-            // JSR VGHALT		;ADD HALT TO VECTOR LIST
-            VGHALT();
-            // LDA RDELAY
-            // BEQ 30$			;NO DELAY TO DECREMENT
-            // DEC RDELAY
-            if (memory.currentPlayer.RDELAY > 0) {
-                memory.currentPlayer.RDELAY--;
-            }
-            // 30$: ORA NROCKS
-            // BNE START2			;LOOP FOR NEXT PASS
-            if (memory.currentPlayer.NROCKS <= 0) {
-                break; // Will break out of START2 loop and into START1
-            }
-        }
-        // BEQ START1		;START NEW SET OF ASTEROIDS
+}
+
+void START1() {
+    // START1: JSR NEWAST		;START UP NEW ASTEROIDS
+    NEWAST();
+    // BEQ START1		;START NEW SET OF ASTEROIDS
+}
+
+bool START2() {
+    // START2: LDA A,STSTSW		;NOTE NMI NOT ACTIVE IF STSTSW ON
+    // 5$: BMI 5$			;IN SELF TEST-WANT FOR WATCHDOG TO RESET SOUNDS
+    if (memory.io.STSTSW & 0x80) {
+        _trigger_nmi();
     }
+    // LSR SYNC
+    bool c = (memory.page0.SYNC & 1);
+    memory.page0.SYNC = memory.page0.SYNC >> 1;
+    // BCC START2			;WAIT FOR START OF FRAME
+    if (!c) {
+        //TODO:Disabled by debug return true;
+    }
+    // 10$: LDA A,HALT
+    // BMI 10$			;WAIT FOR BEAM TO HALT
+    todo_wait_for_HALT();
+    // LDA A,VECRAM+1		;SWITCH VECTOR BUFFERS
+    // EOR I,02
+    // STA A,VECRAM+1		;CHANGE JMPL TO STARTING BUFFER
+    uint8_t A = memory.VECMEM[1];
+    memory.VECMEM[1] = A ^0x02;
+    // STA A,GOADD		;START VECTOR GENERATOR
+    todo_io_startGOADD();
+    // STA A,WTDOG
+    todo_io_pollWTDOG();
+    // INC FRAME		;INCREMENT FRAME COUNTER
+    // BNE 11$			;NO OVERFLOW
+    // INC FRAME+1
+    memory.page0.FRAME_16 += 1;
+    // 11$: LDX I,VECRAM/100
+    // AND I,02
+    // BNE 12$			;USE LOWER BUFFER
+    // LDX I,VECRAM/100+04	;USE UPPER BUFFER
+    // 12$: LDA I,VECRAM&0FF+2
+    // STA VGLIST
+    // STX VGLIST+1		;RESET VECTOR LIST POINTER
+    memory.page0.VGLIST_16 = (A & 0x02) ? 0x0002 : 0x0402; // Frame buffer, index = 1 -> 0 and index = 0 -> 1
+    // JSR CHKST		;CHECK FOR START
+    if (CHKST()) {
+        // BCS START		;START NEW GAME
+        return true;
+    }
+    // JSR UPDATE		;UPDATE HIGH SCORE TABLES
+    todo_UPDATE();
+    // JSR GETINT		;GET INITIALS FOR ANY NEW HIGH SCORE
+    // BPL 20$			;UPDATE IN PROGRESS
+    if (todo_GETINT() >= 0) {
+        // JSR SCORES		;DISPLAY HIGH SCORES
+        // BCS 20$			;WE ARE DISPLAYING SCORE TABLE
+        if (!todo_SCORES()) {
+            // LDA GDELAY		;(NOT ENOUGH TIME FOR ASTEROIDS AND SCORE TABLES)
+            // BNE 15$			;STARTING A NEW PLAYER
+            if (memory.page0.GDELAY == 0) {
+                // JSR FIRE		;FIRE SHIPS TORPEDOS
+                todo_FIRE();
+                // JSR HYPER		;CHECK FOR HYPERSPACE
+                todo_HYPER();
+                // JSR MOVE		;MOVE SHIP BY CONTROLS
+                todo_MOVE();
+                // JSR ENEMY		;LAUNCH ENEMY SAUCER AND TORPEDOS
+                todo_ENEMY();
+            }
+            // 15$: JSR MOTION		;MOVE OBJECTS
+            todo_MOTION();
+            // JSR COLIDE		;CHECK FOR COLLISIONS
+            todo_COLIDE();
+        }
+    }
+    // 20$: JSR PARAMS		;DISPLAY SCORE AND OTHER PARAMETERS
+    PARAMS();
+    // JSR SOUNDS		;GENERATE SOUNDS
+    todo_SOUNDS();
+    // LDA I,1023./8
+    // TAX
+    // JSR VGSABS		;POSITION BEAM FOR MINIMUM CURRENT DRAW
+    VGSABS(1023 / 8, 1023 / 8);
+    // JSR RAND		;KEEP RANDOM NUMBERS COMING
+    todo_RAND(); // Condition the rand
+    // JSR VGHALT		;ADD HALT TO VECTOR LIST
+    VGHALT();
+    // LDA RDELAY
+    uint8_t A_rdelay = memory.currentPlayer.RDELAY;
+    // BEQ 30$			;NO DELAY TO DECREMENT
+    if (A_rdelay != 0) {
+        // DEC RDELAY
+        memory.currentPlayer.RDELAY--;
+    }
+    // 30$: ORA NROCKS
+    // BNE START2			;LOOP FOR NEXT PASS
+    return (A_rdelay | memory.currentPlayer.NROCKS) != 0;
 }
 
 /**
@@ -336,14 +330,14 @@ void START() {
  * EXIT	    (C)=SET IF STARTING A NEW GAME
  */
 bool CHKST() {
-    // CHKST:	LDA NPLAYR
+    // CHKST: LDA NPLAYR
     // BEQ 10$			;GAME NOT IN PROGRESS
     if (memory.page0.NPLAYR != 0) {
         // LDA GDELAY
         if (memory.page0.GDELAY == 0) {
             // BNE 60$			;STAY READY MODE
             // JMP CHKST1		;WE ARE NOT IN PLAYER READY MODE
-            return CHKST1();
+            return CHKST1(); // Always returns false
         } else {
             // 60$: DEC GDELAY
             memory.page0.GDELAY--;
@@ -362,7 +356,7 @@ bool CHKST() {
     // 10$: LDA UPDFLG
     // AND UPDFLG+1
     // BPL 30$			;IF UPDATING INITIALS
-    if (((memory.page0.UPDFLG[0] & memory.page0.UPDFLG[1]) & 0x80) == 0x00) {
+    if (((int8_t)memory.page0.UPDFLG[0] & (int8_t)memory.page0.UPDFLG[1]) >= 0x00) {
         return false;
     }
     // LDA $CMODE		;IF FREE PLAY
@@ -527,8 +521,8 @@ bool CHKST() {
     return false;
 }
 
-bool CHKST1() {
-    // CHKST1:	LDA Z,FRAME
+bool CHKST1() { // Always returns false (as the original function did)
+    // CHKST1: LDA Z,FRAME
     // AND I,3F
     // BNE 70$			;ONLY EVERY 1 SECOND
     if ((memory.page0.FRAME[0] & 0x3F) == 0) {
@@ -642,7 +636,7 @@ bool CHKST1() {
 }
 
 void CHKST2() {
-    // CHKST2:	LDY I,1
+    // CHKST2: LDY I,1
     // JSR VGMSG		;DISPLAY "PLAYER" MESSAGE
     VGMSG(0x01);
     // LDY PLAYR
@@ -653,7 +647,7 @@ void CHKST2() {
     // RTS
 }
 
-// CKSUM2:	.BYTE 23	;6800-6BFF
+// CKSUM2: .BYTE 23	;6800-6BFF
 
 /**
  * COLLIDE-COLLISION DETECTOR
@@ -661,7 +655,7 @@ void CHKST2() {
 void todo_COLIDE() {
     //TODO: Remember to implement
 
-    // COLIDE:	LDX I,07
+    // COLIDE: LDX I,07
     // 10$: LDA X,OBJ+NOBJ
     // BEQ 13$			;IF INACTIVE TORPEDO
     // BPL 15$
@@ -757,7 +751,7 @@ void todo_COLIDE() {
 // ;
 // ;ENTRY	(X)=NEW ROCK INDEX
 // ;	(Y)=OLD ROCK INDEX
-// CPYPOS:	LDA Y,OBJ		;COPY PICTURE
+// CPYPOS: LDA Y,OBJ		;COPY PICTURE
 // AND I,07
 // STA TEMP1		;SAVE SIZE
 // JSR RAND		;RANDOM NUMBER
@@ -803,7 +797,7 @@ uint16_t *todo_CPYVEC(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, ui
 /*
     memory.page0.TEMP2_16 = (uint16_t) XA_vector_table_ptr; //TODO: TEMP2 cant hold a pointer, see if we can get rid of the TEMP2 usage
 */
-    // CPYVEC:	STA TEMP2
+    // CPYVEC: STA TEMP2
     // STX TEMP2+1		;SETUP INDIRECT POINTER
     // LDY I,0
     /* Original asm did a fall through to next function */
@@ -814,7 +808,7 @@ uint16_t *todo_COPY(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, uint
                     const uint16_t *XA_vector_ptr, uint8_t Y_index) {
     //TODO: I think this is broken!
     while (true) {
-        // COPY:	INY
+        // COPY: INY
         Y_index++;
         // LDA NY,TEMP2
         uint16_t vector = XA_vector_ptr[Y_index];
@@ -883,7 +877,7 @@ uint16_t *todo_COPY(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, uint
 // ;ENTRY	(X)=SHIP, SAUCER OR TORPEDO INDEX-NOBJ
 // ;	(Y)=ROCK, SHIP OR SAUCER INDEX
 // ;
-// DSTRCT:	CPX I,01
+// DSTRCT: CPX I,01
 // BNE 60$			;NOT SAUCER HITTING SHIP OR ROCKS
 // CPY I,NOBJ
 // BNE 62$			;SAUCER HIT ROCK
@@ -955,7 +949,7 @@ uint16_t *todo_COPY(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, uint
 void todo_ENEMY() {
     //TODO: Remember to implement
 
-    // ENEMY:	LDA FRAME
+    // ENEMY: LDA FRAME
     // AND I,03
     // BEQ 1$			;EVERY FOURTH FRAME
     // 50$: RTS
@@ -1036,7 +1030,7 @@ void todo_ENEMY() {
 void todo_FIRE() {
     //TODO: Remember to implement
 
-    // EFIRE:	LDA FRAME
+    // EFIRE: LDA FRAME
     // ASL
     // BNE 10$			;NOT TIME TO CHANGE DIRECTION
     // JSR RAND
@@ -1121,7 +1115,7 @@ void todo_FIRE() {
 // .SBTTL FIRE-FIRE SHIPS TORPEDOS
 // ;FIRE-	FIRE SHIP TORPEDOS
 // ;
-// FIRE:	LDA NPLAYR
+// FIRE: LDA NPLAYR
 // BEQ FIRE2		;IN ATTRACT
 // ASL A,FIRESW		;FULLY DECODED FOR R/W
 // ROR LASTSW
@@ -1134,15 +1128,15 @@ void todo_FIRE() {
 // LDA I,03
 // STA TEMP3+1		;STOPPING INDEX FOR SHIP
 // LDY I,7			;NUMBER OF TORPEDOS ALLOWED
-// FIRE1:	LDA Y,OBJ+NOBJ
+// FIRE1: LDA Y,OBJ+NOBJ
 // BEQ FIRE3		;WE FOUND INACTIVE ONE
 // DEY
 // CPY TEMP3+1
 // BNE FIRE1
 //
-// FIRE2:	RTS			;FIND INACTIVE TORPEDO TO USE
+// FIRE2: RTS			;FIND INACTIVE TORPEDO TO USE
 //
-// FIRE3:	STX TEMP3
+// FIRE3: STX TEMP3
 // LDA I,12
 // STA Y,OBJ+NOBJ		;SET TIMER FOR LENGTH OF LIFE
 // LDA X,ANGLE
@@ -1217,21 +1211,21 @@ void todo_FIRE() {
 // STA X,SND1		;START FIRE SOUND FOR SHIP OR SAUCER
 // RTS
 //
-// CKSUM3:	.BYTE 0DC		;6C00-6FFF
+// CKSUM3: .BYTE 0DC		;6C00-6FFF
 
 /**
  * GETINT-GET PLAYERS INITIALS FOR HIGH SCORE
  *
- * @return false if update is in progress or true if ready
+ * @return < 0 if update is in progress or true if ready
  */
-bool todo_GETINT() {
+int8_t todo_GETINT() {
     //TODO: Remember to implement
-    return true;
+    return 0;
 
     // .SBTTL GETINT-GET PLAYERS INITIALS FOR HIGH SCORE
     // ;GETINT-GET PLAYERS INITIALS FOR HIGH SCORE
     // ;
-    // GETINT:	LDA UPDFLG
+    // GETINT: LDA UPDFLG
     // AND UPDFLG+1
     // BPL 10$			;GET PLAYERS INITIALS
     // RTS
@@ -1355,7 +1349,7 @@ bool todo_GETINT() {
 void todo_HYPER() {
     // TODO: Remember to implement
 
-    // HYPER:	LDA NPLAYR
+    // HYPER: LDA NPLAYR
     // BEQ 90$			;IF IN ATTRACT
     // LDA OBJ+NOBJ
     // BMI 90$			;IF EXPLODING
@@ -1407,7 +1401,7 @@ void todo_HYPER() {
  * INIT-INITIALIZATION
  */
 void INIT() {
-    // INIT:	LDA I,02		;STARTING NUMBER OF ROCKS-2 (ADDS 2 IN START LOOP)
+    // INIT: LDA I,02		;STARTING NUMBER OF ROCKS-2 (ADDS 2 IN START LOOP)
     // STA SROCKS
     memory.currentPlayer.SROCKS = 0x02;
     // LDX I,03
@@ -1438,7 +1432,7 @@ void INIT() {
  * INIT1 - INITIALIZE ALL SOUNDS
  */
 void INIT1() {
-    // INIT1:	LDA I,0			;STOP ALL SOUNDS
+    // INIT1: LDA I,0			;STOP ALL SOUNDS
     // STA A,EXPSND
     io_set_EXPSND(0);
     // STA A,THUMP
@@ -1467,7 +1461,7 @@ void INIT1() {
 // .SBTTL INITAL-DISPLAY AN INITIAL ON THE SCREEN
 // ;INITIAL-DISPLAY INITIAL ON SCREEN
 // ;ENTRY	(Y)=INDEX INTO INITL TABLE
-// INITAL:	LDA Y,INITL		;INITIAL
+// INITAL: LDA Y,INITL		;INITIAL
 // ASL			;INDEX INTO VGMSGA TABLE
 // TAY
 // BNE VGCHAR		;IF NOT A BLANK
@@ -1488,7 +1482,7 @@ void INIT1() {
 // ;	(X)=SECOND BYTE
 // ;EXIT	(VGLIST,VGLIST+1)=NEW VECTOR LIST POINTER
 // ;USES	A,Y
-// VGADD2:	LDY I,0
+// VGADD2: LDY I,0
 // STA NY,VGLIST
 // INY
 // TXA
@@ -1499,7 +1493,7 @@ void INIT1() {
 // ;
 // ;ENTRY	(Y)=INDEX OF CHARACTER (0=BLANK,2=0,4=1,ETC)
 // ;USES	A,X,Y
-// VGCHAR:	LDA AY,VGMSGA
+// VGCHAR: LDA AY,VGMSGA
 // LDX AY,VGMSGA+1
 // JMP VGADD2		;ADD TO VECTOR LIST
 
@@ -1515,7 +1509,7 @@ void INIT1() {
  */
 void LIVES(uint8_t A_x, uint8_t Y_lives) {
     if (Y_lives > 0) {
-        // LIVES:	BEQ 99$			;NO LIVES LEFT
+        // LIVES: BEQ 99$			;NO LIVES LEFT
         // STY TEMP1
         // LDX I,852./4		;Y POSITION FOR PICTURES
         // LDY I,0E0		;1/4 SIZE PICTURE
@@ -1544,7 +1538,7 @@ void LIVES(uint8_t A_x, uint8_t Y_lives) {
 void todo_MOTION() {
     //TODO: Remember to implement
 
-    // MOTION:	LDX I,NOBJ+7		;NUMBER OF OBJECTS TO MOVE
+    // MOTION: LDX I,NOBJ+7		;NUMBER OF OBJECTS TO MOVE
     // 10$: LDA X,OBJ
     // BNE 12$			;ACTIVE OBJECT
     // 13$: DEX
@@ -1655,16 +1649,16 @@ void todo_MOTION() {
 }
 
 void RSAUCR() {
-    // RSAUCR:	LDA SEDLAY
+    // RSAUCR: LDA SEDLAY
     // STA EDELAY		;DELAY BEFORE RESTARTING
     memory.currentPlayer.EDELAY = memory.currentPlayer.SDELAY;
     // LDA I,0
     // STA OBJ+NOBJ+1		;CLEAR SAUCER
-    memory.currentPlayer.OBJ[NOBJ+1] = 0x00;
+    memory.currentPlayer.OBJ[NOBJ + 1] = 0x00;
     // STA XINC+NOBJ+1		;STOP SPEED FOR NEWAST
-    memory.currentPlayer.XINC[NOBJ+1] = 0x00;
+    memory.currentPlayer.XINC[NOBJ + 1] = 0x00;
     // STA YINC+NOBJ+1
-    memory.currentPlayer.YINC[NOBJ+1] = 0x00;
+    memory.currentPlayer.YINC[NOBJ + 1] = 0x00;
     // RTS
 }
 
@@ -1674,7 +1668,7 @@ void RSAUCR() {
 void todo_MOVE() {
     //TODO: Remember to implement
 
-    // MOVE:	LDA NPLAYR
+    // MOVE: LDA NPLAYR
     // BEQ 90$			;IN ATTRACT MODE
     // LDA OBJ+NOBJ
     // BMI 90$			;IF EXPLODING
@@ -1723,7 +1717,7 @@ void todo_MOVE() {
     // 20$: LDA FRAME
     // LSR
     // BCS 90$			;EVERY OTHER FRAME CHECK THRUST
-    // MOVE1:	LDA A,THRUST
+    // MOVE1: LDA A,THRUST
     // BPL 80$			;NO THRUST
     // LDA I,80
     // STA A,SHPSND		;SOUND FOR THRUST
@@ -1794,7 +1788,7 @@ void todo_MOVE() {
     // 89$: RTS
 }
 
-// MOVE2:	BMI 30$			;IF OUT OF RANGE
+// MOVE2: BMI 30$			;IF OUT OF RANGE
 // CMP I,40
 // BCC 35$			;IF IN RANGE
 // LDX I,0FF		;MAX
@@ -1813,7 +1807,7 @@ void todo_MOVE() {
 // ;
 // ;EXIT	(CC)=0 IF AREA FREE OF ROCKS
 // ;	(SDELAY)>0 IF ROCK NEAR SHIP
-// NEARBY:	LDX I,NOBJ+1
+// NEARBY: LDX I,NOBJ+1
 // 10$: LDA X,OBJ
 // BEQ 40$			;OBJECT NOT ALIVE
 // LDA X,OBJXH
@@ -1838,13 +1832,13 @@ void todo_MOVE() {
 // 50$: INC SDELAY		;DELAY BEFORE ENTERING SHIP
 // RTS			;SETS NON-ZERO FLAG
 //
-// CKSUM4:	.BYTE 99		;7000-73FF
+// CKSUM4: .BYTE 99		;7000-73FF
 
 /**
  * NEWAST - START UP NEW ASTEROIDS
  */
 void NEWAST() {
-    // NEWAST:	LDX I,NOBJ-1
+    // NEWAST: LDX I,NOBJ-1
     int8_t x = NOBJ - 1;
 
     // LDA RDELAY
@@ -1948,7 +1942,7 @@ void NEWAST() {
  * NEWSHP-POSITION SHIP FOR START
  */
 void NEWSHP() {
-    // NEWSHP:	LDA I,0
+    // NEWSHP: LDA I,0
     // STA A,OBJXL+NOBJ	;POSITION IN MIDDLE
     memory.currentPlayer.OBJXL[NOBJ] = 0x00;
     // STA A,OBJYL+NOBJ
@@ -1975,7 +1969,7 @@ void NEWSHP() {
 void todo_NEWVEL() {
     //TODO: Remember to implement
 
-// NEWVEL:	JSR RAND		;RANDOM NUMBER
+// NEWVEL: JSR RAND		;RANDOM NUMBER
 // AND I,8F
 // BPL 10$			;IF POSITIVE NUMBER 0 TO 3
 // ORA I,0F0		;-1 TO -4
@@ -1996,7 +1990,7 @@ void todo_NEWVEL() {
 // STA X,YINC
 // RTS
 //
-// NEWVE1:	BPL 20$			;POSITIVE RESULT
+// NEWVE1: BPL 20$			;POSITIVE RESULT
 // CMP I,-1F
 // BCS 15$			;WITHIN RANGE
 // LDA I,-1F
@@ -2018,7 +2012,7 @@ void todo_NEWVEL() {
  * PARAMS-DISPLAY PARAMETERS
  */
 void PARAMS() {
-    // PARAMS:	LDA I,10
+    // PARAMS: LDA I,10
     // STA VGSIZE		;STANDARD SIZE CHARACTER
     memory.page0.VGSIZE = 0x10;
     // LDA I,0
@@ -2161,7 +2155,7 @@ void PARAMS() {
 // ;
 // ;ENTRY (Y)=SCALING FACTOR TO BE USED
 // ;	(XCOMP,XCOMP+3)=OBJECT POSITION
-// PICTUR:	STY VGSIZE		;SET SCALING FACTOR
+// PICTUR: STY VGSIZE		;SET SCALING FACTOR
 // STX TEMP3		;SAVE X
 // LDA XCOMP+1		;PUT VALUES INTO RIGHT FORMAT
 // LSR
@@ -2248,7 +2242,7 @@ void PARAMS() {
 // ;ENTRY	(CC)=CARRY AND DECIMAL MODE SET
 // ;	(X)=PLAYER NUMBER
 // ;	(A)=POINTS TO ADD
-// POINTS:	SED
+// POINTS: SED
 // ADC X,SCORE
 // STA X,SCORE
 // BCC 19$			;NO EXTRA 1000
@@ -2274,7 +2268,7 @@ void PARAMS() {
 bool todo_SCORES() {
     //TODO: Remember to implement
 
-    // SCORES:	LDA NPLAYR
+    // SCORES: LDA NPLAYR
     // BEQ 10$			;IF END OF GAME
     // 90$: CLC
     // RTS
@@ -2372,8 +2366,8 @@ bool todo_SCORES() {
 // ;EXIT	(CC)=POSITIVE IF ENTRY EXISTS
 // ;	(X)=FREE ENTRY INDEX IF POSSIBLE
 // ;
-// SEARCH:	LDX I,NOBJ-1
-// SEARC1:	LDA X,OBJ
+// SEARCH: LDX I,NOBJ-1
+// SEARC1: LDA X,OBJ
 // BEQ 20$			;FOUND ONE
 // DEX
 // BPL SEARC1		;LOOP TIL EXHAUSTED
@@ -2383,7 +2377,7 @@ bool todo_SCORES() {
 // .SBTTL SHPEXP-SHIP EXPLODING PICTURES
 // ;SHPEXP-SHP EXPLODING PICTURES
 // ;
-// SHPEXP:	LDA OBJ+NOBJ
+// SHPEXP: LDA OBJ+NOBJ
 // CMP I,0A2
 // BCS 20$			;IF NOT THE FIRST EXPLOSION
 // LDX I,10.		;2*NUMBER OF PIECES -2
@@ -2480,7 +2474,7 @@ bool todo_SCORES() {
 // ;ENTRY	(ANGLE)=SHIP ROTATION (0 TO FF)
 // ;EXIT	(VGLIST,VGLIST+1)=UPDATED VECTOR LIST POINTER
 // ;USES	A,X,Y,(TEMP1,TEMP1+1),(TEMP2,TEMP2+1)
-// SHPPIC:	LDX I,0
+// SHPPIC: LDX I,0
 // STX TEMP4+2		;NO CHANGE IN BRITENESS
 // LDY I,0			;FLAG X=X AND Y=Y
 // LDA ANGLE
@@ -2527,7 +2521,7 @@ bool todo_SCORES() {
 void todo_SOUNDS() {
     //TODO: Remember to implement
 
-    // SOUNDS:	LDA NPLAYR
+    // SOUNDS: LDA NPLAYR
     // BNE 10$			;NOT IN ATTRACT
     // RTS
     //
@@ -2591,7 +2585,7 @@ void todo_SOUNDS() {
 // ;SOUND1-GET VALUE FOR SOUND
 // ;
 // ;EXIT (A)=80 TO TURN ON SOUND, POSITIVE TO TURN IT OFF
-// SOUND1:	LDA X,LSND1
+// SOUND1: LDA X,LSND1
 // BMI 50$			;IF SOUND IS ON
 // LDA X,SND1
 // BPL 70$			;NOT SUPPOSED TO START
@@ -2615,7 +2609,7 @@ void todo_SOUNDS() {
 // ;
 // ;ENTRY	(Y)=INDEX OF OBJECT BEING SPLIT
 // ;	(X)=INDEX OF SHIP, SAUCER OR TORPEDO
-// SPLIT:	STX TEMP3		;SAVE X
+// SPLIT: STX TEMP3		;SAVE X
 // LDA I,50
 // STA RTIMER		;RESET TIMER IF ROCK HAS BEEN HIT
 // LDA Y,OBJ
@@ -2671,7 +2665,7 @@ void todo_SOUNDS() {
 void todo_UPDATE() {
     //TODO: Remember to implement
 
-    // UPDATE:	LDA NPLAYR
+    // UPDATE: LDA NPLAYR
     // BPL 90$			;FRAME AFTER END OF GAME (A=-1)
     // LDX I,02		;INDEX FOR PLAYER SCORE
     // STA FRAME+1		;PUT UP HIGH SCORE TABLE NEXT
@@ -2751,7 +2745,7 @@ void todo_UPDATE() {
     // BEQ 28$			;ALWAYS
 }
 
-// CKSUM5:	.BYTE 77		;7400-77FF
+// CKSUM5: .BYTE 77		;7400-77FF
 // .PAGE
 // .PAGE
 // ;ATAN-ARCTANGENT
@@ -2760,13 +2754,13 @@ void todo_UPDATE() {
 // ;	(Y)=Y PART (SIGNED NUMBER)
 // ;EXIT	(A)=ARCTAN RESULT (0 TO FF, 40=90 DEGREES)
 // ;USES	A,X,Y,(TEMP2,TEMP2+1)
-// ATAN:	TYA
+// ATAN: TYA
 // BPL ATAN1		;IF Y>-0
 // JSR COMP		;+Y=-Y
 // JSR ATAN1		;ATAN (-Y/X)
 // JMP COMP		;ARCTAN(Y/X)=-ARCTAN(-Y/X)
 //
-// ATAN1:	TAY			;DIVISOR
+// ATAN1: TAY			;DIVISOR
 // TXA
 // BPL ATAN2		;IF X=-0
 // JSR COMP		;X=-X
@@ -2780,12 +2774,12 @@ void todo_UPDATE() {
 // ;ENTRY	(A)=VALUE TO BE COMPLEMENTED
 // ;EXIT	(A)=ANSWER
 // ;USES	A
-// COMP:	EOR I,0FF
+// COMP: EOR I,0FF
 // CLC
 // ADC I,01
 // RTS
 //
-// ATAN2:	STA TEMP2+1		;DIVISOR (X)
+// ATAN2: STA TEMP2+1		;DIVISOR (X)
 // TYA			;DIVIDEND (Y)
 // CMP TEMP2+1
 // BEQ 10$			;IF Y=X
@@ -2801,11 +2795,11 @@ void todo_UPDATE() {
 // 10$: LDA I,20		;45 DEGRESS
 // RTS
 //
-// ATAN3:	JSR DIVIDE		;4 BIT DIVIDE
+// ATAN3: JSR DIVIDE		;4 BIT DIVIDE
 // LDA X,ATANA		;TABLE LOOKUP
 // RTS
 //
-// ATANA:	.BYTE 0,2,5,7		;0-3
+// ATANA: .BYTE 0,2,5,7		;0-3
 // .BYTE 10.,12.,15.,17.	;4-7
 // .BYTE 19.,21.,23.,25.	;8-B
 // .BYTE 26.,28.,29.,31.	;C-F
@@ -2825,7 +2819,7 @@ void todo_UPDATE() {
  * @param C_zero_suppression
  */
 void DIGITS(const uint8_t *A_digits_ptr, uint8_t _2Y_length, uint8_t X_intensity_delta, bool C_zero_suppression) {
-    // DIGITS:	PHP			;SAVE INPU PARAMEERS
+    // DIGITS: PHP			;SAVE INPU PARAMEERS
     // STX TEMP4+2
     // DEY
     // STY TEMP4+1
@@ -2867,7 +2861,7 @@ void DIGITS(const uint8_t *A_digits_ptr, uint8_t _2Y_length, uint8_t X_intensity
 // ;ENTRY (A)=DIVIDEND (UNSIGNED)
 // ;      (TEMP2+1)=DIVISOR (UNSIGNED)
 // ;EXIT	(X)=QUOTUNT (4 BITS)
-// DIVIDE:	LDY I,0
+// DIVIDE: LDY I,0
 // STY TEMP2		;CLEAR LSB
 // LDY I,4			;4 BITS OF RESOLUTION
 // 10$: ROL TEMP2		;SHIFT IN BIT OF ANSWER
@@ -2893,7 +2887,7 @@ void DIGITS(const uint8_t *A_digits_ptr, uint8_t _2Y_length, uint8_t X_intensity
  * EXIT     (C)=CLEAR IF NO ZERO SUPPRESSION
  */
 bool HEXZ(uint8_t A_digit, uint8_t TEMP4_2_intensity_delta, bool C_zero_suppression) {
-    // HEXZ:	BCC HEX			;NO ZERO-SUPPRESSION
+    // HEXZ: BCC HEX			;NO ZERO-SUPPRESSION
     if (!C_zero_suppression) {
         HEX(A_digit, TEMP4_2_intensity_delta);
     } else {
@@ -2911,7 +2905,7 @@ bool HEXZ(uint8_t A_digit, uint8_t TEMP4_2_intensity_delta, bool C_zero_suppress
 }
 
 void HEX(uint8_t A_digit, uint8_t TEMP4_2_intensity_delta) {
-    // HEX:	LDX TEMP4+2
+    // HEX: LDX TEMP4+2
     // BEQ HEX1		;USE JSRL TO CHARACTER ROUTINES
     if (TEMP4_2_intensity_delta == 0) {
         HEX1(A_digit, false);
@@ -2943,7 +2937,7 @@ void HEX(uint8_t A_digit, uint8_t TEMP4_2_intensity_delta) {
 }
 
 void HEX1(uint8_t A_digit, bool C_zero_suppression) {
-    // HEX1:	JMP VGHEXZ
+    // HEX1: JMP VGHEXZ
     VGHEXZ(A_digit, C_zero_suppression);
 }
 
@@ -2956,7 +2950,7 @@ uint8_t todo_RAND() {
     // TODO: Remember to implement
     return (uint8_t) (rand() & 0xFF);;
 
-    // RAND:	ASL POLYL
+    // RAND: ASL POLYL
     // ROL POLYH
     // BPL 1$
     // INC POLYL
@@ -2978,7 +2972,7 @@ uint8_t todo_RAND() {
 // ;COS-COSINE
 // ;ENTRY	=ANGLE (0 TO FF)
 // ;EXIT	(A)=COSINE(-127,127)
-// COS:	CLC			;COS(A)=SIN(A+PI/2)
+// COS: CLC			;COS(A)=SIN(A+PI/2)
 // ADC I,40
 // ;	JMP SIN
 //
@@ -2989,12 +2983,12 @@ uint8_t todo_RAND() {
 // ;	(CC)=MINUS/PLUS FLAG SET CORRECTLY
 // ;EXIT	(A)=SINE (-127 TO +127)
 // ;USES	A,X
-// SIN:	BPL SIN1		;IF PI > ANGLE >-0
+// SIN: BPL SIN1		;IF PI > ANGLE >-0
 // AND I,7F
 // JSR SIN1		;SIN(A) WHEN PI > A >= 0
 // JMP COMP		;SIN(PI+A)=-SIN(A)
 //
-// SIN1:	CMP I,41
+// SIN1: CMP I,41
 // BCC 10$			;PI/2 >- ANGLE >- 0
 // EOR I,7F		;SIN(PI/2+A)=SIN(PI/2-A)
 // ADC I,0			;ADD 1
