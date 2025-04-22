@@ -4,62 +4,6 @@
 #include "msg_A35131_1B.h"
 #include "vg_A35131_1C.h"
 
-void INIT();
-
-void INIT1();
-
-bool CHKST();
-
-void todo_COLIDE();
-
-void todo_ENEMY();
-
-void todo_FIRE();
-
-int8_t todo_GETINT();
-
-void todo_HYPER();
-
-void todo_MOTION();
-
-void todo_MOVE();
-
-void PARAMS();
-
-bool todo_SCORES();
-
-void todo_SOUNDS();
-
-void todo_UPDATE();
-
-uint8_t todo_RAND();
-
-void NEWAST();
-
-void todo_NEWVEL();
-
-void DIGITS(const uint8_t *A_digits_ptr, uint8_t _2Y_length, uint8_t X_intensity_delta, bool C_zero_suppression);
-
-void HEX(uint8_t A_digit, uint8_t TEMP4_2_intensity_delta);
-
-bool HEXZ(uint8_t A_digit, uint8_t TEMP4_2_intensity_delta, bool C_zero_suppression);
-
-void HEX1(uint8_t A_digit, bool C_zero_suppression);
-
-uint16_t *todo_CPYVEC(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, uint8_t TEMP4_2_intensity_delta,
-                      const uint16_t *XA_vector_ptr);
-
-uint16_t *todo_COPY(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, uint8_t TEMP4_2_intensity_delta,
-                    const uint16_t *XA_vector_ptr, uint8_t Y_index);
-
-bool CHKST1();
-
-void CHKST2();
-
-void NEWSHP();
-
-void RSAUCR();
-
 // .TITLE ASTROD (21503)
 // .ASECT
 // .ENABLE AMA
@@ -215,6 +159,66 @@ void RSAUCR();
 // THUMP3:	.BLKB 1			;STARTING VALUE FOR THUMP2
 // DIFCTY:	.BLKB 1			;DIFFICULTY VALUE FOR STARTING SAUCERS
 
+void INIT();
+
+void INIT1();
+
+bool CHKST();
+
+void todo_COLIDE();
+
+void todo_ENEMY();
+
+void todo_FIRE();
+
+int8_t todo_GETINT();
+
+void todo_HYPER();
+
+void MOTION();
+
+void todo_MOVE();
+
+void PARAMS();
+
+bool todo_SCORES();
+
+void todo_SOUNDS();
+
+void todo_UPDATE();
+
+uint8_t todo_RAND();
+
+void NEWAST();
+
+void todo_NEWVEL();
+
+void DIGITS(const uint8_t *A_digits_ptr, uint8_t _2Y_length, uint8_t X_intensity_delta, bool C_zero_suppression);
+
+void HEX(uint8_t A_digit, uint8_t TEMP4_2_intensity_delta);
+
+bool HEXZ(uint8_t A_digit, uint8_t TEMP4_2_intensity_delta, bool C_zero_suppression);
+
+void HEX1(uint8_t A_digit, bool C_zero_suppression);
+
+uint16_t *todo_CPYVEC(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, uint8_t TEMP4_2_intensity_delta,
+                      const uint16_t *XA_vector_ptr);
+
+uint16_t *todo_COPY(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, uint8_t TEMP4_2_intensity_delta,
+                    const uint16_t *XA_vector_ptr, uint8_t Y_index);
+
+bool CHKST1();
+
+void CHKST2();
+
+void NEWSHP();
+
+void RSAUCR();
+
+uint8_t COMP(uint8_t A_value);
+
+void todo_PICTUR(uint8_t Y_scaling_factor, uint8_t XCOMP_01_OBJX, uint8_t XCOMP_23_OBJY);
+
 /**
  *  .SBTTL MAIN LINE LOOP
  *  .=6800
@@ -253,7 +257,7 @@ bool START2() {
     // EOR I,02
     // STA A,VECRAM+1		;CHANGE JMPL TO STARTING BUFFER
     uint8_t A = memory.VECMEM[1];
-    memory.VECMEM[1] = A ^0x02;
+    memory.VECMEM[1] = A ^ 0x02;
     // STA A,GOADD		;START VECTOR GENERATOR
     todo_io_startGOADD();
     // STA A,WTDOG
@@ -296,7 +300,7 @@ bool START2() {
                 todo_ENEMY();
             }
             // 15$: JSR MOTION		;MOVE OBJECTS
-            todo_MOTION();
+            MOTION();
             // JSR COLIDE		;CHECK FOR COLLISIONS
             todo_COLIDE();
         }
@@ -356,7 +360,7 @@ bool CHKST() {
     // 10$: LDA UPDFLG
     // AND UPDFLG+1
     // BPL 30$			;IF UPDATING INITIALS
-    if (((int8_t)memory.page0.UPDFLG[0] & (int8_t)memory.page0.UPDFLG[1]) >= 0x00) {
+    if (((int8_t) memory.page0.UPDFLG[0] & (int8_t) memory.page0.UPDFLG[1]) >= 0x00) {
         return false;
     }
     // LDA $CMODE		;IF FREE PLAY
@@ -1530,122 +1534,185 @@ void LIVES(uint8_t A_x, uint8_t Y_lives) {
 }
 
 /**
- * MOTION-MOTION todo_UPDATE ROUTINE
+ * MOTION-MOTION UPDATE ROUTINE
  *
  * THIS ROUTINE ALSO UPDATES THE EXPLOSION INDEX TO SEQUENCE
  * THRU THE PICTURES.
  */
-void todo_MOTION() {
-    //TODO: Remember to implement
-
+void MOTION() {
     // MOTION: LDX I,NOBJ+7		;NUMBER OF OBJECTS TO MOVE
     // 10$: LDA X,OBJ
     // BNE 12$			;ACTIVE OBJECT
     // 13$: DEX
     // BPL 10$			;MORE OBJECTS
     // RTS
-    //
-    // 12$: BPL 14$			;IF OBJECT ACTIVE
-    // JSR COMP		;TIME REMAINING (0 TO 60)
-    // LSR
-    // LSR
-    // LSR
-    // LSR
-    // CPX I,NOBJ
-    // BNE 16$			;NOT THE SHIP
-    // LDA FRAME
-    // AND I,01		;ADD 1 EVERYOTHER FRAME
-    // LSR
-    // BEQ 42$			;ALWAYS
-    //
-    // 16$: SEC			;1+ VALUE /16
-    // 42$: ADC X,OBJ		;NEW EXPLOSION PICTURE
-    // BMI 11$			;STILL INACTIVE
-    // CPX I,NOBJ
-    // BEQ 18$			;IF THE SHIP
-    // BCS 40$			;IF THE SAUCER
-    // DEC NROCKS
-    // BNE 17$			;IF MORE ROCKS REMAIN
-    // LDY I,7F		;DELAY BEFORE STARTING
-    // STY RDELAY
-    // 17$: LDA I,0
-    // STA X,OBJ		;RESET PICTURE
-    // BEQ 13$
-    //
-    // 18$: JSR NEWSHP		;RESET SHIP
-    // JMP 17$
-    //
-    // 40$: LDA SEDLAY
-    // STA EDELAY		;DELAY BEFORE REENTERING
-    // BNE 17$			;ALWAYS
-    //
-    // 11$: STA X,OBJ
-    // AND I,0F0		;A0 TO 0F0
-    // CLC
-    // ADC I,10		;B0 TO 0
-    // CPX I,NOBJ
-    // BNE 41$			;NOT THE SHIP
-    // LDA I,0			;NO SCALING FOR SHIP EXPLOSION
-    // 41$: TAY
-    // LDA X,OBJXL
-    // STA XCOMP
-    // LDA X,OBJXH
-    // STA XCOMP+1
-    // LDA X,OBJYL
-    // STA XCOMP+2
-    // LDA X,OBJYH
-    // STA XCOMP+3
-    // JMP 30$
-    //
-    // 14$: CLC
-    // LDY I,0
-    // LDA X,XINC
-    // BPL 15$			;SIGN EXTENSION
-    // DEY
-    // 15$: ADC X,OBJXL
-    // STA X,OBJXL
-    // STA XCOMP
-    // TYA
-    // ADC X,OBJXH
-    // CMP I,20
-    // BCC 19$			;IF 0 TO 1023
-    // AND I,1F
-    // CPX I,NOBJ+1
-    // BNE 19$			;NOT THE SAUCER
-    // JSR RSAUCR		;RESET SAUCER VALUES
-    // JMP 13$			;ALWAYS
-    //
-    // 19$: STA X,OBJXH
-    // STA XCOMP+1
-    // CLC
-    // LDY I,0
-    // LDA X,YINC
-    // BPL 20$			;SIGN EXTENSION
-    // LDY I,0FF
-    // 20$: ADC X,OBJYL
-    // STA X,OBJYL
-    // STA XCOMP+2
-    // TYA
-    // ADC X,OBJYH		;0 TO 767 PLEASE
-    // CMP I,18
-    // BCC 25$			;ALREADY 0 TO 767
-    // BEQ 24$			;IF 768 UP
-    // LDA I,17
-    // BNE 25$
-    //
-    // 24$: LDA I,0
-    // 25$: STA X,OBJYH
-    // STA XCOMP+3
-    // LDA X,OBJ
-    // LDY I,0E0		;1/4 SIZE PICTURE
-    // LSR
-    // BCS 30$			;SMALLEST SIZE
-    // LDY I,0F0		;1/2 SIZE PICTOR
-    // LSR
-    // BCS 30$			;MEDIUM SIZE
-    // LDY I,0			;FULL SIZE
-    // 30$: JSR PICTUR		;DISPLAY PICTURE
-    // JMP 13$
+    for (int8_t X_object_index = NOBJ + 0x07; X_object_index >= 0; X_object_index--) {
+        uint8_t A_object = memory.currentPlayer.OBJ[X_object_index];
+        // 12$: BPL 14$			;IF OBJECT ACTIVE
+        if ((int8_t) A_object >= 0) {
+            goto _14;
+        }
+        // JSR COMP		;TIME REMAINING (0 TO 60)
+        // LSR
+        // LSR
+        // LSR
+        // LSR
+        A_object = COMP(A_object) >> 4; // Time ?
+        // CPX I,NOBJ
+        // BNE 16$			;NOT THE SHIP
+        if (X_object_index == NOBJ) {
+            // LDA FRAME
+            // AND I,01		;ADD 1 EVERYOTHER FRAME
+            // LSR
+            // BEQ 42$			;ALWAYS
+            A_object = memory.page0.FRAME[0] & 0x01; // Substitute for a conditional carry
+        } else {
+            // 16$: SEC			;1+ VALUE /16
+            A_object++; // Substitute for a carry
+        }
+        // 42$: ADC X,OBJ		;NEW EXPLOSION PICTURE
+        A_object += memory.currentPlayer.OBJ[X_object_index];
+        // BMI 11$			;STILL INACTIVE
+        if ((int8_t) A_object >= 0) {
+            // CPX I,NOBJ
+            // BEQ 18$			;IF THE SHIP
+            if (X_object_index != NOBJ) {
+                // BCS 40$			;IF THE SAUCER
+                if (X_object_index >= NOBJ) {
+                    goto _40;
+                }
+                // DEC NROCKS
+                // BNE 17$			;IF MORE ROCKS REMAIN
+                if (--memory.currentPlayer.NROCKS == 0) {
+                    // LDY I,7F		;DELAY BEFORE STARTING
+                    // STY RDELAY
+                    memory.currentPlayer.RDELAY = 0x7F;
+                }
+
+                _17:
+                // 17$: LDA I,0
+                // STA X,OBJ		;RESET PICTURE
+                memory.currentPlayer.OBJ[X_object_index] = 0x00;
+                // BEQ 13$ // JMP always ???
+                continue;
+            } else {
+                // 18$: JSR NEWSHP		;RESET SHIP
+                NEWSHP();
+                // JMP 17$
+                goto _17;
+            }
+            _40:
+            // 40$: LDA SEDLAY
+            // STA EDELAY		;DELAY BEFORE REENTERING
+            memory.currentPlayer.EDELAY = memory.currentPlayer.SDELAY;
+            // BNE 17$			;ALWAYS
+            goto _17;
+        }
+        // 11$: STA X,OBJ
+        memory.currentPlayer.OBJ[X_object_index] = A_object;
+        // AND I,0F0		;A0 TO 0F0
+        uint8_t Y_scaling_factor = A_object & 0xF0;
+        // CLC
+        // ADC I,10		;B0 TO 0
+        Y_scaling_factor += 0x10;
+        // CPX I,NOBJ
+        // BNE 41$			;NOT THE SHIP
+        if (X_object_index == NOBJ) {
+            // LDA I,0			;NO SCALING FOR SHIP EXPLOSION
+            Y_scaling_factor = 0x00;
+        }
+
+        // 41$: TAY
+        // LDA X,OBJXL
+        // STA XCOMP
+        // LDA X,OBJXH
+        // STA XCOMP+1
+        // LDA X,OBJYL
+        // STA XCOMP+2
+        // LDA X,OBJYH
+        // STA XCOMP+3
+        // JMP 30$
+        /* Goto avoided and asm inlined */
+        todo_PICTUR(Y_scaling_factor, memory.currentPlayer.OBJX[X_object_index], memory.currentPlayer.OBJY[X_object_index]);
+        continue;
+
+        _14:
+        // 14$: CLC
+        // LDY I,0
+        // LDA X,XINC
+        // BPL 15$			;SIGN EXTENSION
+        // DEY
+        // 15$: ADC X,OBJXL
+        // STA X,OBJXL
+        // STA XCOMP
+        // TYA
+        // ADC X,OBJXH
+        uint16_t AA = memory.currentPlayer.OBJX[X_object_index] + memory.currentPlayer.XINC[X_object_index];
+        // CMP I,20
+        // BCC 19$			;IF 0 TO 1023
+        if (AA >= 0x2000) {
+            // AND I,1F
+            AA &= 0x1FFF;
+        }
+        // CPX I,NOBJ+1
+        // BNE 19$			;NOT THE SAUCER
+        if (X_object_index == NOBJ + 1) {
+            // JSR RSAUCR		;RESET SAUCER VALUES
+            RSAUCR();
+            // JMP 13$			;ALWAYS
+            continue;
+        }
+        // 19$: STA X,OBJXH
+        memory.currentPlayer.OBJX[X_object_index] = AA;
+        // STA XCOMP+1
+
+        // CLC
+        // LDY I,0
+        // LDA X,YINC
+        // BPL 20$			;SIGN EXTENSION
+        // LDY I,0FF
+        // 20$: ADC X,OBJYL
+        // STA X,OBJYL
+        // STA XCOMP+2
+        // TYA
+        // ADC X,OBJYH		;0 TO 767 PLEASE
+        AA = memory.currentPlayer.OBJY[X_object_index] + memory.currentPlayer.YINC[X_object_index];
+        // CMP I,18
+        // BCC 25$			;ALREADY 0 TO 767
+        if (AA >= 0x1800) {
+            // BEQ 24$			;IF 768 UP
+            if (AA > 0x1800) {
+                // LDA I,17
+                // BNE 25$// Always?
+                AA = 0x1700;
+            } else {
+                // 24$: LDA I,0
+                AA = 0x0000;
+            }
+        }
+        // 25$: STA X,OBJYH
+        // STA XCOMP+3
+        memory.currentPlayer.OBJY[X_object_index] = AA;
+        // LDA X,OBJ
+        A_object = memory.currentPlayer.OBJ[X_object_index];
+        // LDY I,0E0		;1/4 SIZE PICTURE
+        Y_scaling_factor = 0xE0;
+        // LSR
+        // BCS 30$			;SMALLEST SIZE
+        if ((A_object & 0x01) == 0x01) {
+            // LDY I,0F0		;1/2 SIZE PICTOR
+            Y_scaling_factor = 0xF0;
+            // LSR
+            // BCS 30$			;MEDIUM SIZE
+            if ((A_object & 0x02) == 0x02) {
+                // LDY I,0			;FULL SIZE
+                Y_scaling_factor = 0x00;
+            }
+        }
+        // 30$: JSR PICTUR		;DISPLAY PICTURE
+        todo_PICTUR(Y_scaling_factor, memory.currentPlayer.OBJX[X_object_index], memory.currentPlayer.OBJY[X_object_index]);
+        // JMP 13$
+    }
 }
 
 void RSAUCR() {
@@ -1899,21 +1966,19 @@ void NEWAST() {
                     a &= 0x17;
                 }
                 // 35$: STA X,OBJYH
-                memory.currentPlayer.OBJYH[x] = a;
+                memory.currentPlayer.OBJY[x] = (a << 8) | (memory.currentPlayer.OBJY[x] & 0x00FF);
                 // LDA I,0
                 // STA X,OBJXH
-                memory.currentPlayer.OBJXH[x] = 0;
                 // STA X,OBJXL
-                memory.currentPlayer.OBJXL[x] = 0;
+                memory.currentPlayer.OBJX[x] = 0;
                 // BEQ 60$			;ALWAYS
             } else {
                 // 50$: STA X,OBJXH
-                memory.currentPlayer.OBJXH[x] = a;
+                memory.currentPlayer.OBJX[x] = (a << 8) | (memory.currentPlayer.OBJX[x] & 0x00FF);
                 // LDA I,0
                 // STA X,OBJYH
-                memory.currentPlayer.OBJYH[x] = 0;
                 // STA X,OBJYL
-                memory.currentPlayer.OBJYL[x] = 0;
+                memory.currentPlayer.OBJY[x] = 0;
             }
             // 60$: DEX
             x--;
@@ -1944,24 +2009,22 @@ void NEWAST() {
 void NEWSHP() {
     // NEWSHP: LDA I,0
     // STA A,OBJXL+NOBJ	;POSITION IN MIDDLE
-    memory.currentPlayer.OBJXL[NOBJ] = 0x00;
     // STA A,OBJYL+NOBJ
-    memory.currentPlayer.OBJYL[NOBJ] = 0x00;
     // STA XINC+NOBJ		;WITH NO VELOCITY
     memory.currentPlayer.XINC[NOBJ] = 0x00;
     // STA YINC+NOBJ
     memory.currentPlayer.YINC[NOBJ] = 0x00;
     // LDA I,10
     // STA A,OBJXH+NOBJ
-    memory.currentPlayer.OBJXH[NOBJ] = 0x10;
+    memory.currentPlayer.OBJX[NOBJ] = 0x1000;
     // LDA I,0C
     // STA A,OBJYH+NOBJ
-    memory.currentPlayer.OBJYH[NOBJ] = 0x0C;
+    memory.currentPlayer.OBJY[NOBJ] = 0x0C00;
     // RTS
 }
 
 /**
- * todo_NEWVEL - NEW RANDOM VELOCITY USING OLD
+ * NEWVEL - NEW RANDOM VELOCITY USING OLD
  *
  * ENTRY	(X)=INDEX FOR NEW VELOCITY
  *          (Y)=INDEX OF OLD VELOCITY
@@ -2150,90 +2213,95 @@ void PARAMS() {
     // 90$: RTS
 }
 
-// .SBTTL PICTUR-DISPLAY OBJECT PICTURE
-// ;PICTUR-DISPLAY OBJECT PICTURE
-// ;
-// ;ENTRY (Y)=SCALING FACTOR TO BE USED
-// ;	(XCOMP,XCOMP+3)=OBJECT POSITION
-// PICTUR: STY VGSIZE		;SET SCALING FACTOR
-// STX TEMP3		;SAVE X
-// LDA XCOMP+1		;PUT VALUES INTO RIGHT FORMAT
-// LSR
-// ROR XCOMP
-// LSR
-// ROR XCOMP
-// LSR
-// ROR XCOMP
-// STA XCOMP+1
-// LDA XCOMP+3
-// CLC
-// ADC I,04		;ADD 128-RANGE IS 127<Y<897
-// LSR
-// ROR XCOMP+2
-// LSR
-// ROR XCOMP+2
-// LSR
-// ROR XCOMP+2
-// STA XCOMP+3
-// LDX I,XCOMP
-// JSR VGLABS		;POSITION PIECE
-// LDA I,70		;WE WANT WAIT OF 7
-// SEC
-// SBC VGSIZE		;SCALE FACTOR EFFECT WAIT TOO
-// CMP I,0A0
-// BCC 30$			;IF 0 TO 90
-// LDA I,90
-// JSR VGWAIT		;TWO WAITS ARE NEEDED
-// LDA I,90		;SET MAX TO PREVENT TEARING
-// 30$: JSR VGWAIT		;WAIT FOR BEAMS
-// LDX TEMP3
-// LDA X,OBJ
-// BPL 35$			;IF NOT EXPLODING
-// CPX I,NOBJ
-// BEQ 33$			;IF THE SHIP
-// AND I,0C
-// LSR			;0, 2, 4 OR 6
-// TAY
-// LDA AY,EXPPIC
-// LDX AY,EXPPIC+1
-// BNE 78$			;ALWAYS
-//
-// 33$: JSR SHPEXP		;EXPLODE SHIP
-// LDX TEMP3		;RESTORE X
-// RTS
-//
-// 35$: CPX I,NOBJ
-// BEQ 50$			;IF THE SHIP
-// CPX I,NOBJ+1
-// BEQ 60$			;IF SAUCER
-// BCS 70$			;IF A TORPEDO (DOT)
-// AND I,18		;PICTURE NUMBER
-// LSR
-// LSR
-// TAY
-// LDA AY,ROCKS
-// LDX AY,ROCKS+1
-// 78$: JSR VGADD2		;ADD JSRL OF PICTURE TO VECTOR LIST
-// LDX TEMP3		;RESTORE X
-// RTS
-//
-// 50$: JSR SHPPIC		;DISPLAY SHIP PICTURE
-// LDX TEMP3
-// RTS
-//
-// 60$: LDA A,SAUCER
-// LDX A,SAUCER+1
-// BNE 78$			;ALWAYS
-//
-// 70$: LDA I,70
-// LDX I,0F0
-// JSR VGDOT		;PUT A DOT THERE
-// LDX TEMP3
-// LDA FRAME
-// AND I,03
-// BNE 75$			;EVERY FOURTH FRAME
-// DEC X,OBJ		;DECREMENT ACTIVE COUNT
-// 75$: RTS
+/**
+ * PICTUR-DISPLAY OBJECT PICTURE
+ * ENTRY (Y)=SCALING FACTOR TO BE USED
+ * 	(XCOMP,XCOMP+3)=OBJECT POSITION
+ */
+void todo_PICTUR(uint8_t Y_scaling_factor, uint8_t XCOMP_01_OBJX, uint8_t XCOMP_23_OBJY) {
+    //TODO: Remember to implement
+
+    // PICTUR: STY VGSIZE		;SET SCALING FACTOR
+    // STX TEMP3		;SAVE X
+    // LDA XCOMP+1		;PUT VALUES INTO RIGHT FORMAT
+    // LSR
+    // ROR XCOMP
+    // LSR
+    // ROR XCOMP
+    // LSR
+    // ROR XCOMP
+    // STA XCOMP+1
+    // LDA XCOMP+3
+    // CLC
+    // ADC I,04		;ADD 128-RANGE IS 127<Y<897
+    // LSR
+    // ROR XCOMP+2
+    // LSR
+    // ROR XCOMP+2
+    // LSR
+    // ROR XCOMP+2
+    // STA XCOMP+3
+    // LDX I,XCOMP
+    // JSR VGLABS		;POSITION PIECE
+    // LDA I,70		;WE WANT WAIT OF 7
+    // SEC
+    // SBC VGSIZE		;SCALE FACTOR EFFECT WAIT TOO
+    // CMP I,0A0
+    // BCC 30$			;IF 0 TO 90
+    // LDA I,90
+    // JSR VGWAIT		;TWO WAITS ARE NEEDED
+    // LDA I,90		;SET MAX TO PREVENT TEARING
+    // 30$: JSR VGWAIT		;WAIT FOR BEAMS
+    // LDX TEMP3
+    // LDA X,OBJ
+    // BPL 35$			;IF NOT EXPLODING
+    // CPX I,NOBJ
+    // BEQ 33$			;IF THE SHIP
+    // AND I,0C
+    // LSR			;0, 2, 4 OR 6
+    // TAY
+    // LDA AY,EXPPIC
+    // LDX AY,EXPPIC+1
+    // BNE 78$			;ALWAYS
+    //
+    // 33$: JSR SHPEXP		;EXPLODE SHIP
+    // LDX TEMP3		;RESTORE X
+    // RTS
+    //
+    // 35$: CPX I,NOBJ
+    // BEQ 50$			;IF THE SHIP
+    // CPX I,NOBJ+1
+    // BEQ 60$			;IF SAUCER
+    // BCS 70$			;IF A TORPEDO (DOT)
+    // AND I,18		;PICTURE NUMBER
+    // LSR
+    // LSR
+    // TAY
+    // LDA AY,ROCKS
+    // LDX AY,ROCKS+1
+    // 78$: JSR VGADD2		;ADD JSRL OF PICTURE TO VECTOR LIST
+    // LDX TEMP3		;RESTORE X
+    // RTS
+    //
+    // 50$: JSR SHPPIC		;DISPLAY SHIP PICTURE
+    // LDX TEMP3
+    // RTS
+    //
+    // 60$: LDA A,SAUCER
+    // LDX A,SAUCER+1
+    // BNE 78$			;ALWAYS
+    //
+    // 70$: LDA I,70
+    // LDX I,0F0
+    // JSR VGDOT		;PUT A DOT THERE
+    // LDX TEMP3
+    // LDA FRAME
+    // AND I,03
+    // BNE 75$			;EVERY FOURTH FRAME
+    // DEC X,OBJ		;DECREMENT ACTIVE COUNT
+    // 75$: RTS
+}
+
 //
 //
 // .SBTTL POINTS-ADD POINTS TO SCORE
@@ -2769,15 +2837,23 @@ void todo_UPDATE() {
 // ;	JMP COMP
 //
 //
-// ;COMP-COMPLEMENT ACCUMULATOR
-// ;
-// ;ENTRY	(A)=VALUE TO BE COMPLEMENTED
-// ;EXIT	(A)=ANSWER
-// ;USES	A
-// COMP: EOR I,0FF
-// CLC
-// ADC I,01
-// RTS
+/**
+ * COMP-COMPLEMENT ACCUMULATOR
+ * ENTRY	(A)=VALUE TO BE COMPLEMENTED
+ * EXIT     (A)=ANSWER
+ * USES     A
+ *
+ * @param A_value
+ * @return
+ */
+uint8_t COMP(uint8_t A_value) {
+    // COMP: EOR I,0FF
+    // CLC
+    // ADC I,01
+    A_value = (A_value ^ 0xFF) + 1;
+    // RTS
+    return A_value;
+}
 //
 // ATAN2: STA TEMP2+1		;DIVISOR (X)
 // TYA			;DIVIDEND (Y)
@@ -2942,7 +3018,7 @@ void HEX1(uint8_t A_digit, bool C_zero_suppression) {
 }
 
 /**
- * todo_RAND-RANDOM NUMBER GENERATOR
+ * RAND-RANDOM NUMBER GENERATOR
  *
  * EXIT	(A)=RANDOM NUMBER
  */

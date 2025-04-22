@@ -126,7 +126,7 @@ _Noreturn void PWRON() {
 }
 
 /**
- * todo_STEST - SELF TEST PROCESSING
+ * STEST - SELF TEST PROCESSING
  */
 void todo_STEST() {
     assert(1 == 2); // TODO: Remember to implement

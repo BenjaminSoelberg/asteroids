@@ -15,6 +15,8 @@
 //                              ;PLUS 2 SAUCER TORPEDOES
 //                              ;PLUS 4 SHIP TORPEDOES
 #define NOBJ 27
+#define SHIP 27
+#define SAUCER 28
 
 #define JSRL (0xC000)
 
@@ -83,14 +85,9 @@ extern uint16_t VGMSGA[];
 typedef struct {
     uint8_t VGSIZE;             //	VGSIZE:     .BLKB 1			;SCALING SIZE (0,10,20,...,F0)
     uint8_t VGBRIT;             //	VGBRIT:     .BLKB 1			;VECTOR BRIGHTNESS (0=OFF, F0=MAX, 10INC)
-    union {
-        uint8_t VGLIST[2];     //	VGLIST:     .BLKB 2			;VECTOR LIST POINTER
-        uint16_t VGLIST_16;
-    } __attribute__((packed));
-    union {
-        uint8_t XCOMP[4];       //	XCOMP:      .BLKB 4			;X COMPONENT FOR VECTORS
-        uint16_t XCOMP_16[2];
-    } __attribute__((packed));
+    //uint8_t VGLIST[2];        //	VGLIST:     .BLKB 2			;VECTOR LIST POINTER
+    uint16_t VGLIST_16;         //	16 bit replacement
+    //uint8_t XCOMP[4];         //	XCOMP:      .BLKB 4			;X COMPONENT FOR VECTORS
     uint8_t TEMP1[2];           //	TEMP1:      .BLKB 2			;SCRATCH
     uint8_t TEMP2[2];           //	TEMP2:      .BLKB 2
     uint8_t TEMP3[8];           //	TEMP3:      .BLKB 8			;8 CKSUMS IN SELF TEST
@@ -145,12 +142,14 @@ typedef struct {
     uint8_t OBJ[NOBJ + 8];      //  OBJ:	    .BLKB NOBJ+8		;ZERO IF OBJECT NOT ACTIVE- OTHERWISE PICTURE NUMBER
     //                          //                                  ;BITS 0-2=SIZE, 1=SMALL, 2=MEDIUM, 4=LARGE
     //                          //                                  ;BITS 3-6=PICTURE NUMBER
-    uint8_t XINC[NOBJ + 8];     //  XINC:	    .BLKB NOBJ+8		;X INCREMENT FOR UPDATING POSITION(S8999.BBB)
-    uint8_t YINC[NOBJ + 8];     //  YINC:       .BLKB NOBJ+8		;Y INCREMENT FOR UPDATING POSITION(S9999.BBB)
-    uint8_t OBJXH[NOBJ + 8];    //  OBJXH:      .BLKB NOBJ+8		;X POSITION OF OBJECT (HIGH ORDER)(00099999)
-    uint8_t OBJYH[NOBJ + 8];    //  OBJYH:      .BLKB NOBJ+8		;Y POSITION OF OBJECT (HIGH ORDER)(00099999)
-    uint8_t OBJXL[NOBJ + 8];    //  OBJXL:      .BLKB NOBJ+8		;X POSITION OF OBJECT (LOW ORDER)(99999.BBB)
-    uint8_t OBJYL[NOBJ + 8];    //  OBJYL:      .BLKB NOBJ+8		;Y POSITION OF OBJECT (LOW ORDER)(99999.BBB)
+    int8_t XINC[NOBJ + 8];      //  XINC:	    .BLKB NOBJ+8		;X INCREMENT FOR UPDATING POSITION(S8999.BBB)
+    int8_t YINC[NOBJ + 8];      //  YINC:       .BLKB NOBJ+8		;Y INCREMENT FOR UPDATING POSITION(S9999.BBB)
+    //uint8_t OBJXH[NOBJ + 8];  //  OBJXH:      .BLKB NOBJ+8		;X POSITION OF OBJECT (HIGH ORDER)(00099999)
+    //uint8_t OBJYH[NOBJ + 8];  //  OBJYH:      .BLKB NOBJ+8		;Y POSITION OF OBJECT (HIGH ORDER)(00099999)
+    //uint8_t OBJXL[NOBJ + 8];  //  OBJXL:      .BLKB NOBJ+8		;X POSITION OF OBJECT (LOW ORDER)(99999.BBB)
+    //uint8_t OBJYL[NOBJ + 8];  //  OBJYL:      .BLKB NOBJ+8		;Y POSITION OF OBJECT (LOW ORDER)(99999.BBB)
+    uint16_t OBJX[NOBJ + 8];    //  16 bit replacement
+    uint16_t OBJY[NOBJ + 8];    //  16 bit replacement
     uint8_t SROCKS;             //  SROCKS:     .BLKB 1		    	;NUMBER OF ROCKS TO START WITH
     uint8_t NROCKS;             //  NROCKS:     .BLKB 1		    	;CURRENT NUMBER OF ROCKS
     uint8_t EDELAY;             //  EDELAY:     .BLKB 1	    		;DELAY BEFORE ENEMY ENTRY OR FIRING
