@@ -16,8 +16,10 @@
 #define DVG_YY_MASK 0b0000000000000011
 #define DVG_MAX_YY 0x3
 
+#define DVG_MAX_LOCAL_SF 9
+
 #define DVG_MIN_SF 0
-#define DVG_MAX_SF 9
+#define DVG_MAX_SF 15
 #define DVG_SF_MASK 0xF
 
 #define DVG_MIN_SP 0

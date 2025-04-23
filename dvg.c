@@ -71,8 +71,8 @@ void dvg_parse_vec(cairo_t *cr, uint16_t word_1, uint16_t word_2) {
     delta_y = (int16_t) (y_sign ? -delta_y : delta_y);
     delta_x = (int16_t) (x_sign ? -delta_x : delta_x);
 
-    int16_t scaled_delta_y = (int16_t) (delta_y >> (DVG_MAX_SF - sf));
-    int16_t scaled_delta_x = (int16_t) (delta_x >> (DVG_MAX_SF - sf));
+    int16_t scaled_delta_y = (int16_t) (delta_y >> (DVG_MAX_LOCAL_SF - sf));
+    int16_t scaled_delta_x = (int16_t) (delta_x >> (DVG_MAX_LOCAL_SF - sf));
 
     printf("0x%04X VEC scale=%d, bri=%d, x=%d, y=%d  (%d, %d)\n", current_pc, sf, brightness, delta_x, delta_y,
            scaled_delta_x, scaled_delta_y);
@@ -143,7 +143,6 @@ void dvg_parse_svec(cairo_t *cr, uint16_t word) {
     uint8_t ss = (word >> 11 & DVG_S0_MASK) | (word >> 2 & DVG_S1_MASK);
     assert(ss <= DVG_MAX_SS);
     uint8_t sf = 1 << (ss + 1);
-    assert(sf <= DVG_MAX_SF);
 
     uint8_t brightness = word >> 4 & DVG_BRIGHTNESS_MASK;
     assert(brightness <= DVG_MAX_BRIGHTNESS);
