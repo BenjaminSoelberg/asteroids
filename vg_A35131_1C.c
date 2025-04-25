@@ -1,10 +1,10 @@
 #include "vg_A35131_1C.h"
 
-void VGDOT(uint8_t A_timer, uint8_t X_intensity);
+#define VGWAIT_MAX_TIMER 0x90
+#define VGDOT_MAX_TIMER 0x90
+#define VGDOT_MAX_INTENSITY 0xF0
 
 void fixme_VGJMP1(uint16_t vg_instruction);
-
-void VGLABS(uint16_t x, uint16_t y);
 
 void VGHAL1(uint8_t opcode);
 
@@ -346,6 +346,10 @@ void VGSABS(uint8_t A_x, uint8_t X_y) {
  * @param y
  */
 void VGLABS(uint16_t x, uint16_t y) {
+    assert(memory.page0.VGSIZE <= 0xF0);
+    assert(memory.page0.VGSIZE % 0x10 == 0);
+    assert(x <= 0x0FFF);
+    assert(y <= 0x0FFF);
     //  VGLABS:	LDA ZX,2
     //  LDY I,0
     //  STA NY,VGLIST		;Y LSB
@@ -522,6 +526,7 @@ void VGRTSL() {
  * USES     A,X,Y,(VGLIST,VGLIST+1)
  */
 void VGWAIT(uint8_t A_timer) {
+    assert(A_timer <= VGWAIT_MAX_TIMER);
     assert(A_timer % 0x10 == 0);
     //  VGWAIT:	LDX I,0			;NO INTENSITY
     //  ;	JMP VGDOT
@@ -543,6 +548,11 @@ void VGWAIT(uint8_t A_timer) {
  * @param X_intensity
  */
 void VGDOT(uint8_t A_timer, uint8_t X_intensity) {
+    assert(A_timer <= VGDOT_MAX_TIMER);
+    assert(A_timer % 0x10 == 0);
+    assert(X_intensity <= VGDOT_MAX_INTENSITY);
+    assert(X_intensity % 0x10 == 0);
+
     //  VGDOT:	LDY I,1
     //  STA NY,VGLIST		;SAVE TIMER VALUE
     vg_memory_put(1, A_timer);
