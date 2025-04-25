@@ -15,30 +15,31 @@
 //                              ;PLUS 2 SAUCER TORPEDOES
 //                              ;PLUS 4 SHIP TORPEDOES
 #define NOBJ 27
-#define SHIP 27
-#define SAUCER 28
+#define SHIP_OBJ 27
+#define SAUCER_OBJ 28
+#define LAST_OBJ_INDEX (NOBJ + 0x07)
 
 #define JSRL (0xC000)
 
 // Offsets below are all relative to the start of VECMEM
-#define SHIP0  ((0x0A90 - 0x0800 + 0x1000) / 2)
-#define SHIP1  ((0x0AA8 - 0x0800 + 0x1000) / 2)
-#define SHIP2  ((0x0ACC - 0x0800 + 0x1000) / 2)
-#define SHIP3  ((0x0AF0 - 0x0800 + 0x1000) / 2)
-#define SHIP4  ((0x0B14 - 0x0800 + 0x1000) / 2)
-#define SHIP5  ((0x0B36 - 0x0800 + 0x1000) / 2)
-#define SHIP6  ((0x0B5A - 0x0800 + 0x1000) / 2)
-#define SHIP7  ((0x0B7E - 0x0800 + 0x1000) / 2)
-#define SHIP8  ((0x0BA2 - 0x0800 + 0x1000) / 2)
-#define SHIP9  ((0x0BC6 - 0x0800 + 0x1000) / 2)
-#define SHIP10 ((0x0BEA - 0x0800 + 0x1000) / 2)
-#define SHIP11 ((0x0C0E - 0x0800 + 0x1000) / 2)
-#define SHIP12 ((0x0C32 - 0x0800 + 0x1000) / 2)
-#define SHIP13 ((0x0C56 - 0x0800 + 0x1000) / 2)
-#define SHIP14 ((0x0C7A - 0x0800 + 0x1000) / 2)
-#define SHIP15 ((0x0C9E - 0x0800 + 0x1000) / 2)
-#define SHIP16 ((0x0CC2 - 0x0800 + 0x1000) / 2)
-#define SHIP17 ((0x0CDA - 0x0800 + 0x1000) / 2)
+#define SHIP0      ((0x0A90 - 0x0800 + 0x1000) / 2)
+#define SHIP1      ((0x0AA8 - 0x0800 + 0x1000) / 2)
+#define SHIP2      ((0x0ACC - 0x0800 + 0x1000) / 2)
+#define SHIP3      ((0x0AF0 - 0x0800 + 0x1000) / 2)
+#define SHIP4      ((0x0B14 - 0x0800 + 0x1000) / 2)
+#define SHIP5      ((0x0B36 - 0x0800 + 0x1000) / 2)
+#define SHIP6      ((0x0B5A - 0x0800 + 0x1000) / 2)
+#define SHIP7      ((0x0B7E - 0x0800 + 0x1000) / 2)
+#define SHIP8      ((0x0BA2 - 0x0800 + 0x1000) / 2)
+#define SHIP9      ((0x0BC6 - 0x0800 + 0x1000) / 2)
+#define SHIP10     ((0x0BEA - 0x0800 + 0x1000) / 2)
+#define SHIP11     ((0x0C0E - 0x0800 + 0x1000) / 2)
+#define SHIP12     ((0x0C32 - 0x0800 + 0x1000) / 2)
+#define SHIP13     ((0x0C56 - 0x0800 + 0x1000) / 2)
+#define SHIP14     ((0x0C7A - 0x0800 + 0x1000) / 2)
+#define SHIP15     ((0x0C9E - 0x0800 + 0x1000) / 2)
+#define SHIP16     ((0x0CC2 - 0x0800 + 0x1000) / 2)
+#define SHIP17     ((0x0CDA - 0x0800 + 0x1000) / 2)
 
 #define CHAR_SPACE ((0x0E58 - 0x0800 + 0x1000) / 2)
 #define CHAR_0     ((0x0DBA - 0x0800 + 0x1000) / 2)
@@ -80,7 +81,22 @@
 
 #define ASTMSG     ((0x08A4 - 0x0800 + 0x1000) / 2)
 
+#define EXP10      ((0x08F8 - 0x0800 + 0x1000) / 2)
+#define EXP12      ((0x08FA - 0x0800 + 0x1000) / 2)
+#define EXP14      ((0x08FC - 0x0800 + 0x1000) / 2)
+#define EXP16      ((0x08FE - 0x0800 + 0x1000) / 2)
+
+#define ROCK1      ((0x09DE - 0x0800 + 0x1000) / 2)
+#define ROCK2      ((0x09E0 - 0x0800 + 0x1000) / 2)
+#define ROCK3      ((0x09E2 - 0x0800 + 0x1000) / 2)
+#define ROCK4      ((0x09E4 - 0x0800 + 0x1000) / 2)
+
+#define SAUCER1     ((0x0A52 - 0x0800 + 0x1000) / 2)
+
 extern uint16_t VGMSGA[];
+extern uint16_t EXPPIC[];
+extern uint16_t ROCKS[];
+extern uint16_t SAUCER[];
 
 typedef struct {
     uint8_t VGSIZE;             //	VGSIZE:     .BLKB 1			;SCALING SIZE (0,10,20,...,F0)

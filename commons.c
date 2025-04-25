@@ -2,6 +2,7 @@
 
 MEMORY memory;
 
+// This is also defined in the ROM
 uint16_t VGMSGA[] = {
         JSRL | CHAR_SPACE, JSRL | CHAR_0, JSRL | CHAR_1, JSRL | CHAR_2,
         JSRL | CHAR_3, JSRL | CHAR_4, JSRL | CHAR_5, JSRL | CHAR_6,
@@ -13,6 +14,27 @@ uint16_t VGMSGA[] = {
         JSRL | CHAR_R, JSRL | CHAR_S, JSRL | CHAR_T, JSRL | CHAR_U,
         JSRL | CHAR_V, JSRL | CHAR_W, JSRL | CHAR_X, JSRL | CHAR_Y,
         JSRL | CHAR_Z
+};
+
+// This is also defined in the ROM
+uint16_t EXPPIC[] = {
+        JSRL | EXP10,
+        JSRL | EXP12,
+        JSRL | EXP14,
+        JSRL | EXP16
+};
+
+// This is also defined in the ROM
+uint16_t ROCKS[] = {
+        JSRL | ROCK1,
+        JSRL | ROCK2,
+        JSRL | ROCK3,
+        JSRL | ROCK4
+};
+
+// This is also defined in the ROM
+uint16_t SAUCER[] = {
+        JSRL | SAUCER1
 };
 
 int32_t max(int32_t a, int32_t b) {
