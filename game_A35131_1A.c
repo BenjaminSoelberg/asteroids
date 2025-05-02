@@ -217,7 +217,11 @@ void RSAUCR();
 
 uint8_t COMP(uint8_t A_value);
 
-void todo_PICTUR(uint8_t Y_scaling_factor, uint8_t XCOMP_01_OBJX, uint8_t XCOMP_23_OBJY);
+void PICTUR(uint8_t Y_scaling_factor, uint8_t X_object_index);
+
+void todo_SHPEXP();
+
+void todo_SHPPIC();
 
 /**
  *  .SBTTL MAIN LINE LOOP
@@ -566,7 +570,7 @@ bool CHKST1() { // Always returns false (as the original function did)
 
     // 60$: LDA OBJ+NOBJ
     // BNE 80$			;IF SHIP ALIVE OR EXPLODING
-    if (memory.currentPlayer.OBJ[NOBJ] != 0) {
+    if (memory.currentPlayer.OBJ[SHIP_OBJ] != 0) {
         return false;
     }
     // LDA SDELAY
@@ -1478,21 +1482,26 @@ void INIT1() {
 // LDA I,01
 // LDX I,0F8		;VCTR 4,0,0
 // ;	JMP VGADD2
-//
-//
-// ;VGADD2-ADD 2 WORDS TO VECTOR LIST
-// ;
-// ;ENTRY	(A)=FIRST BYTE
-// ;	(X)=SECOND BYTE
-// ;EXIT	(VGLIST,VGLIST+1)=NEW VECTOR LIST POINTER
-// ;USES	A,Y
-// VGADD2: LDY I,0
-// STA NY,VGLIST
-// INY
-// TXA
-// STA NY,VGLIST
-// JMP VGADD		;UPDATE VECTOR POINTER
-//
+
+/**
+ * VGADD2-ADD 2 WORDS TO VECTOR LIST
+ *
+ * ENTRY	(A)=FIRST BYTE
+ *          (X)=SECOND BYTE
+ * EXIT     (VGLIST,VGLIST+1)=NEW VECTOR LIST POINTER
+ * USES     A,Y
+ */
+void VGADD2(uint16_t XA_instruction) {
+    // VGADD2: LDY I,0
+    // STA NY,VGLIST
+    // INY
+    // TXA
+    // STA NY,VGLIST
+    vg_memory_put16(0, XA_instruction);
+    // JMP VGADD		;UPDATE VECTOR POINTER
+    VGADD(1);
+}
+
 // ;VGCHAR-DISPLAY A CHARACTER
 // ;
 // ;ENTRY	(Y)=INDEX OF CHARACTER (0=BLANK,2=0,4=1,ETC)
@@ -1546,7 +1555,7 @@ void MOTION() {
     // 13$: DEX
     // BPL 10$			;MORE OBJECTS
     // RTS
-    for (int8_t X_object_index = NOBJ + 0x07; X_object_index >= 0; X_object_index--) {
+    for (int8_t X_object_index = LAST_OBJ_INDEX; X_object_index >= 0; X_object_index--) {
         uint8_t A_object = memory.currentPlayer.OBJ[X_object_index];
         // 12$: BPL 14$			;IF OBJECT ACTIVE
         if ((int8_t) A_object >= 0) {
@@ -1560,7 +1569,7 @@ void MOTION() {
         A_object = COMP(A_object) >> 4; // Time ?
         // CPX I,NOBJ
         // BNE 16$			;NOT THE SHIP
-        if (X_object_index == NOBJ) {
+        if (X_object_index == SHIP_OBJ) {
             // LDA FRAME
             // AND I,01		;ADD 1 EVERYOTHER FRAME
             // LSR
@@ -1576,7 +1585,7 @@ void MOTION() {
         if ((int8_t) A_object >= 0) {
             // CPX I,NOBJ
             // BEQ 18$			;IF THE SHIP
-            if (X_object_index != NOBJ) {
+            if (X_object_index != SHIP_OBJ) {
                 // BCS 40$			;IF THE SAUCER
                 if (X_object_index >= NOBJ) {
                     goto _40;
@@ -1617,7 +1626,7 @@ void MOTION() {
         Y_scaling_factor += 0x10;
         // CPX I,NOBJ
         // BNE 41$			;NOT THE SHIP
-        if (X_object_index == NOBJ) {
+        if (X_object_index == SHIP_OBJ) {
             // LDA I,0			;NO SCALING FOR SHIP EXPLOSION
             Y_scaling_factor = 0x00;
         }
@@ -1633,7 +1642,7 @@ void MOTION() {
         // STA XCOMP+3
         // JMP 30$
         /* Goto avoided and asm inlined */
-        todo_PICTUR(Y_scaling_factor, memory.currentPlayer.OBJX[X_object_index], memory.currentPlayer.OBJY[X_object_index]);
+        PICTUR(Y_scaling_factor, X_object_index);
         continue;
 
         _14:
@@ -1656,7 +1665,7 @@ void MOTION() {
         }
         // CPX I,NOBJ+1
         // BNE 19$			;NOT THE SAUCER
-        if (X_object_index == NOBJ + 1) {
+        if (X_object_index == SAUCER_OBJ) {
             // JSR RSAUCR		;RESET SAUCER VALUES
             RSAUCR();
             // JMP 13$			;ALWAYS
@@ -1710,7 +1719,7 @@ void MOTION() {
             }
         }
         // 30$: JSR PICTUR		;DISPLAY PICTURE
-        todo_PICTUR(Y_scaling_factor, memory.currentPlayer.OBJX[X_object_index], memory.currentPlayer.OBJY[X_object_index]);
+        PICTUR(Y_scaling_factor, X_object_index);
         // JMP 13$
     }
 }
@@ -1721,11 +1730,11 @@ void RSAUCR() {
     memory.currentPlayer.EDELAY = memory.currentPlayer.SDELAY;
     // LDA I,0
     // STA OBJ+NOBJ+1		;CLEAR SAUCER
-    memory.currentPlayer.OBJ[NOBJ + 1] = 0x00;
+    memory.currentPlayer.OBJ[SAUCER_OBJ] = 0x00;
     // STA XINC+NOBJ+1		;STOP SPEED FOR NEWAST
-    memory.currentPlayer.XINC[NOBJ + 1] = 0x00;
+    memory.currentPlayer.XINC[SAUCER_OBJ] = 0x00;
     // STA YINC+NOBJ+1
-    memory.currentPlayer.YINC[NOBJ + 1] = 0x00;
+    memory.currentPlayer.YINC[SAUCER_OBJ] = 0x00;
     // RTS
 }
 
@@ -1910,16 +1919,16 @@ void NEWAST() {
 
     // LDA RDELAY
     // BNE 65$			;DELAY FIRST - CLEAR OLD ROCKS IF ANY
-    if (memory.currentPlayer.RDELAY == 0) {
+    if (memory.currentPlayer.RDELAY == 0x00) {
         // LDA OBJ+NOBJ+1
         // BNE 90$			;NOT WHILE SAUCER IS THERE
-        if (memory.currentPlayer.OBJ[NOBJ + 1] > 0) {
+        if (memory.currentPlayer.OBJ[SAUCER_OBJ] > 0x00) {
             return;
         }
         // STA XINC+NOBJ+1		;CLEAR SPEED OF SAUCER
         // STA YINC+NOBJ+1
-        memory.currentPlayer.XINC[NOBJ + 1] = 0;
-        memory.currentPlayer.YINC[NOBJ + 1] = 0;
+        memory.currentPlayer.XINC[SAUCER_OBJ] = 0x00;
+        memory.currentPlayer.YINC[SAUCER_OBJ] = 0x00;
         // INC DIFCTY
         // LDA DIFCTY
         // CMP I,11.
@@ -2011,15 +2020,15 @@ void NEWSHP() {
     // STA A,OBJXL+NOBJ	;POSITION IN MIDDLE
     // STA A,OBJYL+NOBJ
     // STA XINC+NOBJ		;WITH NO VELOCITY
-    memory.currentPlayer.XINC[NOBJ] = 0x00;
+    memory.currentPlayer.XINC[SHIP_OBJ] = 0x00;
     // STA YINC+NOBJ
-    memory.currentPlayer.YINC[NOBJ] = 0x00;
+    memory.currentPlayer.YINC[SHIP_OBJ] = 0x00;
     // LDA I,10
     // STA A,OBJXH+NOBJ
-    memory.currentPlayer.OBJX[NOBJ] = 0x1000;
+    memory.currentPlayer.OBJX[SHIP_OBJ] = 0x1000;
     // LDA I,0C
     // STA A,OBJYH+NOBJ
-    memory.currentPlayer.OBJY[NOBJ] = 0x0C00;
+    memory.currentPlayer.OBJY[SHIP_OBJ] = 0x0C00;
     // RTS
 }
 
@@ -2106,7 +2115,7 @@ void PARAMS() {
             // LDA OBJ+NOBJ
             // ORA RENTRY
             // BNE 10$			;IF HE HAS APPEARED
-            if ((memory.currentPlayer.OBJ[NOBJ] | memory.page0.RENTRY) == 0) {
+            if ((memory.currentPlayer.OBJ[SHIP_OBJ] | memory.page0.RENTRY) == 0) {
                 // LDA SDELAY
                 // BMI 10$			;HE HAS DIED
                 if (((int8_t) memory.currentPlayer.SDELAY) > 0) {
@@ -2181,7 +2190,7 @@ void PARAMS() {
                 // LDA OBJ+NOBJ
                 // ORA RENTRY
                 // BNE 30$			;IF HE HAS APPEARED
-                if ((memory.currentPlayer.OBJ[NOBJ] | memory.page0.RENTRY) == 0) {
+                if ((memory.currentPlayer.OBJ[SHIP_OBJ] | memory.page0.RENTRY) == 0) {
                     // LDA SDELAY
                     // BMI 30$			;HE HAS DIED
                     if (((int8_t) memory.currentPlayer.SDELAY) >= 0) {
@@ -2215,13 +2224,12 @@ void PARAMS() {
 
 /**
  * PICTUR-DISPLAY OBJECT PICTURE
- * ENTRY (Y)=SCALING FACTOR TO BE USED
- * 	(XCOMP,XCOMP+3)=OBJECT POSITION
+ * ENTRY    (Y)=SCALING FACTOR TO BE USED
+ *          (XCOMP,XCOMP+3)=OBJECT POSITION
  */
-void todo_PICTUR(uint8_t Y_scaling_factor, uint8_t XCOMP_01_OBJX, uint8_t XCOMP_23_OBJY) {
-    //TODO: Remember to implement
-
+void PICTUR(uint8_t Y_scaling_factor, uint8_t X_object_index) {
     // PICTUR: STY VGSIZE		;SET SCALING FACTOR
+    memory.page0.VGSIZE = Y_scaling_factor;
     // STX TEMP3		;SAVE X
     // LDA XCOMP+1		;PUT VALUES INTO RIGHT FORMAT
     // LSR
@@ -2243,54 +2251,91 @@ void todo_PICTUR(uint8_t Y_scaling_factor, uint8_t XCOMP_01_OBJX, uint8_t XCOMP_
     // STA XCOMP+3
     // LDX I,XCOMP
     // JSR VGLABS		;POSITION PIECE
+    VGLABS(memory.currentPlayer.OBJX[X_object_index] >> 3, (memory.currentPlayer.OBJY[X_object_index] + 4) >> 3); // Div X & Y by 8 (remove fixed point) and also round Y up.
+
     // LDA I,70		;WE WANT WAIT OF 7
     // SEC
     // SBC VGSIZE		;SCALE FACTOR EFFECT WAIT TOO
+    uint8_t A = 0x70 - memory.page0.VGSIZE;
+
     // CMP I,0A0
     // BCC 30$			;IF 0 TO 90
-    // LDA I,90
-    // JSR VGWAIT		;TWO WAITS ARE NEEDED
-    // LDA I,90		;SET MAX TO PREVENT TEARING
+    if (A >= 0xA0) {
+        // LDA I,90
+        // JSR VGWAIT		;TWO WAITS ARE NEEDED
+        VGWAIT(0x90);
+        // LDA I,90		;SET MAX TO PREVENT TEARING    }
+        A = 0x90;
+    }
     // 30$: JSR VGWAIT		;WAIT FOR BEAMS
+    VGWAIT(A);
+
     // LDX TEMP3
     // LDA X,OBJ
+    A = memory.currentPlayer.OBJ[X_object_index];
     // BPL 35$			;IF NOT EXPLODING
-    // CPX I,NOBJ
-    // BEQ 33$			;IF THE SHIP
-    // AND I,0C
-    // LSR			;0, 2, 4 OR 6
-    // TAY
-    // LDA AY,EXPPIC
-    // LDX AY,EXPPIC+1
-    // BNE 78$			;ALWAYS
-    //
-    // 33$: JSR SHPEXP		;EXPLODE SHIP
-    // LDX TEMP3		;RESTORE X
-    // RTS
-    //
+    if ((int8_t) A < 0) {
+        // CPX I,NOBJ
+        // BEQ 33$			;IF THE SHIP
+        if (X_object_index != SHIP_OBJ) {
+            // AND I,0C
+            // LSR			;0, 2, 4 OR 6
+            // TAY
+            // LDA AY,EXPPIC
+            // LDX AY,EXPPIC+1
+            // BNE 78$			;ALWAYS
+            /* Goto avoided and asm inlined */
+            VGADD2(EXPPIC[(X_object_index & 0x0C) >> 2]);
+        } else {
+            // 33$: JSR SHPEXP		;EXPLODE SHIP
+            // LDX TEMP3		;RESTORE X
+            todo_SHPEXP();
+            // RTS
+        }
+
+        return;
+    }
+
     // 35$: CPX I,NOBJ
     // BEQ 50$			;IF THE SHIP
-    // CPX I,NOBJ+1
-    // BEQ 60$			;IF SAUCER
-    // BCS 70$			;IF A TORPEDO (DOT)
-    // AND I,18		;PICTURE NUMBER
-    // LSR
-    // LSR
-    // TAY
-    // LDA AY,ROCKS
-    // LDX AY,ROCKS+1
-    // 78$: JSR VGADD2		;ADD JSRL OF PICTURE TO VECTOR LIST
-    // LDX TEMP3		;RESTORE X
-    // RTS
-    //
-    // 50$: JSR SHPPIC		;DISPLAY SHIP PICTURE
-    // LDX TEMP3
-    // RTS
-    //
+    if (X_object_index != SHIP_OBJ) {
+        // CPX I,NOBJ+1
+        // BEQ 60$			;IF SAUCER
+        if (X_object_index == SAUCER_OBJ) {
+            /* Goto avoided and asm inlined */
+            VGADD2(SAUCER[0]);
+        } else if (X_object_index > SAUCER_OBJ) {
+            // BCS 70$			;IF A TORPEDO (DOT)
+            /* Goto avoided and asm inlined */
+            VGDOT(0x70, 0xF0);
+            if ((memory.page0.FRAME[0] & 0x03) == 0x03) {
+                memory.currentPlayer.OBJ[X_object_index]--;
+            }
+        } else {
+            // AND I,18		;PICTURE NUMBER
+            // LSR
+            // LSR
+            // TAY
+            // LDA AY,ROCKS
+            // LDX AY,ROCKS+1
+            // 78$:	JSR VGADD2		;ADD JSRL OF PICTURE TO VECTOR LIST
+            VGADD2(ROCKS[(X_object_index & 0x18) >> 3]);
+            // LDX TEMP3		;RESTORE X
+            // RTS
+        }
+    } else {
+        // 50$: JSR SHPPIC		;DISPLAY SHIP PICTURE
+        todo_SHPPIC();
+        // LDX TEMP3
+        // RTS
+    }
+
+    /* Goto avoided and asm inlined above */
     // 60$: LDA A,SAUCER
     // LDX A,SAUCER+1
     // BNE 78$			;ALWAYS
-    //
+
+    /* Goto avoided and asm inlined above */
     // 70$: LDA I,70
     // LDX I,0F0
     // JSR VGDOT		;PUT A DOT THERE
@@ -2440,148 +2485,156 @@ bool todo_SCORES() {
 // DEX
 // BPL SEARC1		;LOOP TIL EXHAUSTED
 // 20$: RTS
-//
-//
-// .SBTTL SHPEXP-SHIP EXPLODING PICTURES
-// ;SHPEXP-SHP EXPLODING PICTURES
-// ;
-// SHPEXP: LDA OBJ+NOBJ
-// CMP I,0A2
-// BCS 20$			;IF NOT THE FIRST EXPLOSION
-// LDX I,10.		;2*NUMBER OF PIECES -2
-// 10$: LDA X,EXPDIR		;INITIALIZE POSITIONS OF PIECES
-// LSR			;DIVIDE BY 16
-// LSR
-// LSR
-// LSR
-// CLC
-// ADC I,0F8
-// EOR I,0F8		;SIGN EXTEND
-// STA X,SHIPX+1
-// LDA X,EXPDIR+1
-// LSR			;DIVIDE BY 16
-// LSR
-// LSR
-// LSR
-// CLC
-// ADC I,0F8
-// EOR I,0F8		;SIGN EXTEND
-// STA X,SHIPY+1
-// DEX
-// DEX
-// BPL 10$			;LOOP FOR ALL PIECES
-// 20$: LDA OBJ+NOBJ
-// EOR I,0FF		;0 TO 5F
-// AND I,70
-// LSR
-// LSR
-// LSR			;0 TO A
-// TAX			;STARTING INDEX
-// 25$: STX TEMP1+1
-// LDY I,0
-// LDA AX,EXPDIR
-// BPL 27$
-// DEY			;SIGN EXTENSION (Y=0FF)
-// 27$: CLC
-// ADC ZX,SHIPX
-// STA ZX,SHIPX		;LSB
-// TYA
-// ADC ZX,SHIPX+1
-// STA ZX,SHIPX+1		;MSB-ACTUAL COUNT OF X-Y LINES
-// STA XCOMP
-// STY XCOMP+1
-// LDY I,0
-// LDA AX,EXPDIR+1
-// BPL 28$
-// DEY			;SIGN EXTENSION (Y=0FF)
-// 28$: CLC
-// ADC ZX,SHIPY
-// STA ZX,SHIPY
-// TYA
-// ADC ZX,SHIPY+1
-// STA ZX,SHIPY+1
-// STA XCOMP+2
-// STY XCOMP+3
-// LDA VGLIST
-// STA TEMP2
-// LDA VGLIST+1
-// STA TEMP2+1
-// JSR VGVCTR		;DRAW VECTOR TO START OF SHIP PIECE
-// LDY TEMP1+1
-// LDA AY,EXPSHP
-// LDX AY,EXPSHP+1
-// JSR VGADD2		;ADD SHIP PIECE TO VECTOR LIST
-// LDY TEMP1+1
-// LDA AY,EXPSHP+1
-// EOR I,04		;REVERSE SIGN
-// TAX
-// LDA AY,EXPSHP
-// AND I,0F		;NO INTENSITY
-// EOR I,04		;REVERSE SIGN
-// JSR VGADD2
-// LDY I,0FF
-// 30$: INY
-// LDA NY,TEMP2
-// STA NY,VGLIST		;REVERSE VECTOR BACK TO MIDDLE
-// INY
-// LDA NY,TEMP2
-// EOR I,04		;REVERSE SIGN
-// STA NY,VGLIST
-// CPY I,03
-// BCC 30$
-// JSR VGADD		;UPDATE VGUST
-// LDX TEMP1+1
-// DEX
-// DEX
-// BPL 25$			;LOOP THRU ALL PIECES
-// RTS
-//
-// .SBTTL SHPPIC-DISPLAY SHIP PICTURE
-// ;SHPPIC-DISPLAY SHIP PICTURE
-// ;
-// ;ENTRY	(ANGLE)=SHIP ROTATION (0 TO FF)
-// ;EXIT	(VGLIST,VGLIST+1)=UPDATED VECTOR LIST POINTER
-// ;USES	A,X,Y,(TEMP1,TEMP1+1),(TEMP2,TEMP2+1)
-// SHPPIC: LDX I,0
-// STX TEMP4+2		;NO CHANGE IN BRITENESS
-// LDY I,0			;FLAG X=X AND Y=Y
-// LDA ANGLE
-// BPL 10$			;IF IN VECTORS 0,1,2 OR 3
-// LDY I,04		;Y=-Y
-// TXA			;LDA I,0
-// SEC
-// SBC ANGLE		;256.-ANGLE=NEW ANGLE
-// 10$: STA TEMP1		;0 TO 80
-// BIT TEMP1
-// BMI 15$			;IF ANGLE=80
-// BVC 20$			;IF IN SECTORS 0 OR 1
-// 15$: LDX I,04		;X=-X
-// LDA I,80
-// SEC
-// SBC TEMP1		;128.-ANGLE=NEW ANGLE
-// 20$: STX TEMP1
-// STY TEMP1+1		;SAVE MASKS FOR CPYVEC
-// LSR			;ROTATION/2=PICTURE NUMBER*2
-// AND I,0FE		;MUST BE EVEN
-// TAY
-// LDA AY,SHIPS
-// LDX AY,SHIPS+1		;GET PICTURE ADDRESS
-// JSR CPYVEC		;COPY VECTOR AND CHECK SIGNS AND X/Y
-// LDA A,THRUST
-// BPL 1$			;IF NO THRUST
-// LDA FRAME
-// AND I,04
-// BEQ 1$			;FLICKER AT 15 HZ
-// INY
-// INY
-// SEC			;SKIP OVER RTSL
-// LDX TEMP2+1
-// TYA
-// ADC TEMP2		;ADD 3+ INDEX TO GET START OF FLAME
-// BCC 30$			;NO PAGE CROSSING
-// INX
-// 30$: JSR CPYVEC		;SHOW FLAME
-// 1$: RTS
+
+/**
+ * SHPEXP-SHIP EXPLODING PICTURES
+ */
+void todo_SHPEXP() {
+    //TODO: Remember to implement
+
+    // SHPEXP: LDA OBJ+NOBJ
+    // CMP I,0A2
+    // BCS 20$			;IF NOT THE FIRST EXPLOSION
+    // LDX I,10.		;2*NUMBER OF PIECES -2
+    // 10$: LDA X,EXPDIR		;INITIALIZE POSITIONS OF PIECES
+    // LSR			;DIVIDE BY 16
+    // LSR
+    // LSR
+    // LSR
+    // CLC
+    // ADC I,0F8
+    // EOR I,0F8		;SIGN EXTEND
+    // STA X,SHIPX+1
+    // LDA X,EXPDIR+1
+    // LSR			;DIVIDE BY 16
+    // LSR
+    // LSR
+    // LSR
+    // CLC
+    // ADC I,0F8
+    // EOR I,0F8		;SIGN EXTEND
+    // STA X,SHIPY+1
+    // DEX
+    // DEX
+    // BPL 10$			;LOOP FOR ALL PIECES
+    // 20$: LDA OBJ+NOBJ
+    // EOR I,0FF		;0 TO 5F
+    // AND I,70
+    // LSR
+    // LSR
+    // LSR			;0 TO A
+    // TAX			;STARTING INDEX
+    // 25$: STX TEMP1+1
+    // LDY I,0
+    // LDA AX,EXPDIR
+    // BPL 27$
+    // DEY			;SIGN EXTENSION (Y=0FF)
+    // 27$: CLC
+    // ADC ZX,SHIPX
+    // STA ZX,SHIPX		;LSB
+    // TYA
+    // ADC ZX,SHIPX+1
+    // STA ZX,SHIPX+1		;MSB-ACTUAL COUNT OF X-Y LINES
+    // STA XCOMP
+    // STY XCOMP+1
+    // LDY I,0
+    // LDA AX,EXPDIR+1
+    // BPL 28$
+    // DEY			;SIGN EXTENSION (Y=0FF)
+    // 28$: CLC
+    // ADC ZX,SHIPY
+    // STA ZX,SHIPY
+    // TYA
+    // ADC ZX,SHIPY+1
+    // STA ZX,SHIPY+1
+    // STA XCOMP+2
+    // STY XCOMP+3
+    // LDA VGLIST
+    // STA TEMP2
+    // LDA VGLIST+1
+    // STA TEMP2+1
+    // JSR VGVCTR		;DRAW VECTOR TO START OF SHIP PIECE
+    // LDY TEMP1+1
+    // LDA AY,EXPSHP
+    // LDX AY,EXPSHP+1
+    // JSR VGADD2		;ADD SHIP PIECE TO VECTOR LIST
+    // LDY TEMP1+1
+    // LDA AY,EXPSHP+1
+    // EOR I,04		;REVERSE SIGN
+    // TAX
+    // LDA AY,EXPSHP
+    // AND I,0F		;NO INTENSITY
+    // EOR I,04		;REVERSE SIGN
+    // JSR VGADD2
+    // LDY I,0FF
+    // 30$: INY
+    // LDA NY,TEMP2
+    // STA NY,VGLIST		;REVERSE VECTOR BACK TO MIDDLE
+    // INY
+    // LDA NY,TEMP2
+    // EOR I,04		;REVERSE SIGN
+    // STA NY,VGLIST
+    // CPY I,03
+    // BCC 30$
+    // JSR VGADD		;UPDATE VGUST
+    // LDX TEMP1+1
+    // DEX
+    // DEX
+    // BPL 25$			;LOOP THRU ALL PIECES
+    // RTS
+
+}
+
+/**
+ * SHPPIC-DISPLAY SHIP PICTURE
+ * ENTRY	(ANGLE)=SHIP ROTATION (0 TO FF)
+ * EXIT     (VGLIST,VGLIST+1)=UPDATED VECTOR LIST POINTER
+ * USES     A,X,Y,(TEMP1,TEMP1+1),(TEMP2,TEMP2+1)
+ */
+void todo_SHPPIC() {
+    //TODO: Remember to implement
+
+    // SHPPIC: LDX I,0
+    // STX TEMP4+2		;NO CHANGE IN BRITENESS
+    // LDY I,0			;FLAG X=X AND Y=Y
+    // LDA ANGLE
+    // BPL 10$			;IF IN VECTORS 0,1,2 OR 3
+    // LDY I,04		;Y=-Y
+    // TXA			;LDA I,0
+    // SEC
+    // SBC ANGLE		;256.-ANGLE=NEW ANGLE
+    // 10$: STA TEMP1		;0 TO 80
+    // BIT TEMP1
+    // BMI 15$			;IF ANGLE=80
+    // BVC 20$			;IF IN SECTORS 0 OR 1
+    // 15$: LDX I,04		;X=-X
+    // LDA I,80
+    // SEC
+    // SBC TEMP1		;128.-ANGLE=NEW ANGLE
+    // 20$: STX TEMP1
+    // STY TEMP1+1		;SAVE MASKS FOR CPYVEC
+    // LSR			;ROTATION/2=PICTURE NUMBER*2
+    // AND I,0FE		;MUST BE EVEN
+    // TAY
+    // LDA AY,SHIPS
+    // LDX AY,SHIPS+1		;GET PICTURE ADDRESS
+    // JSR CPYVEC		;COPY VECTOR AND CHECK SIGNS AND X/Y
+    // LDA A,THRUST
+    // BPL 1$			;IF NO THRUST
+    // LDA FRAME
+    // AND I,04
+    // BEQ 1$			;FLICKER AT 15 HZ
+    // INY
+    // INY
+    // SEC			;SKIP OVER RTSL
+    // LDX TEMP2+1
+    // TYA
+    // ADC TEMP2		;ADD 3+ INDEX TO GET START OF FLAME
+    // BCC 30$			;NO PAGE CROSSING
+    // INX
+    // 30$: JSR CPYVEC		;SHOW FLAME
+    // 1$: RTS
+}
 
 /**
  * SOUNDS-GENERATE SOUNDS
