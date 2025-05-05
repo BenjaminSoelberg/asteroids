@@ -191,7 +191,7 @@ uint8_t todo_RAND();
 
 void NEWAST();
 
-void todo_NEWVEL();
+void NEWVEL(uint8_t X_new_object_index, uint8_t Y_old_object_index);
 
 void DIGITS(const uint8_t *A_digits_ptr, uint8_t _2Y_length, uint8_t X_intensity_delta, bool C_zero_suppression);
 
@@ -222,6 +222,8 @@ void PICTUR(uint8_t Y_scaling_factor, uint8_t X_object_index);
 void todo_SHPEXP();
 
 void todo_SHPPIC();
+
+int8_t NEWVE1(int8_t A_velocity);
 
 /**
  *  .SBTTL MAIN LINE LOOP
@@ -1688,12 +1690,12 @@ void MOTION() {
         AA = memory.currentPlayer.OBJY[X_object_index] + memory.currentPlayer.YINC[X_object_index];
         // CMP I,18
         // BCC 25$			;ALREADY 0 TO 767
-        if (AA >= 0x1800) {
+        if ((AA & 0xFF00) >= 0x1800) {
             // BEQ 24$			;IF 768 UP
-            if (AA > 0x1800) {
+            if ((AA & 0xFF00) > 0x1800) {
                 // LDA I,17
                 // BNE 25$// Always?
-                AA = 0x1700;
+                AA = 0x1700 | (AA & 0x00FF);
             } else {
                 // 24$: LDA I,0
                 AA = 0x0000;
@@ -1915,7 +1917,7 @@ void todo_MOVE() {
  */
 void NEWAST() {
     // NEWAST: LDX I,NOBJ-1
-    int8_t x = NOBJ - 1;
+    int8_t X_new_object_index = NOBJ - 1;
 
     // LDA RDELAY
     // BNE 65$			;DELAY FIRST - CLEAR OLD ROCKS IF ANY
@@ -1950,16 +1952,16 @@ void NEWAST() {
                 min(memory.currentPlayer.SROCKS + 2, 11);
         /** Get random bits to build up rocks */
         // LDY I,NOBJ+1
-        uint8_t y = NOBJ + 1;
+        uint8_t Y_old_object_index = NOBJ + 1;
         do {
             // 10$: JSR RAND		;RANDOM NUMBER
             // AND I,18		;PICTURE NUMBER
             // ORA I,04		;SIZE OF OBJECT
             uint8_t a = (todo_RAND() & 0x18) | 0x04;
             // STA X,OBJ		;SET PICTURE
-            memory.currentPlayer.OBJ[x] = a;
+            memory.currentPlayer.OBJ[X_new_object_index] = a;
             // JSR NEWVEL		;GET NEW VELOCITY
-            todo_NEWVEL();
+            NEWVEL(X_new_object_index, Y_old_object_index);
             // JSR RAND		;RANDOM NUMBER
             a = todo_RAND();
             // LSR
@@ -1975,22 +1977,22 @@ void NEWAST() {
                     a &= 0x17;
                 }
                 // 35$: STA X,OBJYH
-                memory.currentPlayer.OBJY[x] = (a << 8) | (memory.currentPlayer.OBJY[x] & 0x00FF);
+                memory.currentPlayer.OBJY[X_new_object_index] = (a << 8) | (memory.currentPlayer.OBJY[X_new_object_index] & 0x00FF);
                 // LDA I,0
                 // STA X,OBJXH
                 // STA X,OBJXL
-                memory.currentPlayer.OBJX[x] = 0;
+                memory.currentPlayer.OBJX[X_new_object_index] = 0;
                 // BEQ 60$			;ALWAYS
             } else {
                 // 50$: STA X,OBJXH
-                memory.currentPlayer.OBJX[x] = (a << 8) | (memory.currentPlayer.OBJX[x] & 0x00FF);
+                memory.currentPlayer.OBJX[X_new_object_index] = (a << 8) | (memory.currentPlayer.OBJX[X_new_object_index] & 0x00FF);
                 // LDA I,0
                 // STA X,OBJYH
                 // STA X,OBJYL
-                memory.currentPlayer.OBJY[x] = 0;
+                memory.currentPlayer.OBJY[X_new_object_index] = 0;
             }
             // 60$: DEX
-            x--;
+            X_new_object_index--;
             // DEC TEMP1
             // BNE 10$			;LOOP FOR EACH NEW ROCK
             //TODO: is this correct or am i missing one ? also, remove the usage of TEMP1
@@ -2006,8 +2008,8 @@ void NEWAST() {
     // 70$: STA X,OBJ		;CLEAR REST OF OBJECTS
     // DEX
     // BPL 70$			;ASSUMES SROCKS < NOBJ
-    for (; x >= 0; x--) {
-        memory.currentPlayer.OBJ[x] = 0;
+    for (; X_new_object_index >= 0; X_new_object_index--) {
+        memory.currentPlayer.OBJ[X_new_object_index] = 0x00;
     }
     // 90$: RTS
 }
@@ -2038,46 +2040,69 @@ void NEWSHP() {
  * ENTRY	(X)=INDEX FOR NEW VELOCITY
  *          (Y)=INDEX OF OLD VELOCITY
  */
-void todo_NEWVEL() {
-    //TODO: Remember to implement
+void NEWVEL(uint8_t X_new_object_index, uint8_t Y_old_object_index) {
+    // NEWVEL: JSR RAND		;RANDOM NUMBER
+    // AND I,8F
+    int8_t A_velocity = (int8_t) (todo_RAND() & 0x8F);
+    // BPL 10$			;IF POSITIVE NUMBER 0 TO 3
+    if (A_velocity < 0) {
+        // ORA I,0F0		;-1 TO -4
+        A_velocity = (int8_t) (A_velocity | 0xF0);
+    }
+    // 10$: CLC
+    // ADC Y,XINC
+    A_velocity += memory.currentPlayer.XINC[Y_old_object_index];
+    // JSR NEWVE1		;CHECK RANGE OF VELOCITIES
+    A_velocity = NEWVE1(A_velocity);
+    // STA X,XINC
+    memory.currentPlayer.XINC[X_new_object_index] = (int8_t) A_velocity;
 
-// NEWVEL: JSR RAND		;RANDOM NUMBER
-// AND I,8F
-// BPL 10$			;IF POSITIVE NUMBER 0 TO 3
-// ORA I,0F0		;-1 TO -4
-// 10$: CLC
-// ADC Y,XINC
-// JSR NEWVE1		;CHECK RANGE OF VELOCITIES
-// STA X,XINC
-// JSR RAND		;NUMBERS WILL NOT BE RANDOM IF UNLESS
-// JSR RAND		;WE SHIFT AT LEAST 4 BITS
-// JSR RAND
-// JSR RAND		;RANDOM NUMBER
-// AND I,8F
-// BPL 40$			;POSITIVE NUMBER 0 TO 3
-// ORA I,0F0		;NEGATIVE -1 TO -4
-// 40$: CLC
-// ADC Y,YINC
-// JSR NEWVE1		;CHECK RANGE OF VELOCITY
-// STA X,YINC
-// RTS
-//
-// NEWVE1: BPL 20$			;POSITIVE RESULT
-// CMP I,-1F
-// BCS 15$			;WITHIN RANGE
-// LDA I,-1F
-// 15$: CMP I,-5
-// BCC 30$			;NOT TOO CLOSE TO ZERO
-// LDA I,-6		;AT LEAST 1/2
-// RTS
-//
-// 20$: CMP I,06
-// BCS 25$			;NOT TOO CLOSE TO ZERO
-// LDA I,06
-// 25$: CMP I,20
-// BCC 30$			;WITHIN RANGE
-// LDA I,1F
-// 30$: RTS
+    // JSR RAND		;NUMBERS WILL NOT BE RANDOM IF UNLESS
+    todo_RAND();
+    // JSR RAND		;WE SHIFT AT LEAST 4 BITS
+    todo_RAND();
+    // JSR RAND
+    todo_RAND();
+
+    // JSR RAND		;RANDOM NUMBER
+    // AND I,8F
+    A_velocity = (int8_t) (todo_RAND() & 0x8F);
+    // BPL 40$			;POSITIVE NUMBER 0 TO 3
+    if (A_velocity < 0) {
+        // ORA I,0F0		;-1 TO -4
+        A_velocity = (int8_t) (A_velocity | 0xF0);
+    }
+    // 40$: CLC
+    // ADC Y,YINC
+    A_velocity += memory.currentPlayer.YINC[Y_old_object_index];
+    // JSR NEWVE1		;CHECK RANGE OF VELOCITY
+    A_velocity = NEWVE1(A_velocity);
+    // STA X,YINC
+    memory.currentPlayer.YINC[X_new_object_index] = (int8_t) A_velocity;
+    // RTS
+}
+
+int8_t NEWVE1(int8_t A_velocity) {
+    // NEWVE1: BPL 20$			;POSITIVE RESULT
+    if (A_velocity < 0) {
+        // CMP I,-1F
+        // BCS 15$			;WITHIN RANGE
+        // LDA I,-1F
+        // 15$: CMP I,-5
+        // BCC 30$			;NOT TOO CLOSE TO ZERO
+        // LDA I,-6		;AT LEAST 1/2
+        // RTS
+        return min(max(A_velocity, -0x1F), -0x06);
+    } else {
+        // 20$: CMP I,06
+        // BCS 25$			;NOT TOO CLOSE TO ZERO
+        // LDA I,06
+        // 25$: CMP I,20
+        // BCC 30$			;WITHIN RANGE
+        // LDA I,1F
+        // 30$: RTS
+        return min(max(A_velocity, 0x06), 0x1F);
+    }
 }
 
 /**
@@ -2251,7 +2276,8 @@ void PICTUR(uint8_t Y_scaling_factor, uint8_t X_object_index) {
     // STA XCOMP+3
     // LDX I,XCOMP
     // JSR VGLABS		;POSITION PIECE
-    VGLABS(memory.currentPlayer.OBJX[X_object_index] >> 3, (memory.currentPlayer.OBJY[X_object_index] + 4) >> 3); // Div X & Y by 8 (remove fixed point) and also round Y up.
+    VGLABS(memory.currentPlayer.OBJX[X_object_index] >> 3, (memory.currentPlayer.OBJY[X_object_index] + 4)
+            >> 3); // Div X & Y by 8 (remove fixed point) and also round Y up.
 
     // LDA I,70		;WE WANT WAIT OF 7
     // SEC
