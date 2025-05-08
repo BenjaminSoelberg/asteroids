@@ -508,7 +508,7 @@ bool CHKST() {
     // 40$: LDA FRAME
     // AND I,20
     // BNE 41$			;NOT TIME TO DISPLAY MESSAGE
-    if ((memory.page0.FRAME[0] & 0x20) == 0) {
+    if ((memory.page0.FRAME_16 & 0x0020) == 0) {
         // LDY I,6
         // JSR VGMSG		;DISPLAY "PUSH START" MESSAGE
         VGMSG(0x06);
@@ -516,7 +516,7 @@ bool CHKST() {
     // 41$: LDA FRAME
     // AND I,0F
     // BNE 45$			;DO NOT CHANGE LITE
-    if ((memory.page0.FRAME[0] & 0x0F) == 0) {
+    if ((memory.page0.FRAME_16 & 0x000F) == 0) {
         // LDA I,01
         // CMP $$CRDT		;SET CARRY IF $$CRDT=1
         // ADC I,01		;A=2 IF $$CRDT > 1 ELSE 3
@@ -535,7 +535,7 @@ bool CHKST1() { // Always returns false (as the original function did)
     // CHKST1: LDA Z,FRAME
     // AND I,3F
     // BNE 70$			;ONLY EVERY 1 SECOND
-    if ((memory.page0.FRAME[0] & 0x3F) == 0) {
+    if ((memory.page0.FRAME_16 & 0x003F) == 0) {
         // LDA THUMP3
         // CMP I,08
         // BEQ 70$			;AT FASTEST RATE NOW
@@ -1576,7 +1576,7 @@ void MOTION() {
             // AND I,01		;ADD 1 EVERYOTHER FRAME
             // LSR
             // BEQ 42$			;ALWAYS
-            A_object = memory.page0.FRAME[0] & 0x01; // Substitute for a conditional carry
+            A_object = memory.page0.FRAME_16 & 0x0001; // Substitute for a conditional carry
         } else {
             // 16$: SEC			;1+ VALUE /16
             A_object++; // Substitute for a carry
@@ -1698,7 +1698,7 @@ void MOTION() {
                 AA = 0x1700 | (AA & 0x00FF);
             } else {
                 // 24$: LDA I,0
-                AA = 0x0000;
+                AA = 0;
             }
         }
         // 25$: STA X,OBJYH
@@ -2147,7 +2147,7 @@ void PARAMS() {
                     // LDA FRAME
                     // AND I,10
                     // BEQ 20$			;FLASH SCORE
-                    if (memory.page0.FRAME[0] & 0x10) {
+                    if ((memory.page0.FRAME_16 & 0x0010) == 0) {
                         goto _20$;
                     }
                 }
@@ -2222,7 +2222,7 @@ void PARAMS() {
                         // LDA FRAME
                         // AND I,10
                         // BEQ 40$			;FLASH SCORE
-                        if ((memory.page0.FRAME[0] & 0x10) == 0) {
+                        if ((memory.page0.FRAME_16 & 0x0010) == 0) {
                             goto _40;
                         }
                     }
@@ -2334,7 +2334,7 @@ void PICTUR(uint8_t Y_scaling_factor, uint8_t X_object_index) {
             // BCS 70$			;IF A TORPEDO (DOT)
             /* Goto avoided and asm inlined */
             VGDOT(0x70, 0xF0);
-            if ((memory.page0.FRAME[0] & 0x03) == 0x03) {
+            if ((memory.page0.FRAME_16 & 0x0003) == 0x0003) {
                 memory.currentPlayer.OBJ[X_object_index]--;
             }
         } else {
@@ -2418,7 +2418,7 @@ bool todo_SCORES() {
     // 10$: LDA FRAME+1
     // AND I,04
     // BNE 90$			;NOT TIME TO DISPLAY TABLE
-    if ((memory.page0.FRAME_16 >> 8 & 0x04) != 0) {
+    if ((memory.page0.FRAME_16 & 0x0400) != 0) {
         return false;
     }
     // LDA HSCORE

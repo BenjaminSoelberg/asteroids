@@ -122,10 +122,8 @@ typedef struct {
     uint8_t RENTRY;             //	RENTRY:     .BLKB 1			;BLOW UP ON REENTRY IF NEGATIVE (NON-ZERO IF HE JUST HYPERSPACED)
     uint8_t GDELAY;             //	GDELAY:     .BLKB 1			;DELAY BEFORE STARTING GAME
     uint8_t SYNC;               //	SYNC:       .BLKB 1			;FRAME COUNTER SYNC
-    union {
-        uint8_t FRAME[2];       //	FRAME:      .BLKB 2			;FRAME COUNTER
-        uint16_t FRAME_16;
-    } __attribute__((packed));
+    //uint8_t FRAME[2];         //	FRAME:      .BLKB 2			;FRAME COUNTER
+    uint16_t FRAME_16;          //	16 bit replacement
     uint8_t $INTCT;             //	$INTCT:     .BLKB 1			;INTERRUPT COUNTER
     uint8_t POLYL;              //	POLYL:      .BLKB 1			;POLY COUNTER VALUES
     uint8_t POLYH;              //	POLYH:      .BLKB 1
