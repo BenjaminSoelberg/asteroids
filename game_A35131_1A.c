@@ -3102,22 +3102,36 @@ void HEX1(uint8_t A_digit, bool C_zero_suppression) {
  * EXIT	(A)=RANDOM NUMBER
  */
 uint8_t todo_RAND() {
-    // TODO: Remember to implement
-    return (uint8_t) (rand() & 0xFF);;
-
     // RAND: ASL POLYL
+    uint8_t carry = (memory.page0.POLYL & 0x80) == 0x80;
+    memory.page0.POLYL = memory.page0.POLYL << 1;
     // ROL POLYH
+    memory.page0.POLYH = (memory.page0.POLYH << 1) | carry;
     // BPL 1$
-    // INC POLYL
+    if ((int8_t)memory.page0.POLYH < 0) {
+        // INC POLYL
+        memory.page0.POLYL++;
+    }
     // 1$: LDA POLYL		;CHANGE BIT 0 DISPENDING ON BIT 1
+    uint8_t A_polyl = memory.page0.POLYL;
     // BIT 9$
+    uint8_t Z = (A_polyl & 0x02) == 0x00;
+    uint8_t N = (A_polyl & 0x01) == 0x01;
     // BEQ 2$
-    // EOR I,01
-    // STA POLYL
+    if (Z == 0) {
+        // EOR I,01
+        A_polyl ^= 0x01;
+        // STA POLYL
+        memory.page0.POLYL = A_polyl;
+    }
     // 2$: ORA POLYH		;BEWARE THE 0 CASE
     // BNE 3$
-    // INC POLYL
+    if ((A_polyl | memory.page0.POLYH) == 0) {
+        // INC POLYL
+        memory.page0.POLYL++;
+    }
     // 3$: LDA POLYL
+    return memory.page0.POLYL;
     // RTS
 }
 
