@@ -15,8 +15,8 @@
 //                              ;PLUS 2 SAUCER TORPEDOES
 //                              ;PLUS 4 SHIP TORPEDOES
 #define NOBJ 27
-#define SHIP_OBJ 27
-#define SAUCER_OBJ 28
+#define SHIP_OBJ (NOBJ)
+#define SAUCER_OBJ (NOBJ + 0x01)
 #define LAST_OBJ_INDEX (NOBJ + 0x07)
 
 #define JSRL (0xC000)

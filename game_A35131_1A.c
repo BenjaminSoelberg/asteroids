@@ -1664,14 +1664,14 @@ void MOTION() {
         if (AA >= 0x2000) {
             // AND I,1F
             AA &= 0x1FFF;
-        }
-        // CPX I,NOBJ+1
-        // BNE 19$			;NOT THE SAUCER
-        if (X_object_index == SAUCER_OBJ) {
-            // JSR RSAUCR		;RESET SAUCER VALUES
-            RSAUCR();
-            // JMP 13$			;ALWAYS
-            continue;
+            // CPX I,NOBJ+1
+            // BNE 19$			;NOT THE SAUCER
+            if (X_object_index == SAUCER_OBJ) {
+                // JSR RSAUCR		;RESET SAUCER VALUES
+                RSAUCR();
+                // JMP 13$			;ALWAYS
+                continue;
+            }
         }
         // 19$: STA X,OBJXH
         memory.currentPlayer.OBJX[X_object_index] = AA;
