@@ -169,7 +169,7 @@ void todo_COLIDE();
 
 void todo_ENEMY();
 
-void todo_FIRE();
+void todo_EFIRE();
 
 int8_t todo_GETINT();
 
@@ -187,7 +187,7 @@ void todo_SOUNDS();
 
 void todo_UPDATE();
 
-uint8_t todo_RAND();
+uint8_t RAND();
 
 void NEWAST();
 
@@ -224,6 +224,8 @@ void todo_SHPEXP();
 void todo_SHPPIC();
 
 int8_t NEWVE1(int8_t A_velocity);
+
+void todo_FIRE();
 
 /**
  *  .SBTTL MAIN LINE LOOP
@@ -320,7 +322,7 @@ bool START2() {
     // JSR VGSABS		;POSITION BEAM FOR MINIMUM CURRENT DRAW
     VGSABS(1023 / 8, 1023 / 8);
     // JSR RAND		;KEEP RANDOM NUMBERS COMING
-    todo_RAND(); // Condition the rand
+    RAND(); // Condition the rand
     // JSR VGHALT		;ADD HALT TO VECTOR LIST
     VGHALT();
     // LDA RDELAY
@@ -1037,7 +1039,7 @@ void todo_ENEMY() {
 /**
  * EFIRE-ENEMY todo_FIRE CONTROL
  */
-void todo_FIRE() {
+void todo_EFIRE() {
     //TODO: Remember to implement
 
     // EFIRE: LDA FRAME
@@ -1122,105 +1124,109 @@ void todo_FIRE() {
     // 99$: .BYTE -10,0,0,10	;DIFFERENT SAUCER VELOCITIES
 }
 
-// .SBTTL FIRE-FIRE SHIPS TORPEDOS
-// ;FIRE-	FIRE SHIP TORPEDOS
-// ;
-// FIRE: LDA NPLAYR
-// BEQ FIRE2		;IN ATTRACT
-// ASL A,FIRESW		;FULLY DECODED FOR R/W
-// ROR LASTSW
-// BIT LASTSW
-// BPL FIRE2		;IF NOT ON
-// BVS FIRE2		;IF NOT OFF BEFORE
-// LDA SDELAY
-// BNE FIRE2		;SHIP NOT VISIBLE YET
-// TAX			;LDX I,0
-// LDA I,03
-// STA TEMP3+1		;STOPPING INDEX FOR SHIP
-// LDY I,7			;NUMBER OF TORPEDOS ALLOWED
-// FIRE1: LDA Y,OBJ+NOBJ
-// BEQ FIRE3		;WE FOUND INACTIVE ONE
-// DEY
-// CPY TEMP3+1
-// BNE FIRE1
-//
-// FIRE2: RTS			;FIND INACTIVE TORPEDO TO USE
-//
-// FIRE3: STX TEMP3
-// LDA I,12
-// STA Y,OBJ+NOBJ		;SET TIMER FOR LENGTH OF LIFE
-// LDA X,ANGLE
-// JSR COS			;COS(ANGLE)-SHIPS SPEED=X CHANGE TO TORPEDO
-// LDX TEMP3
-// CMP I,80		;DIVIDE BY 2
-// ROR			;SS999.BBB
-// STA TEMP1+1
-// CLC
-// ADC X,XINC+NOBJ
-// BMI 23$			;IF NEGATVE
-// CMP I,70
-// BCC 30$			;IF MAX NOT EXCEEDED
-// LDA I,6F
-// BNE 30$			;ALWAYS
-//
-// 23$: CMP I,-6F
-// BCS 30$			;IF MIN NOT EXCEEDED
-// LDA I,-6F
-// 30$: STA Y,XINC+NOBJ	;SET X SPEED
-// LDA X,ANGLE
-// JSR SIN			;SIN (ANGLE)
-// LDX TEMP3
-// CMP I,80		;DIVIDE BY 2
-// ROR			;SSAAA.BBB
-// STA TEMP2+1
-// CLC
-// ADC X,YINC+NOBJ
-// BMI 33$			;IF NEGATIVE
-// CMP I,70
-// BCC 40$			;IF IN RANGE
-// LDA I,6F		;SET MAX
-// BNE 40$			;ALWAYS
-//
-// 33$: CMP I,-6F
-// BCS 40$			;IF IN RANGE
-// LDA I,-6F
-// 40$: STA Y,YINC+NOBJ
-// LDX I,0
-// LDA TEMP1+1		;SCALE TO PUT TORP AT NOSE OF SHIP
-// BPL 45$			;SIGN EXTENSION
-// DEX			;LDX I,0FF
-// 45$: STX TEMP1
-// LDX TEMP3
-// CMP I,80
-// ROR
-// CLC
-// ADC TEMP1+1		;MULTIPLY BY 3/2
-// CLC
-// ADC X,OBJXL+NOBJ		;ADD SHIPS POSITION TO GET STARTING POSITION
-// STA Y,OBJXL+NOBJ
-// LDA TEMP1
-// ADC X,OBJXH+NOBJ
-// STA Y,OBJXH+NOBJ
-// LDX I,0
-// LDA TEMP2+1		;SCALE AGAIN TO PUT AT NOSE
-// BPL 50$			;SIGN EXTENSION
-// DEX			;LDX I,0FF
-// 50$: STX TEMP2
-// LDX TEMP3
-// CMP I,80
-// ROR
-// CLC
-// ADC TEMP2+1		;MULTIPLY BY 3/2
-// CLC
-// ADC X,OBJYL+NOBJ		;ADD SHIPS POSITION TO GET STARTING POSITION
-// STA Y,OBJYL+NOBJ
-// LDA TEMP2
-// ADC X,OBJYH+NOBJ
-// STA Y,OBJYH+NOBJ
-// LDA I,80
-// STA X,SND1		;START FIRE SOUND FOR SHIP OR SAUCER
-// RTS
-//
+/**
+ * FIRE-FIRE SHIPS TORPEDOS
+ */
+void todo_FIRE() {
+    //TODO: Remember to implement
+
+    // FIRE: LDA NPLAYR
+    // BEQ FIRE2		;IN ATTRACT
+    // ASL A,FIRESW		;FULLY DECODED FOR R/W
+    // ROR LASTSW
+    // BIT LASTSW
+    // BPL FIRE2		;IF NOT ON
+    // BVS FIRE2		;IF NOT OFF BEFORE
+    // LDA SDELAY
+    // BNE FIRE2		;SHIP NOT VISIBLE YET
+    // TAX			;LDX I,0
+    // LDA I,03
+    // STA TEMP3+1		;STOPPING INDEX FOR SHIP
+    // LDY I,7			;NUMBER OF TORPEDOS ALLOWED
+    // FIRE1: LDA Y,OBJ+NOBJ
+    // BEQ FIRE3		;WE FOUND INACTIVE ONE
+    // DEY
+    // CPY TEMP3+1
+    // BNE FIRE1
+    //
+    // FIRE2: RTS			;FIND INACTIVE TORPEDO TO USE
+    //
+    // FIRE3: STX TEMP3
+    // LDA I,12
+    // STA Y,OBJ+NOBJ		;SET TIMER FOR LENGTH OF LIFE
+    // LDA X,ANGLE
+    // JSR COS			;COS(ANGLE)-SHIPS SPEED=X CHANGE TO TORPEDO
+    // LDX TEMP3
+    // CMP I,80		;DIVIDE BY 2
+    // ROR			;SS999.BBB
+    // STA TEMP1+1
+    // CLC
+    // ADC X,XINC+NOBJ
+    // BMI 23$			;IF NEGATVE
+    // CMP I,70
+    // BCC 30$			;IF MAX NOT EXCEEDED
+    // LDA I,6F
+    // BNE 30$			;ALWAYS
+    //
+    // 23$: CMP I,-6F
+    // BCS 30$			;IF MIN NOT EXCEEDED
+    // LDA I,-6F
+    // 30$: STA Y,XINC+NOBJ	;SET X SPEED
+    // LDA X,ANGLE
+    // JSR SIN			;SIN (ANGLE)
+    // LDX TEMP3
+    // CMP I,80		;DIVIDE BY 2
+    // ROR			;SSAAA.BBB
+    // STA TEMP2+1
+    // CLC
+    // ADC X,YINC+NOBJ
+    // BMI 33$			;IF NEGATIVE
+    // CMP I,70
+    // BCC 40$			;IF IN RANGE
+    // LDA I,6F		;SET MAX
+    // BNE 40$			;ALWAYS
+    //
+    // 33$: CMP I,-6F
+    // BCS 40$			;IF IN RANGE
+    // LDA I,-6F
+    // 40$: STA Y,YINC+NOBJ
+    // LDX I,0
+    // LDA TEMP1+1		;SCALE TO PUT TORP AT NOSE OF SHIP
+    // BPL 45$			;SIGN EXTENSION
+    // DEX			;LDX I,0FF
+    // 45$: STX TEMP1
+    // LDX TEMP3
+    // CMP I,80
+    // ROR
+    // CLC
+    // ADC TEMP1+1		;MULTIPLY BY 3/2
+    // CLC
+    // ADC X,OBJXL+NOBJ		;ADD SHIPS POSITION TO GET STARTING POSITION
+    // STA Y,OBJXL+NOBJ
+    // LDA TEMP1
+    // ADC X,OBJXH+NOBJ
+    // STA Y,OBJXH+NOBJ
+    // LDX I,0
+    // LDA TEMP2+1		;SCALE AGAIN TO PUT AT NOSE
+    // BPL 50$			;SIGN EXTENSION
+    // DEX			;LDX I,0FF
+    // 50$: STX TEMP2
+    // LDX TEMP3
+    // CMP I,80
+    // ROR
+    // CLC
+    // ADC TEMP2+1		;MULTIPLY BY 3/2
+    // CLC
+    // ADC X,OBJYL+NOBJ		;ADD SHIPS POSITION TO GET STARTING POSITION
+    // STA Y,OBJYL+NOBJ
+    // LDA TEMP2
+    // ADC X,OBJYH+NOBJ
+    // STA Y,OBJYH+NOBJ
+    // LDA I,80
+    // STA X,SND1		;START FIRE SOUND FOR SHIP OR SAUCER
+    // RTS
+}
+
 // CKSUM3: .BYTE 0DC		;6C00-6FFF
 
 /**
@@ -1957,13 +1963,13 @@ void NEWAST() {
             // 10$: JSR RAND		;RANDOM NUMBER
             // AND I,18		;PICTURE NUMBER
             // ORA I,04		;SIZE OF OBJECT
-            uint8_t a = (todo_RAND() & 0x18) | 0x04;
+            uint8_t a = (RAND() & 0x18) | 0x04;
             // STA X,OBJ		;SET PICTURE
             memory.currentPlayer.OBJ[X_new_object_index] = a;
             // JSR NEWVEL		;GET NEW VELOCITY
             NEWVEL(X_new_object_index, Y_old_object_index);
             // JSR RAND		;RANDOM NUMBER
-            a = todo_RAND();
+            a = RAND();
             // LSR
             // AND I,1F
             bool c = a & 1;
@@ -2043,7 +2049,7 @@ void NEWSHP() {
 void NEWVEL(uint8_t X_new_object_index, uint8_t Y_old_object_index) {
     // NEWVEL: JSR RAND		;RANDOM NUMBER
     // AND I,8F
-    int8_t A_velocity = (int8_t) (todo_RAND() & 0x8F);
+    int8_t A_velocity = (int8_t) (RAND() & 0x8F);
     // BPL 10$			;IF POSITIVE NUMBER 0 TO 3
     if (A_velocity < 0) {
         // ORA I,0F0		;-1 TO -4
@@ -2058,15 +2064,15 @@ void NEWVEL(uint8_t X_new_object_index, uint8_t Y_old_object_index) {
     memory.currentPlayer.XINC[X_new_object_index] = (int8_t) A_velocity;
 
     // JSR RAND		;NUMBERS WILL NOT BE RANDOM IF UNLESS
-    todo_RAND();
+    RAND();
     // JSR RAND		;WE SHIFT AT LEAST 4 BITS
-    todo_RAND();
+    RAND();
     // JSR RAND
-    todo_RAND();
+    RAND();
 
     // JSR RAND		;RANDOM NUMBER
     // AND I,8F
-    A_velocity = (int8_t) (todo_RAND() & 0x8F);
+    A_velocity = (int8_t) (RAND() & 0x8F);
     // BPL 40$			;POSITIVE NUMBER 0 TO 3
     if (A_velocity < 0) {
         // ORA I,0F0		;-1 TO -4
@@ -3101,7 +3107,7 @@ void HEX1(uint8_t A_digit, bool C_zero_suppression) {
  *
  * EXIT	(A)=RANDOM NUMBER
  */
-uint8_t todo_RAND() {
+uint8_t RAND() {
     // RAND: ASL POLYL
     uint8_t carry = (memory.page0.POLYL & 0x80) == 0x80;
     memory.page0.POLYL = memory.page0.POLYL << 1;
@@ -3115,10 +3121,8 @@ uint8_t todo_RAND() {
     // 1$: LDA POLYL		;CHANGE BIT 0 DISPENDING ON BIT 1
     uint8_t A_polyl = memory.page0.POLYL;
     // BIT 9$
-    uint8_t Z = (A_polyl & 0x02) == 0x00;
-    uint8_t N = (A_polyl & 0x01) == 0x01;
     // BEQ 2$
-    if (Z == 0) {
+    if (A_polyl & 0x02) {
         // EOR I,01
         A_polyl ^= 0x01;
         // STA POLYL
