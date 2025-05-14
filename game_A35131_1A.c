@@ -167,7 +167,7 @@ bool CHKST();
 
 void todo_COLIDE();
 
-void todo_ENEMY();
+void ENEMY();
 
 void todo_EFIRE();
 
@@ -305,7 +305,7 @@ bool START2() {
                 // JSR MOVE		;MOVE SHIP BY CONTROLS
                 todo_MOVE();
                 // JSR ENEMY		;LAUNCH ENEMY SAUCER AND TORPEDOS
-                todo_ENEMY();
+                ENEMY();
             }
             // 15$: JSR MOTION		;MOVE OBJECTS
             MOTION();
@@ -958,81 +958,149 @@ uint16_t *todo_COPY(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, uint
 /**
  * ENEMY-LAUNCH EMEMY SAUCER
  */
-void todo_ENEMY() {
-    //TODO: Remember to implement
-
+void ENEMY() {
     // ENEMY: LDA FRAME
     // AND I,03
     // BEQ 1$			;EVERY FOURTH FRAME
     // 50$: RTS
-    //
+    if ((memory.page0.FRAME_16 & 0x0003) != 0x0003) {
+        return;
+    }
+
     // 1$: LDA OBJ+NOBJ+1
     // BMI 50$			;IF EXPLODING
+    if ((int8_t) memory.currentPlayer.OBJ[SAUCER_OBJ] < 0x00) {
+        return;
+    }
+
     // BEQ 15$			;IF NOT ALIVE YET
-    // JMP EFIRE		;FIRE ENEMY TORPEDOES
-    //
+    if ((int8_t) memory.currentPlayer.OBJ[SAUCER_OBJ] != 0x00) {
+        // JMP EFIRE		;FIRE ENEMY TORPEDOES
+        todo_EFIRE();
+        return;
+    }
+
     // 15$: LDA NPLAYR
     // BEQ 6$			;IF IN ATTRACT SEND IN SAUCER
-    // LDA OBJ+NOBJ
-    // BEQ 50$			;IF YOU ARE NOT VISIBLE
-    // BMI 50$			;IF EXPLODING
+    if (memory.page0.NPLAYR != 0x00) {
+        // LDA OBJ+NOBJ
+        // BEQ 50$			;IF YOU ARE NOT VISIBLE
+        // BMI 50$			;IF EXPLODING
+        if ((int8_t) memory.currentPlayer.OBJ[SHIP_OBJ] <= 0x00) {
+            return;
+        }
+    }
+
     // 6$: LDA RTIMER
     // BEQ 2$			;IF TIMER ALREADY
-    // DEC RTIMER		;DECREMENT ZERO TIMER
+    if (memory.currentPlayer.RTIMER != 0x00) {
+        // DEC RTIMER		;DECREMENT ZERO TIMER
+        memory.currentPlayer.RTIMER--;
+    }
+
     // 2$: DEC EDELAY
     // BNE 50$			;NO TIME YET
+    if (memory.currentPlayer.EDELAY != 0x00) {
+        return;
+    }
+
     // LDA I,18.
     // STA EDELAY		;DELAY BEFORE SHOOTING OR ENTERING
+    memory.currentPlayer.EDELAY = 18;
+
     // LDA RTIMER
     // BEQ 5$			;IF NO ROCKS HIT ENTER SAUCER
-    // LDA NROCKS
-    // BEQ 50$			;IF NO ROCKS
-    // CMP DIFCTY
-    // BCS 50$			;TOO MANY ROCKS
+    if (memory.currentPlayer.RTIMER != 0x00) {
+        // LDA NROCKS
+        // BEQ 50$			;IF NO ROCKS
+        if (memory.currentPlayer.NROCKS == 0x00) {
+            return;
+        }
+        // CMP DIFCTY
+        // BCS 50$			;TOO MANY ROCKS
+        if (memory.currentPlayer.NROCKS >= memory.currentPlayer.DIFCTY == 0x01) { //TODO: Is this correct ???
+            return;
+        }
+    }
+
     // 5$: LDA SEDLAY
     // SEC
     // SBC I,06
+    uint8_t A_sedlay = memory.currentPlayer.SEDLAY - 0x06;
     // CMP I,20
     // BCC 8$			;IF BELOW MINIMUM
-    // STA SEDLAY
+    if (A_sedlay >= 0x20) {
+        // STA SEDLAY
+        memory.currentPlayer.SEDLAY = A_sedlay; //TODO Why ???
+    }
+
     // 8$: LDA I,0
     // STA A,OBJXL+NOBJ+1
     // STA A,OBJXH+NOBJ+1
+    memory.currentPlayer.OBJX[SAUCER_OBJ] = 0;
     // JSR RAND		;RANDOM NUMBER
+    uint8_t A_rand = RAND();
     // LSR
     // ROR A,OBJYL+NOBJ+1
     // LSR
     // ROR A,OBJYL+NOBJ+1
     // LSR
     // ROR A,OBJYL+NOBJ+1
+    memory.currentPlayer.OBJY[SAUCER_OBJ] = memory.currentPlayer.OBJY[SAUCER_OBJ] & 0xFF1F | ((uint8_t) A_rand << 5);
+    A_rand = A_rand >> 3;
     // CMP I,18
     // BCC 10$			;MUST BE 0 TO 767
-    // AND I,17
+    if (A_rand >= 0x18) {
+        // AND I,17
+        A_rand &= 0x17;
+    }
     // 10$: STA A,OBJYH+NOBJ+1	;STARTING VERTICAL POSITION
+    memory.currentPlayer.OBJY[SAUCER_OBJ] = memory.currentPlayer.OBJY[SAUCER_OBJ] & 0x00FF | ((uint16_t) A_rand << 8);
+
     // LDX I,10
+    int8_t X_incx = 0x10;
     // BIT POLYH
     // BVS 20$			;PICK DIRECTION
-    // LDA I,1F
-    // STA A,OBJXH+NOBJ+1
-    // LDA I,0FF
-    // STA A,OBJXL+NOBJ+1	;START ON RIGHT SIDE
-    // LDX I,-10
+    if ((memory.page0.POLYH & 0x02) == 0x00) {
+        // LDA I,1F
+        // STA A,OBJXH+NOBJ+1
+        // LDA I,0FF
+        // STA A,OBJXL+NOBJ+1	;START ON RIGHT SIDE
+        memory.currentPlayer.OBJX[SAUCER_OBJ] = 0x1FFF;
+        // LDX I,-10
+        X_incx = -0x10;
+    }
+
     // 20$: STX XINC+NOBJ+1
+    memory.currentPlayer.XINC[SAUCER_OBJ] = X_incx;
     // LDX I,02
+    uint8_t X_picture_size = 0x02;
     // LDA SEDLAY
     // BMI 40$			;KEEP IT LARGE FOR FIRST FEW APPEARANCES
-    // LDY PLAYR2
-    // LDA Y,SCORE+1
-    // CMP I,30
-    // BCS 38$			;IF SCORE LARGER, KEEP SMALL SAUCER
-    // JSR RAND
-    // STA TEMP1
-    // LDA SEDLAY
-    // LSR			;START AT 1/4 LARGE SAUCER
-    // CMP TEMP1
-    // BCS 40$			;KEEP LARGE SAUCER
-    // 38$: DEX			;SMALL SAUCER
+    if ((int8_t) memory.currentPlayer.SEDLAY >= 0x00) {
+        // LDY PLAYR2
+        // LDA Y,SCORE+1
+        // CMP I,30
+        // BCS 38$			;IF SCORE LARGER, KEEP SMALL SAUCER
+        if (memory.page0.SCORE[memory.page0.PLAYR2 + 1] < 0x30) {
+            // JSR RAND
+            // STA TEMP1
+            // LDA SEDLAY
+            // LSR			;START AT 1/4 LARGE SAUCER
+            // CMP TEMP1
+            // BCS 40$			;KEEP LARGE SAUCER
+            if ((memory.currentPlayer.SEDLAY >> 1) < RAND()) {
+                /* Goto avoided and asm inlined */
+                // 38$: DEX			;SMALL SAUCER
+                X_picture_size--;
+            }
+        } else {
+            // 38$: DEX			;SMALL SAUCER
+            X_picture_size--;
+        }
+    }
     // 40$: STX OBJ+NOBJ+1		;USE MEDUIM SIZE PICTURE
+    memory.currentPlayer.OBJ[SAUCER_OBJ] = X_picture_size;
     // RTS
 }
 
@@ -1983,7 +2051,8 @@ void NEWAST() {
                     a &= 0x17;
                 }
                 // 35$: STA X,OBJYH
-                memory.currentPlayer.OBJY[X_new_object_index] = (a << 8) | (memory.currentPlayer.OBJY[X_new_object_index] & 0x00FF);
+                memory.currentPlayer.OBJY[X_new_object_index] =
+                        (a << 8) | (memory.currentPlayer.OBJY[X_new_object_index] & 0x00FF);
                 // LDA I,0
                 // STA X,OBJXH
                 // STA X,OBJXL
@@ -1991,7 +2060,8 @@ void NEWAST() {
                 // BEQ 60$			;ALWAYS
             } else {
                 // 50$: STA X,OBJXH
-                memory.currentPlayer.OBJX[X_new_object_index] = (a << 8) | (memory.currentPlayer.OBJX[X_new_object_index] & 0x00FF);
+                memory.currentPlayer.OBJX[X_new_object_index] =
+                        (a << 8) | (memory.currentPlayer.OBJX[X_new_object_index] & 0x00FF);
                 // LDA I,0
                 // STA X,OBJYH
                 // STA X,OBJYL
