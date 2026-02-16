@@ -227,6 +227,7 @@ int8_t NEWVE1(int8_t A_velocity);
 
 void todo_FIRE();
 
+int8_t EFIRE_99[];
 /**
  *  .SBTTL MAIN LINE LOOP
  *  .=6800
@@ -963,7 +964,7 @@ void ENEMY() {
     // AND I,03
     // BEQ 1$			;EVERY FOURTH FRAME
     // 50$: RTS
-    if ((memory.page0.FRAME_16 & 0x0003) != 0x0003) {
+    if ((memory.page0.FRAME_16 & 0x0003) != 0) {
         return;
     }
 
@@ -1187,10 +1188,12 @@ void todo_EFIRE() {
     // STX TEMP3+1		;3 SAUCER TORPEDOS
     // JMP FIRE1		;FIRE A TORPEDO
     //
-    // 97$: .BYTE 8F,87		;(GOOD,REAL GOOD) SMALL SAUCER
-    // 98$: .BYTE 70,78
-    // 99$: .BYTE -10,0,0,10	;DIFFERENT SAUCER VELOCITIES
 }
+
+// 97$: .BYTE 8F,87		;(GOOD,REAL GOOD) SMALL SAUCER
+// 98$: .BYTE 70,78
+// 99$: .BYTE -10,0,0,10	;DIFFERENT SAUCER VELOCITIES
+int8_t EFIRE_99[] = {-0x10,0x00,0x00,0x10};
 
 /**
  * FIRE-FIRE SHIPS TORPEDOS
