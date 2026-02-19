@@ -2,4 +2,6 @@
 
 Will this project ever see the light of day ?
 
-Currently have a working clean room implementation of the DVG processor.
+I currently have a working clean room implementation of the DVG processor.
+
+Note to self: Numbers are hexidecimal unless post-fixed by a dot.

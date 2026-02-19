@@ -169,7 +169,7 @@ void todo_COLIDE();
 
 void ENEMY();
 
-void todo_EFIRE();
+void EFIRE();
 
 int8_t todo_GETINT();
 
@@ -227,7 +227,14 @@ int8_t NEWVE1(int8_t A_velocity);
 
 void todo_FIRE();
 
+void todo_FIRE1(uint8_t TEMP3_1, uint8_t X, uint8_t Y);
+
+uint8_t EFIRE_97[];
+uint8_t EFIRE_98[];
 int8_t EFIRE_99[];
+
+int8_t todo_ATAN(int8_t X, int8_t Y);
+
 /**
  *  .SBTTL MAIN LINE LOOP
  *  .=6800
@@ -977,7 +984,7 @@ void ENEMY() {
     // BEQ 15$			;IF NOT ALIVE YET
     if ((int8_t) memory.currentPlayer.OBJ[SAUCER_OBJ] != 0x00) {
         // JMP EFIRE		;FIRE ENEMY TORPEDOES
-        todo_EFIRE();
+        EFIRE();
         return;
     }
 
@@ -1106,92 +1113,135 @@ void ENEMY() {
 }
 
 /**
- * EFIRE-ENEMY todo_FIRE CONTROL
+ * EFIRE-ENEMY FIRE CONTROL
  */
-void todo_EFIRE() {
-    //TODO: Remember to implement
-
+void EFIRE() {
     // EFIRE: LDA FRAME
     // ASL
     // BNE 10$			;NOT TIME TO CHANGE DIRECTION
-    // JSR RAND
-    // AND I,03
-    // TAX
-    // LDA X,99$
-    // STA YINC+NOBJ+1
+    if ((memory.page0.FRAME_16 & 0x007F) == 0) {
+        // JSR RAND
+        // AND I,03
+        // TAX
+        // LDA X,99$
+        // STA YINC+NOBJ+1
+        memory.currentPlayer.YINC[SAUCER_OBJ] = EFIRE_99[RAND() & 0x03];
+    }
+
     // 10$: LDA NPLAYR
     // BEQ 30$			;IF IN ATTRACT
-    // LDA SDELAY
-    // BNE 40$			;DONT FIRE IF YOU ARE DEAD
+    if (memory.page0.NPLAYR != 0x00) {
+        // LDA SDELAY
+        // BNE 40$			;DONT FIRE IF YOU ARE DEAD
+        if (memory.currentPlayer.SDELAY != 0x00) {
+            /* Goto avoided and asm inlined */
+            return;
+        }
+    }
+
     // 30$: DEC EDELAY
+    memory.currentPlayer.EDELAY--;
     // BEQ 50$			;NOT TIME TO SHOOT
-    // 40$: RTS
-    //
+    if (memory.currentPlayer.EDELAY != 0x00) {
+        // 40$: RTS
+        //
+        return;
+    }
+
     // 50$: LDA I,10.
     // STA EDELAY		;DELAY BEFORE NEXT SHOT
+    memory.currentPlayer.EDELAY = 10;
+
     // LDA OBJ+NOBJ+1
     // LSR
     // BEQ 80$			;IF SMALL SAUCER
-    // JSR RAND
-    // JMP 96$			;FIRE IN RANDOM DIRECTION
-    //
-    // 80$: LDA XINC+NOBJ+1
-    // CMP I,80
-    // ROR
-    // STA TEMP2+1
-    // LDA A,OBJXL+NOBJ	;GET X DISTANCE TO SHIP
-    // SEC
-    // SBC A,OBJXL+NOBJ+1
-    // STA TEMP2
-    // LDA A,OBJXH+NOBJ
-    // SBC A,OBJXH+NOBJ+1
-    // ASL TEMP2
-    // ROL
-    // ASL TEMP2
-    // ROL			;-7F TO +7F
-    // SEC			;REMEMBER TORPEDO VELOCITY DEPENDS ON
-    // SBC TEMP2+1		;SAUCER SPEED
-    // TAX
-    // LDA YINC+NOBJ+1
-    // CMP I,80
-    // ROR
-    // STA TEMP2+1
-    // LDA A,OBJYL+NOBJ
-    // SEC
-    // SBC A,OBJYL+NOBJ+1
-    // STA TEMP2
-    // LDA A,OBJYH+NOBJ
-    // SBC A,OBJYH+NOBJ+1
-    // ASL TEMP2
-    // ROL
-    // ASL TEMP2
-    // ROL			;-5F TO +5F
-    // SEC
-    // SBC TEMP2+1		;REMEMBER TO ACCOUNT FOR OUR MOTION
-    // TAY			;-60 TO +60
-    // JSR ATAN		;ARCTAN (Y/X)
-    // STA ANGLE+1
-    // JSR RAND		;RANDOM NUMBER
-    // LDX PLAYR2
-    // LDY X,SCORE+1
-    // CPY I,35
-    // LDX I,0
-    // BCC 90$			;IF NOT TO LIMIT YET
-    // INX
-    // 90$: AND X,97$
-    // BPL 95$			;NO SIGN EXTENSION
-    // ORA X,98$
-    // 95$: ADC ANGLE+1		;DONT BE TOO GOOD-JUST CLOSE
+    uint8_t A;
+    if (memory.currentPlayer.OBJ[SAUCER_OBJ] >> 1 != 0x00) {
+        // JSR RAND
+        A = RAND();
+        // JMP 96$			;FIRE IN RANDOM DIRECTION
+        //
+    } else {
+        // 80$: LDA XINC+NOBJ+1
+        // CMP I,80
+        // ROR
+        // STA TEMP2+1
+        int8_t x_inc = (memory.currentPlayer.XINC[SAUCER_OBJ] >> 1) | (memory.currentPlayer.XINC[SAUCER_OBJ] & 0x80); // Compiler independent sign-preserving
+        // LDA A,OBJXL+NOBJ	;GET X DISTANCE TO SHIP
+        // SEC
+        // SBC A,OBJXL+NOBJ+1
+        // STA TEMP2
+        // LDA A,OBJXH+NOBJ
+        // SBC A,OBJXH+NOBJ+1
+        int16_t x_dx = memory.currentPlayer.OBJX[SAUCER_OBJ] - memory.currentPlayer.OBJX[SHIP_OBJ];
+        // ASL TEMP2
+        // ROL
+        // ASL TEMP2
+        // ROL			;-7F TO +7F
+        x_dx <<= 2; // A:TEMP2
+        // SEC			;REMEMBER TORPEDO VELOCITY DEPENDS ON
+        // SBC TEMP2+1		;SAUCER SPEED
+        // TAX
+        int8_t X_atan = (x_dx >> 8) - x_inc;
+        // LDA YINC+NOBJ+1
+        // CMP I,80
+        // ROR
+        // STA TEMP2+1
+        int8_t y_inc = (memory.currentPlayer.YINC[SAUCER_OBJ] >> 1) | (memory.currentPlayer.YINC[SAUCER_OBJ] & 0x80); // Compiler independent sign-preserving
+        // LDA A,OBJYL+NOBJ
+        // SEC
+        // SBC A,OBJYL+NOBJ+1
+        // STA TEMP2
+        // LDA A,OBJYH+NOBJ
+        // SBC A,OBJYH+NOBJ+1
+        int16_t y_dx = memory.currentPlayer.OBJY[SAUCER_OBJ] - memory.currentPlayer.OBJY[SHIP_OBJ];
+        // ASL TEMP2
+        // ROL
+        // ASL TEMP2
+        // ROL			;-5F TO +5F
+        y_dx <<= 2;
+        // SEC
+        // SBC TEMP2+1		;REMEMBER TO ACCOUNT FOR OUR MOTION
+        // TAY			;-60 TO +60
+        int8_t Y_atan = (y_dx >> 8) - y_inc;
+        // JSR ATAN		;ARCTAN (Y/X)
+        // STA ANGLE+1
+        memory.page0.ANGLE[1] = todo_ATAN(X_atan, Y_atan);
+        // JSR RAND		;RANDOM NUMBER
+        A = RAND();
+        // LDX PLAYR2
+        // LDY X,SCORE+1
+        uint8_t Y = memory.page0.SCORE[memory.page0.PLAYR2 + 1]; //TODO Verify!
+        // CPY I,35
+        // LDX I,0
+        // BCC 90$			;IF NOT TO LIMIT YET
+        // INX
+        uint8_t X = Y < 0x35;
+        // 90$: AND X,97$
+        A &= EFIRE_97[X];
+        // BPL 95$			;NO SIGN EXTENSION
+        // ORA X,98$
+        if (A & 0x80) {
+            A |= EFIRE_98[X];
+        }
+        // 95$: ADC ANGLE+1		;DONT BE TOO GOOD-JUST CLOSE
+        A += memory.page0.ANGLE[1] + X; // Note: X dupes as the carry value set by above CPY I,35
+    }
     // 96$: STA ANGLE+1		;ANGLE TO AIM
+    memory.page0.ANGLE[1] = A;
+
     // LDY I,03		;START LOOKING HERE
     // LDX I,01		;FIRE FOR SAUCER
     // STX TEMP3+1		;3 SAUCER TORPEDOS
     // JMP FIRE1		;FIRE A TORPEDO
+    todo_FIRE1(0x01, 0x01, 0x03);
     //
 }
 
 // 97$: .BYTE 8F,87		;(GOOD,REAL GOOD) SMALL SAUCER
+uint8_t EFIRE_97[] = {0x8F,0x87};
 // 98$: .BYTE 70,78
+uint8_t EFIRE_98[] = {0x70,0x78};
 // 99$: .BYTE -10,0,0,10	;DIFFERENT SAUCER VELOCITIES
 int8_t EFIRE_99[] = {-0x10,0x00,0x00,0x10};
 
@@ -1211,9 +1261,16 @@ void todo_FIRE() {
     // LDA SDELAY
     // BNE FIRE2		;SHIP NOT VISIBLE YET
     // TAX			;LDX I,0
+
     // LDA I,03
     // STA TEMP3+1		;STOPPING INDEX FOR SHIP
     // LDY I,7			;NUMBER OF TORPEDOS ALLOWED
+    todo_FIRE1(0x03, /*TODO fixup real X here */ 0x00, 0x07);
+}
+
+void todo_FIRE1(uint8_t TEMP3_1, uint8_t X, uint8_t Y) {
+    //TODO: Remember to implement
+
     // FIRE1: LDA Y,OBJ+NOBJ
     // BEQ FIRE3		;WE FOUND INACTIVE ONE
     // DEY
@@ -2972,29 +3029,33 @@ void todo_UPDATE() {
 }
 
 // CKSUM5: .BYTE 77		;7400-77FF
-// .PAGE
-// .PAGE
-// ;ATAN-ARCTANGENT
-// ;
-// ;ENTRY	(X)=X PART OF ARCTAN (Y/X) (SIGNED NUMBER)
-// ;	(Y)=Y PART (SIGNED NUMBER)
-// ;EXIT	(A)=ARCTAN RESULT (0 TO FF, 40=90 DEGREES)
-// ;USES	A,X,Y,(TEMP2,TEMP2+1)
-// ATAN: TYA
-// BPL ATAN1		;IF Y>-0
-// JSR COMP		;+Y=-Y
-// JSR ATAN1		;ATAN (-Y/X)
-// JMP COMP		;ARCTAN(Y/X)=-ARCTAN(-Y/X)
-//
-// ATAN1: TAY			;DIVISOR
-// TXA
-// BPL ATAN2		;IF X=-0
-// JSR COMP		;X=-X
-// JSR ATAN2		;ATAN(Y/-X)
-// EOR I,80		;ARCTAN(Y/X)=80-ARTCAN(Y/-X)
-// ;	JMP COMP
-//
-//
+/**
+ * ATAN-ARCTANGENT
+ *
+ * ENTRY	(X)=X PART OF ARCTAN (Y/X) (SIGNED NUMBER)
+ *          (Y)=Y PART (SIGNED NUMBER)
+ * EXIT     (A)=ARCTAN RESULT (0 TO FF, 40=90 DEGREES)
+ * USES     A,X,Y,(TEMP2,TEMP2+1)
+ */
+int8_t todo_ATAN(int8_t X, int8_t Y) {
+    //TODO: Remember to implement
+
+    // ATAN: TYA
+    // BPL ATAN1		;IF Y>-0
+    // JSR COMP		;+Y=-Y
+    // JSR ATAN1		;ATAN (-Y/X)
+    // JMP COMP		;ARCTAN(Y/X)=-ARCTAN(-Y/X)
+    //
+    // ATAN1: TAY			;DIVISOR
+    // TXA
+    // BPL ATAN2		;IF X=-0
+    // JSR COMP		;X=-X
+    // JSR ATAN2		;ATAN(Y/-X)
+    // EOR I,80		;ARCTAN(Y/X)=80-ARTCAN(Y/-X)
+    // ;	JMP COMP
+    return 0; //TODO: Fixme
+}
+
 /**
  * COMP-COMPLEMENT ACCUMULATOR
  * ENTRY	(A)=VALUE TO BE COMPLEMENTED
