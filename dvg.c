@@ -14,6 +14,8 @@ uint8_t sp;
 
 uint16_t stack[DVG_MAX_SP + 1];
 
+//TODO: Change all SHIFT + AND to AND + SHIFT as it makes more sense
+
 void dvg_init() {
     x = DVG_MIN_X;
     y = DVG_MIN_Y;
@@ -30,6 +32,10 @@ uint16_t get_next_word() {
     return word;
 }
 
+int16_t scale(int16_t value) {
+    return gsf >= 8 ? value >> (16 - gsf) : value << gsf;
+}
+
 void dvg_draw_to(cairo_t *cr, int16_t delta_x, int16_t delta_y, uint8_t brightness) {
     uint16_t new_x = x + delta_x;
     uint16_t new_y = y + delta_y;
@@ -38,7 +44,7 @@ void dvg_draw_to(cairo_t *cr, int16_t delta_x, int16_t delta_y, uint8_t brightne
 
     if (brightness > DVG_MIN_BRIGHTNESS) {
         cairo_set_source_rgb(cr, 1.0 / DVG_MAX_BRIGHTNESS * brightness, 1.0 / DVG_MAX_BRIGHTNESS * brightness, 1.0 / DVG_MAX_BRIGHTNESS * brightness);
-        cairo_set_line_width(cr, 2);
+        cairo_set_line_width(cr, 1);
 
         cairo_move_to(cr, x, DVG_MAX_Y - y);
         cairo_line_to(cr, new_x, DVG_MAX_Y - new_y);
@@ -49,38 +55,38 @@ void dvg_draw_to(cairo_t *cr, int16_t delta_x, int16_t delta_y, uint8_t brightne
     y = new_y;
 }
 
-void dvg_parse_vec(cairo_t *cr, uint16_t word_1, uint16_t word_2) {
-    uint8_t lsf = word_1 >> 12 & DVG_SF_MASK;
-    assert(lsf <= DVG_MAX_SF);
-    uint8_t sf = gsf + lsf;
-    assert(sf <= DVG_MAX_SF); //TODO: Is this right or do we need to clamp sf to DVG_MAX_SF
+void dvg_parse_vctr(cairo_t *cr, uint16_t word_1, uint16_t word_2) {
+    const uint8_t sf = word_1 >> 12 & DVG_SF_MASK;
+    assert(sf <= DVG_MAX_SF);
 
-    bool y_sign = word_1 >> 10 & DVG_SIGN_MASK;
+    const bool y_sign = word_1 >> 10 & DVG_SIGN_MASK;
 
     int16_t delta_y = (int16_t) (word_1 & DVG_Y_MASK);
     assert(delta_y <= DVG_MAX_Y);
 
-    uint8_t brightness = word_2 >> 12 & DVG_BRIGHTNESS_MASK;
+    const uint8_t brightness = word_2 >> 12 & DVG_BRIGHTNESS_MASK;
     assert(brightness <= DVG_MAX_BRIGHTNESS);
 
-    bool x_sign = word_2 >> 10 & DVG_SIGN_MASK;
+    const bool x_sign = word_2 >> 10 & DVG_SIGN_MASK;
 
     int16_t delta_x = (int16_t) (word_2 & DVG_X_MASK);
     assert(delta_x <= DVG_MAX_X);
 
-    delta_y = (int16_t) (y_sign ? -delta_y : delta_y);
-    delta_x = (int16_t) (x_sign ? -delta_x : delta_x);
+    delta_y = y_sign ? -delta_y : delta_y; // One's complement
+    delta_x = x_sign ? -delta_x : delta_x; // One's complement
+    const int16_t scaled_delta_y = delta_y >> (9 - sf);
+    const int16_t scaled_delta_x = delta_x >> (9 - sf);
 
-    int16_t scaled_delta_y = (int16_t) (delta_y >> (DVG_MAX_LOCAL_SF - sf));
-    int16_t scaled_delta_x = (int16_t) (delta_x >> (DVG_MAX_LOCAL_SF - sf));
-
-    printf("0x%04X VEC scale=%d, bri=%d, x=%d, y=%d  (%d, %d)\n", current_pc, sf, brightness, delta_x, delta_y,
+    printf("0x%04X VCTR scale=%d, bri=%d, x=%d, y=%d  (%d, %d)\n", current_pc, 0, brightness, delta_x, delta_y,
            scaled_delta_x, scaled_delta_y);
 
     dvg_draw_to(cr, scaled_delta_x, scaled_delta_y, brightness);
 }
 
-void dvg_parse_cur(uint16_t word_1, uint16_t word_2) {
+void dvg_parse_labs(uint16_t word_1, uint16_t word_2) {
+    assert((word_1 & 0b10000000000) == 0); // According to some docs Y should be signed but that doesn't make sense unless you move 0,0 to the center of the screen
+    assert((word_2 & 0b10000000000) == 0); // According to some docs X should be signed but that doesn't make sense unless you move 0,0 to the center of the screen
+
     uint16_t new_y = word_1 & DVG_Y_MASK;
     assert(new_y <= DVG_MAX_Y);
 
@@ -90,7 +96,7 @@ void dvg_parse_cur(uint16_t word_1, uint16_t word_2) {
     uint8_t new_gsf = word_2 >> 12 & DVG_SF_MASK;
     assert(new_gsf <= DVG_MAX_SF);
 
-    printf("0x%04X CUR scale=%d, x=%d, y=%d\n", current_pc, new_gsf, new_x, new_y);
+    printf("0x%04X LABS scale=%d, x=%d, y=%d\n", current_pc, new_gsf, new_x, new_y);
 
     y = new_y;
     x = new_x;
@@ -142,28 +148,31 @@ void dvg_parse_jmp(uint16_t word) {
 void dvg_parse_svec(cairo_t *cr, uint16_t word) {
     uint8_t ss = (word >> 11 & DVG_S0_MASK) | (word >> 2 & DVG_S1_MASK);
     assert(ss <= DVG_MAX_SS);
-    uint8_t sf = 1 << (ss + 1);
 
     uint8_t brightness = word >> 4 & DVG_BRIGHTNESS_MASK;
     assert(brightness <= DVG_MAX_BRIGHTNESS);
 
     bool y_sign = word >> 10 & DVG_SIGN_MASK;
 
-    int16_t delta_y = (int16_t) (word >> 8 & DVG_YY_MASK);
+    int16_t delta_y = (word >> 8) & DVG_YY_MASK;
     assert(delta_y <= DVG_MAX_YY);
 
     bool x_sign = word >> 2 & DVG_SIGN_MASK;
 
-    int16_t delta_x = (int16_t) (word >> 0 & DVG_XX_MASK);
+    int16_t delta_x = (word >> 0) & DVG_XX_MASK;
     assert(delta_x <= DVG_MAX_XX);
 
+    uint8_t lsf = 1 << (7 - ss);
+
+    delta_y = delta_y << 8 >> (7 - ss);
+    delta_x = delta_x << 8 >> (7 - ss);
     delta_y = (int16_t) (y_sign ? -delta_y : delta_y);
     delta_x = (int16_t) (x_sign ? -delta_x : delta_x);
 
-    int16_t scaled_delta_y = (int16_t) (delta_y << (ss + 1));
-    int16_t scaled_delta_x = (int16_t) (delta_x << (ss + 1));
+    int16_t scaled_delta_y = scale(delta_y);
+    int16_t scaled_delta_x = scale(delta_x);
 
-    printf("0x%04X SVEC scale=%d(*%d), bri=%d, x=%d, y=%d  (%d, %d)\n", current_pc, ss, sf, brightness, delta_x, delta_y, scaled_delta_x, scaled_delta_y);
+    printf("0x%04X SVEC scale=%d(*%d), bri=%d, x=%d, y=%d  (%d, %d)\n", current_pc, ss, lsf, brightness, delta_x, delta_y, scaled_delta_x, scaled_delta_y);
 
     dvg_draw_to(cr, scaled_delta_x, scaled_delta_y, brightness);
 }
@@ -177,21 +186,21 @@ void dvg_run(cairo_t *cr, uint16_t start_pc) {
 
         int opcode = word >> 12 & DVG_OPCODE_MASK;
         switch (opcode) {
-            case DVG_OPCODE_VEC_0:
-            case DVG_OPCODE_VEC_1:
-            case DVG_OPCODE_VEC_2:
-            case DVG_OPCODE_VEC_3:
-            case DVG_OPCODE_VEC_4:
-            case DVG_OPCODE_VEC_5:
-            case DVG_OPCODE_VEC_6:
-            case DVG_OPCODE_VEC_7:
-            case DVG_OPCODE_VEC_8:
-            case DVG_OPCODE_VEC_9:
-                dvg_parse_vec(cr, word, get_next_word());
+            case DVG_OPCODE_VCTR_0:
+            case DVG_OPCODE_VCTR_1:
+            case DVG_OPCODE_VCTR_2:
+            case DVG_OPCODE_VCTR_3:
+            case DVG_OPCODE_VCTR_4:
+            case DVG_OPCODE_VCTR_5:
+            case DVG_OPCODE_VCTR_6:
+            case DVG_OPCODE_VCTR_7:
+            case DVG_OPCODE_VCTR_8:
+            case DVG_OPCODE_VCTR_9:
+                dvg_parse_vctr(cr, word, get_next_word());
                 break;
 
-            case DVG_OPCODE_CUR:
-                dvg_parse_cur(word, get_next_word());
+            case DVG_OPCODE_LABS:
+                dvg_parse_labs(word, get_next_word());
                 break;
 
             case DVG_OPCODE_HALT:
