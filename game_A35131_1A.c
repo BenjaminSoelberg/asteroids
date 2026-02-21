@@ -250,12 +250,12 @@ void START() {
 void START1() {
     // START1: JSR NEWAST		;START UP NEW ASTEROIDS
     NEWAST();
-    // BEQ START1		;START NEW SET OF ASTEROIDS
 }
 
 bool START2() {
     // START2: LDA A,STSTSW		;NOTE NMI NOT ACTIVE IF STSTSW ON
     // 5$: BMI 5$			;IN SELF TEST-WANT FOR WATCHDOG TO RESET SOUNDS
+    //FIXME: how to implement the above ?
     if (memory.io.STSTSW & 0x80) {
         _trigger_nmi();
     }
@@ -343,6 +343,7 @@ bool START2() {
     // 30$: ORA NROCKS
     // BNE START2			;LOOP FOR NEXT PASS
     return (A_rdelay | memory.currentPlayer.NROCKS) != 0;
+	// BEQ START1		;START NEW SET OF ASTEROIDS
 }
 
 /**
@@ -2422,7 +2423,7 @@ void PICTUR(uint8_t Y_scaling_factor, uint8_t X_object_index) {
 
     // CMP I,0A0
     // BCC 30$			;IF 0 TO 90
-    if (A >= 0xA0) {
+    if (A >= 0xA0) { // TODO: Is this correct ?
         // LDA I,90
         // JSR VGWAIT		;TWO WAITS ARE NEEDED
         VGWAIT(0x90);
@@ -2567,6 +2568,8 @@ bool todo_SCORES() {
     // LDY I,0
     // JSR VGMSG		;DISPLAY "HIGH SCORE" MESSAGE
     VGMSG(0x00);
+
+    //TODO: all the below
     // LDX I,0			;INDEX FOR HIGH SCORE TABLE
     // STX TEMP3+3		;INDEX FOR TABLE OF INITIALS
     // LDA I,01
