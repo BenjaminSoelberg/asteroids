@@ -827,7 +827,7 @@ uint16_t *todo_CPYVEC(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, ui
 
 uint16_t *todo_COPY(uint8_t TEMP1_x_sign_mask, uint8_t TEMP1_1_y_sign_mask, uint8_t TEMP4_2_intensity_delta,
                     const uint16_t *XA_vector_ptr, uint8_t Y_index) {
-    //TODO: I think this is broken!
+    assert(false); //TODO: This is broken!
     while (true) {
         // COPY: INY
         Y_index++;
@@ -2321,7 +2321,7 @@ void PARAMS() {
     // LDY I,02
     // SEC
     // JSR DIGITS		;DISPLAY HIGH SCORE
-    //TODO: It seems that X is zero here (according to VGWAIT), but I would expect that it ment no intensity, so can that be true?...)
+    /* Note: X is actually 0 here (follow the code in VGWAIT) */
     DIGITS(memory.page0.HSCORE, 2, 0x00, true);
     // LDA I,0
     // JSR VGHEX		;ADD A ZERO TO SCORE
@@ -2413,8 +2413,7 @@ void PICTUR(uint8_t Y_scaling_factor, uint8_t X_object_index) {
     // STA XCOMP+3
     // LDX I,XCOMP
     // JSR VGLABS		;POSITION PIECE
-    VGLABS(memory.currentPlayer.OBJX[X_object_index] >> 3, (memory.currentPlayer.OBJY[X_object_index] + 4)
-            >> 3); // Div X & Y by 8 (remove fixed point) and also round Y up.
+    VGLABS(memory.currentPlayer.OBJX[X_object_index] >> 3, (memory.currentPlayer.OBJY[X_object_index] + 4) >> 3); // Div X & Y by 8 (remove fixed point) and also round Y up.
 
     // LDA I,70		;WE WANT WAIT OF 7
     // SEC
@@ -2423,7 +2422,7 @@ void PICTUR(uint8_t Y_scaling_factor, uint8_t X_object_index) {
 
     // CMP I,0A0
     // BCC 30$			;IF 0 TO 90
-    if (A >= 0xA0) { // TODO: Is this correct ?
+    if (A >= 0xA0) {
         // LDA I,90
         // JSR VGWAIT		;TWO WAITS ARE NEEDED
         VGWAIT(0x90);
