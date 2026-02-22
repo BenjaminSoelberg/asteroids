@@ -4,7 +4,7 @@
 #define VGDOT_MAX_TIMER 0x90
 #define VGDOT_MAX_INTENSITY 0xF0
 
-void fixme_VGJMP1(uint16_t vg_instruction);
+void VGJMP1(uint16_t vg_instruction);
 
 void VGHAL1(uint8_t opcode);
 
@@ -255,7 +255,7 @@ void VGJMPL(uint16_t vg_jmp_destination) {
     //  AND I,0F		;BASE ADDRESS IS RELATIVE TO ZERO
     //  ORA I,0E0
     /* Original asm did a fall through to next function */
-    fixme_VGJMP1(vg_jmp_destination & 0x0FFF | 0xE000); // 0xE000 is the JMP instruction
+    VGJMP1(vg_jmp_destination & 0x0FFF | 0xE000); // 0xE000 is the JMP instruction
 }
 
 /**
@@ -263,19 +263,17 @@ void VGJMPL(uint16_t vg_jmp_destination) {
  *
  * @note    ASM not ported but reimplemented to fit new memory layout
  */
-void fixme_VGJMP1(uint16_t vg_instruction) {
+void VGJMP1(uint16_t vg_instruction) {
     //  VGJMP1:	LDY I,01
     //  STA NY,VGLIST
     //  DEY
     //  TXA
     //  ROR
     //  STA NY,VGLIST		;SAVE MSB + OPCODE
-    vg_memory_put(0, vg_instruction & 0xFF);
-    vg_memory_put(1, vg_instruction >> 8);
+    vg_memory_put16(0, vg_instruction);
     //  INY
-    VGADD(1);
-    //TODO is this really a conditional jump or is this a size optimization of an unconditional jump ?
     //  BNE VGADD		;UPDATE VECTOR POINTER
+    VGADD(1);
 }
 
 /**
@@ -292,9 +290,8 @@ void VGJSRL(uint16_t vg_jsr_destination) {
     //  VGJSRL:	LSR
     //  AND I,0F		;BASE ADDRESS IS RELATIVE
     //  ORA I,0C0
-    //TODO is this really a conditional jump or is this a size optimization of an unconditional jump ?
     //  BNE VGJMP1		;MOVE INTO VECTOR LIST
-    fixme_VGJMP1(vg_jsr_destination & 0x0FFF | 0xC000); // 0xC000 is the JSR instruction
+    VGJMP1(vg_jsr_destination & 0x0FFF | 0xC000); // 0xC000 is the JSR instruction
 }
 
 /**
