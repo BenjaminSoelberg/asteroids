@@ -53,8 +53,8 @@
 #define DVG_OPCODE_LABS 0xA
 #define DVG_OPCODE_HALT 0xB
 #define DVG_OPCODE_JSRL 0xC
-#define DVG_OPCODE_RTS 0xD
-#define DVG_OPCODE_JMP 0xE
+#define DVG_OPCODE_RTSL 0xD
+#define DVG_OPCODE_JMPL 0xE
 #define DVG_OPCODE_SVEC 0xF
 
 void dvg_init();

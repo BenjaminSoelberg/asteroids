@@ -104,7 +104,7 @@ void dvg_parse_labs(uint16_t word_1, uint16_t word_2) {
 }
 
 void dvg_parse_halt() {
-    printf("0x%04X HALT \n", current_pc);
+    printf("0x%04X HALT\n", current_pc);
 }
 
 void dvg_parse_jsrl(uint16_t word) {
@@ -122,7 +122,7 @@ void dvg_parse_jsrl(uint16_t word) {
     pc = new_pc;
 }
 
-void dvg_parse_rts() {
+void dvg_parse_rtsl() {
     assert(sp > DVG_MIN_SP);
     assert(sp <= DVG_MAX_SP);
     uint8_t new_sp = sp - 1;
@@ -131,17 +131,17 @@ void dvg_parse_rts() {
     assert(new_pc >= DVG_MIN_PC);
     assert(new_pc <= DVG_MAX_PC);
 
-    printf("0x%04X RTC sp=0x%02X 0x%04X \n", current_pc, new_sp, new_pc);
+    printf("0x%04X RTSL sp=0x%02X 0x%04X\n", current_pc, new_sp, new_pc);
     sp = new_sp;
     pc = new_pc;
 }
 
-void dvg_parse_jmp(uint16_t word) {
+void dvg_parse_jmpl(uint16_t word) {
     uint16_t new_pc = word & DVG_PC_MASK;
     assert(new_pc >= DVG_MIN_PC);
     assert(new_pc <= DVG_MAX_PC);
 
-    printf("0x%04X JMP 0x%04X\n", current_pc, new_pc);
+    printf("0x%04X JMPL 0x%04X\n", current_pc, new_pc);
     pc = new_pc;
 }
 
@@ -212,12 +212,12 @@ void dvg_run(cairo_t *cr, uint16_t start_pc) {
                 dvg_parse_jsrl(word);
                 break;
 
-            case DVG_OPCODE_RTS:
-                dvg_parse_rts();
+            case DVG_OPCODE_RTSL:
+                dvg_parse_rtsl();
                 break;
 
-            case DVG_OPCODE_JMP:
-                dvg_parse_jmp(word);
+            case DVG_OPCODE_JMPL:
+                dvg_parse_jmpl(word);
                 break;
 
             case DVG_OPCODE_SVEC:
