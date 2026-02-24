@@ -107,7 +107,7 @@ void dvg_parse_halt() {
     printf("0x%04X HALT \n", current_pc);
 }
 
-void dvg_parse_jsr(uint16_t word) {
+void dvg_parse_jsrl(uint16_t word) {
     assert(sp < DVG_MAX_SP);
     uint8_t new_sp = sp + 1;
 
@@ -115,7 +115,7 @@ void dvg_parse_jsr(uint16_t word) {
     assert(new_pc >= DVG_MIN_PC);
     assert(new_pc <= DVG_MAX_PC);
 
-    printf("0x%04X JSR sp=0x%02X 0x%04X\n", current_pc, new_sp, new_pc);
+    printf("0x%04X JSRL sp=0x%02X 0x%04X\n", current_pc, new_sp, new_pc);
 
     stack[sp] = pc;
     sp = new_sp;
@@ -208,8 +208,8 @@ void dvg_run(cairo_t *cr, uint16_t start_pc) {
                 keep_running = false;
                 break;
 
-            case DVG_OPCODE_JSR:
-                dvg_parse_jsr(word);
+            case DVG_OPCODE_JSRL:
+                dvg_parse_jsrl(word);
                 break;
 
             case DVG_OPCODE_RTS:
