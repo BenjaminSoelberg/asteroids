@@ -1845,12 +1845,12 @@ void MOTION() {
         Y_scaling_factor = 0xE0;
         // LSR
         // BCS 30$			;SMALLEST SIZE
-        if ((A_object & 0x01) == 0x01) {
+        if ((A_object & 0x01) == 0x00) {
             // LDY I,0F0		;1/2 SIZE PICTOR
             Y_scaling_factor = 0xF0;
             // LSR
             // BCS 30$			;MEDIUM SIZE
-            if ((A_object & 0x02) == 0x02) {
+            if ((A_object & 0x02) == 0x00) {
                 // LDY I,0			;FULL SIZE
                 Y_scaling_factor = 0x00;
             }
