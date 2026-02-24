@@ -2083,11 +2083,12 @@ void NEWAST() {
         // 5$: STA NROCKS		;NUMBER OF ROCKS ACTIVE
         // STA SROCKS
         // STA TEMP1
-        memory.currentPlayer.NROCKS = memory.currentPlayer.SROCKS = memory.page0.TEMP1[0] =
-                min(memory.currentPlayer.SROCKS + 2, 11);
+        uint8_t initial_rocks = min(memory.currentPlayer.SROCKS + 2, 11);
+        memory.currentPlayer.NROCKS = initial_rocks;
+        memory.currentPlayer.SROCKS = initial_rocks;
         /** Get random bits to build up rocks */
         // LDY I,NOBJ+1
-        uint8_t Y_old_object_index = NOBJ + 1;
+        uint8_t Y_old_object_index = SAUCER_OBJ;
         do {
             // 10$: JSR RAND		;RANDOM NUMBER
             // AND I,18		;PICTURE NUMBER
@@ -2132,8 +2133,8 @@ void NEWAST() {
             X_new_object_index--;
             // DEC TEMP1
             // BNE 10$			;LOOP FOR EACH NEW ROCK
-            //TODO: is this correct or am i missing one ? also, remove the usage of TEMP1
-        } while (--memory.page0.TEMP1[0] > 0);
+            //TODO: is this correct or am i missing one ?
+        } while (--initial_rocks > 0);
         // LDA I,7F
         // STA EDELAY		;SAUCER SHOULD WAIT
         memory.currentPlayer.EDELAY = 0x7F;
@@ -2568,6 +2569,7 @@ bool todo_SCORES() {
     // JSR VGMSG		;DISPLAY "HIGH SCORE" MESSAGE
     VGMSG(0x00);
 
+    return false;
     //TODO: all the below
     // LDX I,0			;INDEX FOR HIGH SCORE TABLE
     // STX TEMP3+3		;INDEX FOR TABLE OF INITIALS
