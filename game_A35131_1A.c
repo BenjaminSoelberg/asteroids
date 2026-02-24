@@ -2470,7 +2470,7 @@ void PICTUR(uint8_t Y_scaling_factor, uint8_t X_object_index) {
             // BCS 70$			;IF A TORPEDO (DOT)
             /* Goto avoided and asm inlined */
             VGDOT(0x70, 0xF0);
-            if ((memory.page0.FRAME_16 & 0x0003) == 0x0003) {
+            if ((memory.page0.FRAME_16 & 0x0003) == 0) {
                 memory.currentPlayer.OBJ[X_object_index]--;
             }
         } else {
