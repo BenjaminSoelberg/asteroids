@@ -82,15 +82,15 @@
 
 #define ASTMSG     ROM_TO_MEM(0x08A4)
 
-#define EXP10      ROM_TO_MEM(0x08F8)
-#define EXP12      ROM_TO_MEM(0x08FA)
-#define EXP14      ROM_TO_MEM(0x08FC)
-#define EXP16      ROM_TO_MEM(0x08FE)
+#define EXP10      ROM_TO_MEM(0x09A0)
+#define EXP12      ROM_TO_MEM(0x096A)
+#define EXP14      ROM_TO_MEM(0x092C)
+#define EXP16      ROM_TO_MEM(0x0900)
 
-#define ROCK1      ROM_TO_MEM(0x09DE)
-#define ROCK2      ROM_TO_MEM(0x09E0)
-#define ROCK3      ROM_TO_MEM(0x09E2)
-#define ROCK4      ROM_TO_MEM(0x09E4)
+#define ROCK1      ROM_TO_MEM(0x09E6)
+#define ROCK2      ROM_TO_MEM(0x09FE)
+#define ROCK3      ROM_TO_MEM(0x0A1A)
+#define ROCK4      ROM_TO_MEM(0x0A34)
 
 #define SAUCER1    ROM_TO_MEM(0x0A52)
 
