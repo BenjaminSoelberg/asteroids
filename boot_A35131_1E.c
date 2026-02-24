@@ -53,7 +53,7 @@ void todo_STEST();
  *  THIS ROUTINE SETS UP POINTERS FOR THE VECTOR GENERATOR AND
  *  CLEARS AND SETS 0 PAGE AS NEEDED.
  */
-_Noreturn void PWRON() {
+void PWRON() {
     //PWRON:	LDX I,0FE
     //	TXS			;SET STACK
     /** No need to set the stack as we just use the program stack **/
