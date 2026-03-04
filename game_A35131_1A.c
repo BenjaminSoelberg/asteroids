@@ -1703,7 +1703,7 @@ void MOTION() {
         // LSR
         // LSR
         // LSR
-        A_object = COMP(A_object) >> 4; // Time ?
+        A_object = COMP(A_object) >> 4; // Time ? TODO: what happens to A after here?? where is the result used ?
         // CPX I,NOBJ
         // BNE 16$			;NOT THE SHIP
         if (X_object_index == SHIP_OBJ) {
