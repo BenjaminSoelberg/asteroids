@@ -74,8 +74,11 @@ void dvg_parse_vctr(cairo_t *cr, uint16_t word_1, uint16_t word_2) {
 
     delta_y = y_sign ? -delta_y : delta_y; // One's complement
     delta_x = x_sign ? -delta_x : delta_x; // One's complement
-    const int16_t scaled_delta_y = delta_y >> (9 - sf);
-    const int16_t scaled_delta_x = delta_x >> (9 - sf);
+    int16_t scaled_delta_y = delta_y >> (9 - sf);
+    int16_t scaled_delta_x = delta_x >> (9 - sf);
+
+    scaled_delta_y = scale(scaled_delta_y);
+    scaled_delta_x = scale(scaled_delta_x);
 
     printf("0x%04X VCTR scale=%d, bri=%d, x=%d, y=%d  (%d, %d)\n", current_pc, 0, brightness, delta_x, delta_y,
            scaled_delta_x, scaled_delta_y);
@@ -164,13 +167,13 @@ void dvg_parse_svec(cairo_t *cr, uint16_t word) {
 
     uint8_t lsf = 1 << (7 - ss);
 
-    delta_y = delta_y << 8 >> (7 - ss);
-    delta_x = delta_x << 8 >> (7 - ss);
-    delta_y = (int16_t) (y_sign ? -delta_y : delta_y);
-    delta_x = (int16_t) (x_sign ? -delta_x : delta_x);
+    delta_y = y_sign ? -delta_y : delta_y; // One's complement
+    delta_x = x_sign ? -delta_x : delta_x; // One's complement
+    int16_t scaled_delta_y = delta_y << (ss + 1);
+    int16_t scaled_delta_x = delta_x << (ss + 1);
 
-    int16_t scaled_delta_y = scale(delta_y);
-    int16_t scaled_delta_x = scale(delta_x);
+    scaled_delta_y = scale(scaled_delta_y);
+    scaled_delta_x = scale(scaled_delta_x);
 
     printf("0x%04X SVEC scale=%d(*%d), bri=%d, x=%d, y=%d  (%d, %d)\n", current_pc, ss, lsf, brightness, delta_x, delta_y, scaled_delta_x, scaled_delta_y);
 
