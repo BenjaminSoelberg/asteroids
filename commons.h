@@ -98,6 +98,7 @@ extern uint16_t VGMSGA[];
 extern uint16_t EXPPIC[];
 extern uint16_t ROCKS[];
 extern uint16_t SAUCER[];
+extern uint8_t SINCOS[];
 
 typedef struct {
     uint8_t VGSIZE;             //	VGSIZE:     .BLKB 1			;SCALING SIZE (0,10,20,...,F0)
