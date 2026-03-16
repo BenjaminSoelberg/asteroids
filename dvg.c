@@ -14,6 +14,21 @@ uint8_t sp;
 
 uint16_t stack[DVG_MAX_SP + 1];
 
+#ifndef ASTEROIDS_DEBUG
+#define ASTEROIDS_DEBUG 0
+#endif
+
+void debug_printf(const char *format, ...) {
+#if ASTEROIDS_DEBUG
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+#else
+    (void)format;
+#endif
+}
+
 //TODO: Change all SHIFT + AND to AND + SHIFT as it makes more sense
 
 void dvg_init() {
@@ -80,7 +95,7 @@ void dvg_parse_vctr(cairo_t *cr, uint16_t word_1, uint16_t word_2) {
     scaled_delta_y = scale(scaled_delta_y);
     scaled_delta_x = scale(scaled_delta_x);
 
-    printf("0x%04X VCTR scale=%d, bri=%d, x=%d, y=%d  (%d, %d)\n", current_pc, 0, brightness, delta_x, delta_y,
+    debug_printf("0x%04X VCTR scale=%d, bri=%d, x=%d, y=%d  (%d, %d)\n", current_pc, 0, brightness, delta_x, delta_y,
            scaled_delta_x, scaled_delta_y);
 
     dvg_draw_to(cr, scaled_delta_x, scaled_delta_y, brightness);
@@ -99,7 +114,7 @@ void dvg_parse_labs(uint16_t word_1, uint16_t word_2) {
     uint8_t new_gsf = word_2 >> 12 & DVG_SF_MASK;
     assert(new_gsf <= DVG_MAX_SF);
 
-    printf("0x%04X LABS scale=%d, x=%d, y=%d\n", current_pc, new_gsf, new_x, new_y);
+    debug_printf("0x%04X LABS scale=%d, x=%d, y=%d\n", current_pc, new_gsf, new_x, new_y);
 
     y = new_y;
     x = new_x;
@@ -107,7 +122,7 @@ void dvg_parse_labs(uint16_t word_1, uint16_t word_2) {
 }
 
 void dvg_parse_halt() {
-    printf("0x%04X HALT\n", current_pc);
+    debug_printf("0x%04X HALT\n", current_pc);
 }
 
 void dvg_parse_jsrl(uint16_t word) {
@@ -118,7 +133,7 @@ void dvg_parse_jsrl(uint16_t word) {
     assert(new_pc >= DVG_MIN_PC);
     assert(new_pc <= DVG_MAX_PC);
 
-    printf("0x%04X JSRL sp=0x%02X 0x%04X\n", current_pc, new_sp, new_pc);
+    debug_printf("0x%04X JSRL sp=0x%02X 0x%04X\n", current_pc, new_sp, new_pc);
 
     stack[sp] = pc;
     sp = new_sp;
@@ -134,7 +149,7 @@ void dvg_parse_rtsl() {
     assert(new_pc >= DVG_MIN_PC);
     assert(new_pc <= DVG_MAX_PC);
 
-    printf("0x%04X RTSL sp=0x%02X 0x%04X\n", current_pc, new_sp, new_pc);
+    debug_printf("0x%04X RTSL sp=0x%02X 0x%04X\n", current_pc, new_sp, new_pc);
     sp = new_sp;
     pc = new_pc;
 }
@@ -144,7 +159,7 @@ void dvg_parse_jmpl(uint16_t word) {
     assert(new_pc >= DVG_MIN_PC);
     assert(new_pc <= DVG_MAX_PC);
 
-    printf("0x%04X JMPL 0x%04X\n", current_pc, new_pc);
+    debug_printf("0x%04X JMPL 0x%04X\n", current_pc, new_pc);
     pc = new_pc;
 }
 
@@ -175,7 +190,7 @@ void dvg_parse_svec(cairo_t *cr, uint16_t word) {
     scaled_delta_y = scale(scaled_delta_y);
     scaled_delta_x = scale(scaled_delta_x);
 
-    printf("0x%04X SVEC scale=%d(*%d), bri=%d, x=%d, y=%d  (%d, %d)\n", current_pc, ss, lsf, brightness, delta_x, delta_y, scaled_delta_x, scaled_delta_y);
+    debug_printf("0x%04X SVEC scale=%d(*%d), bri=%d, x=%d, y=%d  (%d, %d)\n", current_pc, ss, lsf, brightness, delta_x, delta_y, scaled_delta_x, scaled_delta_y);
 
     dvg_draw_to(cr, scaled_delta_x, scaled_delta_y, brightness);
 }
