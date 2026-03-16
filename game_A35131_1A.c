@@ -1883,53 +1883,117 @@ void todo_MOVE() {
 
     // MOVE: LDA NPLAYR
     // BEQ 90$			;IN ATTRACT MODE
+    if (memory.page0.NPLAYR == 0) {
+        return; // Inlined
+    }
+
     // LDA OBJ+NOBJ
     // BMI 90$			;IF EXPLODING
+    if ((int8_t) memory.currentPlayer.OBJ[SHIP_OBJ] < 0) {
+        return; // Inlined
+    }
+
     // LDA SDELAY
     // BEQ 5$			;SHIP IS VISIBLE
-    // DEC SDELAY		;DECREMENT COUNT
-    // BNE 90$			;NOT DONE YET
-    // LDY RENTRY
-    // BMI 93$			;IF BLOW UP OR RE-ENTRY
-    // BNE 92$			;IF RETURNING FROM HYPERSPACE
-    // JSR NEARBY		;CHECK FOR AREA FREE OF ROCKS
-    // BNE 97$			;IF SOMETHING CLOSE BY
-    // LDY OBJ+NOBJ+1
-    // BEQ 92$			;IF SAUCER NOT VISIBLE
-    // LDY I,02
-    // STY SDELAY		;DELAY SOME MORE
-    // RTS
-    //
+    if (memory.currentPlayer.SDELAY != 0) {
+        // DEC SDELAY		;DECREMENT COUNT
+        memory.currentPlayer.SDELAY--;
+
+        // BNE 90$			;NOT DONE YET
+        if (memory.currentPlayer.SDELAY != 0) {
+            return; // Inlined
+        }
+
+        // LDY RENTRY
+        // BMI 93$			;IF BLOW UP OR RE-ENTRY
+        if ((int8_t) memory.page0.RENTRY < 0) {
+            goto _93;
+        }
+
+        // BNE 92$			;IF RETURNING FROM HYPERSPACE
+        if (memory.page0.RENTRY != 0) {
+            goto _92;
+        }
+
+        // JSR NEARBY		;CHECK FOR AREA FREE OF ROCKS
+        // BNE 97$			;IF SOMETHING CLOSE BY
+        if (NEARBY()) {
+            goto _97;
+        }
+
+        // LDY OBJ+NOBJ+1
+        // BEQ 92$			;IF SAUCER NOT VISIBLE
+        if (memory.currentPlayer.OBJ[SAUCER_OBJ] == 0) {
+            goto _92;
+        }
+
+        // LDY I,02
+        // STY SDELAY		;DELAY SOME MORE
+        memory.currentPlayer.SDELAY = 0x02;
+        // RTS
+        return;
+    }
+
     // 92$: LDA I,01
     // STA OBJ+NOBJ		;USE 1/4 SIZE PICTURE
+_92:
+    memory.currentPlayer.OBJ[SHIP_OBJ] = 0x01;
     // BNE 97$
-    //
+    goto _97;
+
     // 93$: LDA I,0A0
     // STA OBJ+NOBJ		;BLOW UP
+_93:
+    memory.currentPlayer.OBJ[SHIP_OBJ] = 0xA0;
     // LDX I,3E
     // STX LEXPSND		;SOUND OF EXPLOSION
+    memory.page0.LEXPSND = 0x3E;
     // LDX PLAYR
     // DEC X,HITS
+    memory.page0.HITS[memory.page0.PLAYR]--;
     // LDA I,081
     // STA SDELAY		;DELAY BEFORE ENTRY
+    memory.currentPlayer.SDELAY = 0x81;
+
     // 97$: LDA I,0
     // STA RENTRY		;CLEAR HYPERSPACE FLAG
+_97:
+    memory.page0.RENTRY = 0;
     // 90$: RTS
-    //
+    return;
+
+    uint8_t A_rotation_delta;
     // 5$: LDA A,ROTL
     // BPL 10$			;NO ROTATE LEFT
-    // LDA I,03
-    // BNE 15$			;ALWAYS
-    //
+    if ((int8_t) memory.io.ROTL < 0) {
+        // LDA I,03
+        A_rotation_delta = 0x03;
+        // BNE 15$			;ALWAYS
+        goto _15;
+    }
+
     // 10$: LDA A,ROTR
     // BPL 20$			;NO ROTATE RIGHT
+    if ((int8_t) memory.io.ROTR >= 0) {
+        goto _20;
+    }
+
     // LDA I,-3
+    A_rotation_delta = (uint8_t) -0x03;
     // 15$: CLC
     // ADC ANGLE
     // STA ANGLE		;NEW ROTATION ANGLE
+_15:
+    memory.page0.ANGLE[0] = (uint8_t) (memory.page0.ANGLE[0] + A_rotation_delta);
+
     // 20$: LDA FRAME
     // LSR
     // BCS 90$			;EVERY OTHER FRAME CHECK THRUST
+_20:
+    if ((memory.page0.FRAME_16 & 0x0001) != 0) {
+        return; // Inlined
+    }
+
     // MOVE1: LDA A,THRUST
     // BPL 80$			;NO THRUST
     // LDA I,80
