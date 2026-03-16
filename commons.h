@@ -233,7 +233,7 @@ int32_t min(int32_t a, int32_t b);
 
 void io_setOUT1(uint8_t out1);
 
-void todo_wait_for_HALT();
+void todo_io_wait_for_HALT();
 
 void _trigger_nmi();
 

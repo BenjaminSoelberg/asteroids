@@ -78,7 +78,7 @@ void io_setOUT1(uint8_t out1) {
 /**
  * Will wait until the DVG has executed a HALT instruction.
  */
-void todo_wait_for_HALT() {
+void todo_io_wait_for_HALT() {
     //    10$:	LDA A,HALT
     //    BMI 10$			;WAIT FOR BEAM TO HALT
     // TODO: Remember to implement

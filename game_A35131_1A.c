@@ -268,7 +268,7 @@ bool START2() {
     }
     // 10$: LDA A,HALT
     // BMI 10$			;WAIT FOR BEAM TO HALT
-    todo_wait_for_HALT();
+    todo_io_wait_for_HALT();
     // LDA A,VECRAM+1		;SWITCH VECTOR BUFFERS
     // EOR I,02
     // STA A,VECRAM+1		;CHANGE JMPL TO STARTING BUFFER
