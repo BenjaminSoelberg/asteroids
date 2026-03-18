@@ -235,6 +235,16 @@ int8_t EFIRE_99[];
 
 int8_t todo_ATAN(int8_t X, int8_t Y);
 
+int8_t SIN(uint8_t A_angle);
+
+int8_t SIN1(uint8_t A_angle);
+
+int16_t MOVE2(int16_t AX_clamped_value);
+
+bool NEARBY();
+
+int8_t COS(uint8_t A_angle);
+
 /**
  *  .SBTTL MAIN LINE LOOP
  *  .=6800
@@ -1932,35 +1942,35 @@ void todo_MOVE() {
         memory.currentPlayer.SDELAY = 0x02;
         // RTS
         return;
+
+        // 92$: LDA I,01
+        // STA OBJ+NOBJ		;USE 1/4 SIZE PICTURE
+    _92:
+        memory.currentPlayer.OBJ[SHIP_OBJ] = 0x01;
+        // BNE 97$
+        goto _97;
+
+        // 93$: LDA I,0A0
+        // STA OBJ+NOBJ		;BLOW UP
+    _93:
+        memory.currentPlayer.OBJ[SHIP_OBJ] = 0xA0;
+        // LDX I,3E
+        // STX LEXPSND		;SOUND OF EXPLOSION
+        memory.page0.LEXPSND = 0x3E;
+        // LDX PLAYR
+        // DEC X,HITS
+        memory.page0.HITS[memory.page0.PLAYR]--;
+        // LDA I,081
+        // STA SDELAY		;DELAY BEFORE ENTRY
+        memory.currentPlayer.SDELAY = 0x81;
+
+        // 97$: LDA I,0
+        // STA RENTRY		;CLEAR HYPERSPACE FLAG
+    _97:
+        memory.page0.RENTRY = 0;
+        // 90$: RTS
+        return;
     }
-
-    // 92$: LDA I,01
-    // STA OBJ+NOBJ		;USE 1/4 SIZE PICTURE
-_92:
-    memory.currentPlayer.OBJ[SHIP_OBJ] = 0x01;
-    // BNE 97$
-    goto _97;
-
-    // 93$: LDA I,0A0
-    // STA OBJ+NOBJ		;BLOW UP
-_93:
-    memory.currentPlayer.OBJ[SHIP_OBJ] = 0xA0;
-    // LDX I,3E
-    // STX LEXPSND		;SOUND OF EXPLOSION
-    memory.page0.LEXPSND = 0x3E;
-    // LDX PLAYR
-    // DEC X,HITS
-    memory.page0.HITS[memory.page0.PLAYR]--;
-    // LDA I,081
-    // STA SDELAY		;DELAY BEFORE ENTRY
-    memory.currentPlayer.SDELAY = 0x81;
-
-    // 97$: LDA I,0
-    // STA RENTRY		;CLEAR HYPERSPACE FLAG
-_97:
-    memory.page0.RENTRY = 0;
-    // 90$: RTS
-    return;
 
     uint8_t A_rotation_delta;
     // 5$: LDA A,ROTL
@@ -1996,59 +2006,111 @@ _20:
 
     // MOVE1: LDA A,THRUST
     // BPL 80$			;NO THRUST
-    // LDA I,80
-    // STA A,SHPSND		;SOUND FOR THRUST
-    // LDY I,0
-    // LDA ANGLE
-    // JSR COS			;COS(ANGLE)=(CHANGE IN XINC)*4
-    // BPL 25$			;SIGN EXTENSION
-    // DEY			;LDY I,-1
-    // 25$: ASL
-    // CLC
-    // ADC XINCL		;ADD TO SHIPS VELOCITY
-    // TAX
-    // TYA
-    // ADC XINC+NOBJ
-    // JSR MOVE2		;CHECK FOR RANGE
-    // STA XINC+NOBJ
-    // STX XINCL
-    // LDY I,0
-    // LDA ANGLE
-    // JSR SIN			;SIN(ANGLE)
-    // BPL 50$			;SIGN EXTEND
-    // DEY			;LDY I,0FF
-    // 50$: ASL
-    // CLC
-    // ADC YINCL
-    // TAX
-    // TYA
-    // ADC YINC+NOBJ
-    // JSR MOVE2		;CHECK FOR RANGE
-    // STA YINC+NOBJ
-    // STX YINCL
-    // RTS
-    //
+    if ((int8_t) memory.io.THRUST < 0) {
+        // LDA I,80
+        // STA A,SHPSND		;SOUND FOR THRUST
+        io_set_SHPSND(0x80);
+
+        // LDY I,0
+        // LDA ANGLE
+        // JSR COS			;COS(ANGLE)=(CHANGE IN XINC)*4
+        int8_t cos_value = COS(memory.page0.ANGLE[0]);
+        int8_t y_ext = 0;
+        // BPL 25$			;SIGN EXTENSION
+        if (cos_value < 0) {
+            // DEY			;LDY I,-1
+            y_ext = -1;
+        }
+
+        // 25$: ASL
+        // CLC
+        // ADC XINCL		;ADD TO SHIPS VELOCITY
+        // TAX
+        // TYA
+        // ADC XINC+NOBJ
+        // JSR MOVE2		;CHECK FOR RANGE
+        // STA XINC+NOBJ
+        // STX XINCL
+        int16_t x_fixed = ((int16_t) memory.currentPlayer.XINC[SHIP_OBJ] << 8) | memory.page0.XINCL;
+        int16_t x_add = (((int16_t) y_ext << 8) | (uint8_t) cos_value) << 1;
+        x_fixed += x_add;
+        x_fixed = MOVE2(x_fixed);
+        memory.currentPlayer.XINC[SHIP_OBJ] = (int8_t) (x_fixed >> 8);
+        memory.page0.XINCL = (uint8_t) x_fixed;
+
+        // LDY I,0
+        // LDA ANGLE
+        // JSR SIN			;SIN(ANGLE)
+        int8_t sin_value = SIN(memory.page0.ANGLE[0]);
+        y_ext = 0;
+        // BPL 50$			;SIGN EXTEND
+        if (sin_value < 0) {
+            // DEY			;LDY I,0FF
+            y_ext = -1;
+        }
+
+        // 50$: ASL
+        // CLC
+        // ADC YINCL
+        // TAX
+        // TYA
+        // ADC YINC+NOBJ
+        // JSR MOVE2		;CHECK FOR RANGE
+        // STA YINC+NOBJ
+        // STX YINCL
+        int16_t y_fixed = ((int16_t) memory.currentPlayer.YINC[SHIP_OBJ] << 8) | memory.page0.YINCL;
+        int16_t y_add = (((int16_t) y_ext << 8) | (uint8_t) sin_value) << 1;
+        y_fixed += y_add;
+        y_fixed = MOVE2(y_fixed);
+        memory.currentPlayer.YINC[SHIP_OBJ] = (int8_t) (y_fixed >> 8);
+        memory.page0.YINCL = (uint8_t) y_fixed;
+        // RTS
+        return;
+    }
+
     // 80$: LDA I,0
     // STA A,SHPSND		;TURN OFF THRUST SOUND
+    io_set_SHPSND(0);
+
     // LDA XINC+NOBJ
     // ORA XINCL
     // BEQ 87$			;IF X=0
-    // LDA XINC+NOBJ
-    // ASL			;ASSUMES SPEED IS (-3F TO 3F)
-    // LDX I,0FF		;SIGN EXTENSION
-    // CLC
-    // EOR I,0FF
-    // BMI 86$			;IF IT WAS POSITIVE
-    // INX			;LDX I,0
-    // SEC			;1+ X/128 FOR FRICTION
-    // 86$: ADC XINCL
-    // STA XINCL
-    // TXA
-    // ADC XINC+NOBJ
-    // STA XINC+NOBJ
+    if ((memory.currentPlayer.XINC[SHIP_OBJ] | memory.page0.XINCL) != 0) {
+        // LDA XINC+NOBJ
+        // ASL			;ASSUMES SPEED IS (-3F TO 3F)
+        // LDX I,0FF		;SIGN EXTENSION
+        // CLC
+        // EOR I,0FF
+        // BMI 86$			;IF IT WAS POSITIVE
+        // INX			;LDX I,0
+        // SEC			;1+ X/128 FOR FRICTION
+        // 86$: ADC XINCL
+        // STA XINCL
+        // TXA
+        // ADC XINC+NOBJ
+        // STA XINC+NOBJ
+        uint8_t a = (uint8_t) memory.currentPlayer.XINC[SHIP_OBJ];
+        a <<= 1;
+        uint8_t x_ext = 0xFF;
+        uint8_t carry = 0;
+        a ^= 0xFF;
+        if ((int8_t) a >= 0) {
+            x_ext = 0x00;
+            carry = 1;
+        }
+        uint16_t sum = (uint16_t) a + memory.page0.XINCL + carry;
+        memory.page0.XINCL = (uint8_t) sum;
+        sum = (uint16_t) x_ext + (uint8_t) memory.currentPlayer.XINC[SHIP_OBJ] + (sum >> 8);
+        memory.currentPlayer.XINC[SHIP_OBJ] = (int8_t) (uint8_t) sum;
+    }
+
     // 87$: LDA YINCL
     // ORA YINC+NOBJ
     // BEQ 89$			;IF Y=0
+    if ((memory.page0.YINCL | memory.currentPlayer.YINC[SHIP_OBJ]) == 0) {
+        return;
+    }
+
     // LDA YINC+NOBJ
     // ASL
     // LDX I,0FF		;SIGN EXTENSION
@@ -2062,52 +2124,104 @@ _20:
     // TXA
     // ADC YINC+NOBJ
     // STA YINC+NOBJ
+    uint8_t a = (uint8_t) memory.currentPlayer.YINC[SHIP_OBJ];
+    a <<= 1;
+    uint8_t x_ext = 0xFF;
+    uint8_t carry = 0;
+    a ^= 0xFF;
+    if ((int8_t) a >= 0) {
+        carry = 1;
+        x_ext = 0x00;
+    }
+    uint16_t sum = (uint16_t) a + memory.page0.YINCL + carry;
+    memory.page0.YINCL = (uint8_t) sum;
+    sum = (uint16_t) x_ext + (uint8_t) memory.currentPlayer.YINC[SHIP_OBJ] + (sum >> 8);
+    memory.currentPlayer.YINC[SHIP_OBJ] = (int8_t) (uint8_t) sum;
+
     // 89$: RTS
 }
 
-// MOVE2: BMI 30$			;IF OUT OF RANGE
-// CMP I,40
-// BCC 35$			;IF IN RANGE
-// LDX I,0FF		;MAX
-// LDA I,3F
-// RTS
-//
-// 30$: CMP I,-3F
-// BCS 35$			;IF IN RANGE
-// LDX I,01		;-3FFF=C001
-// LDA I,0C0		;SET MAX NEGATIVE
-// 35$: RTS
-//
-//
-// .SBTTL NEARBY - CHECK FOR ROCKS NEARBY
-// ;NEARBY - CHECK FOR ROCKS NEAR SHIP
-// ;
-// ;EXIT	(CC)=0 IF AREA FREE OF ROCKS
-// ;	(SDELAY)>0 IF ROCK NEAR SHIP
-// NEARBY: LDX I,NOBJ+1
-// 10$: LDA X,OBJ
-// BEQ 40$			;OBJECT NOT ALIVE
-// LDA X,OBJXH
-// SEC
-// SBC OBJXH+NOBJ
-// CMP I,04
-// BCC 20$			;IF CLOSE ENOUGH
-// CMP I,-4
-// BCC 40$			;TOO FAR AWAY
-// 20$: LDA X,OBJYH
-// SEC
-// SBC OBJYH+NOBJ
-// CMP I,04
-// BCC 50$			;TOO CLOSE
-// CMP I,-4
-// BCS 50$			;TOO CLOSE
-// 40$: DEX
-// BPL 10$			;LOOP THRU ALL OBJECTS
-// INX			;ZERO FLAG ON EXIT
-// RTS
-//
-// 50$: INC SDELAY		;DELAY BEFORE ENTERING SHIP
-// RTS			;SETS NON-ZERO FLAG
+int16_t MOVE2(int16_t AX_clamped_value) {
+    // MOVE2: BMI 30$			;IF OUT OF RANGE
+    if (AX_clamped_value >= 0) {
+        // CMP I,40
+        // BCC 35$			;IF IN RANGE
+        if (AX_clamped_value >= 0x4000) {
+            // LDX I,0FF		;MAX
+            // LDA I,3F
+            AX_clamped_value = 0x3FFF;
+        }
+        // RTS
+        return AX_clamped_value;
+    }
+
+    // 30$: CMP I,-3F
+    // BCS 35$			;IF IN RANGE
+    if (AX_clamped_value < -0x3FFF) {
+        // LDX I,01		;-3FFF=C001
+        // LDA I,0C0		;SET MAX NEGATIVE
+        AX_clamped_value = -0x3FFF;
+    }
+
+    // 35$: RTS
+    return AX_clamped_value;
+}
+
+/**
+ * NEARBY - CHECK FOR ROCKS NEAR SHIP
+ * EXIT     (CC)=0 IF AREA FREE OF ROCKS
+ *          (SDELAY)>0 IF ROCK NEAR SHIP
+ */
+bool NEARBY() {
+    // NEARBY: LDX I,NOBJ+1
+    for (int8_t X = SAUCER_OBJ; X >= 0; X--) {
+        // 10$: LDA X,OBJ
+        // BEQ 40$			;OBJECT NOT ALIVE
+        if (memory.currentPlayer.OBJ[X] == 0) {
+            continue;
+        }
+        // LDA X,OBJXH
+        // SEC
+        // SBC OBJXH+NOBJ
+        int16_t A = (int16_t)memory.currentPlayer.OBJX[X] - (int16_t)memory.currentPlayer.OBJX[SHIP_OBJ];
+        // CMP I,04
+        // BCC 20$			;IF CLOSE ENOUGH
+        if (A >= 0x0400) {
+            // CMP I,-4
+            // BCC 40$			;TOO FAR AWAY
+            if (A < (int16_t)-0x0400) {
+                continue; //TODO: fixme ???
+            }
+        }
+        // 20$: LDA X,OBJYH
+        // SEC
+        // SBC OBJYH+NOBJ
+        A = (int16_t)memory.currentPlayer.OBJY[X] - (int16_t)memory.currentPlayer.OBJY[SHIP_OBJ];
+        // CMP I,04
+        // BCC 50$			;TOO CLOSE
+        if (A < 0x0400) {
+            goto _50;
+        }
+        // CMP I,-4
+        // BCS 50$			;TOO CLOSE
+        if (A >= (int16_t)-0x0400) {
+            goto _50;
+        }
+        // 40$: DEX
+        // BPL 10$			;LOOP THRU ALL OBJECTS
+    }
+
+    // INX			;ZERO FLAG ON EXIT
+    // RTS
+    return false;
+
+_50:
+    // 50$: INC SDELAY		;DELAY BEFORE ENTERING SHIP
+    memory.currentPlayer.SDELAY = (uint8_t)(memory.currentPlayer.SDELAY + 1);
+    // RTS			;SETS NON-ZERO FLAG
+    return true;
+}
+
 //
 // CKSUM4: .BYTE 99		;7000-73FF
 
@@ -3342,33 +3456,53 @@ uint8_t RAND() {
 }
 
 // 9$: .BYTE 2
-//
-//
-// ;COS-COSINE
-// ;ENTRY	=ANGLE (0 TO FF)
-// ;EXIT	(A)=COSINE(-127,127)
-// COS: CLC			;COS(A)=SIN(A+PI/2)
-// ADC I,40
-// ;	JMP SIN
-//
-//
-// ;SIN-SINE
-// ;
-// ;ENTRY	(A)=ANGLE (0 TO FF REPRESENTS 0 TO 360 DEGREES)
-// ;	(CC)=MINUS/PLUS FLAG SET CORRECTLY
-// ;EXIT	(A)=SINE (-127 TO +127)
-// ;USES	A,X
-// SIN: BPL SIN1		;IF PI > ANGLE >-0
-// AND I,7F
-// JSR SIN1		;SIN(A) WHEN PI > A >= 0
-// JMP COMP		;SIN(PI+A)=-SIN(A)
-//
-// SIN1: CMP I,41
-// BCC 10$			;PI/2 >- ANGLE >- 0
-// EOR I,7F		;SIN(PI/2+A)=SIN(PI/2-A)
-// ADC I,0			;ADD 1
-// 10$: TAX
-// LDA AX,SINCOS
-// RTS
+
+/**
+ * COS - COSINE
+ * ENTRY    =ANGLE (0 TO FF)
+ * EXIT     (A)=COSINE(-127,127)
+ */
+int8_t COS(uint8_t A_angle) {
+    // COS: CLC			;COS(A)=SIN(A+PI/2)
+    // ADC I,40
+    // ;	JMP SIN
+    return SIN(A_angle + 0x40);
+}
+
+/**
+ * SIN - SINE
+ * ENTRY	(A)=ANGLE (0 TO FF REPRESENTS 0 TO 360 DEGREES)
+ * 	        (CC)=MINUS/PLUS FLAG SET CORRECTLY
+ * EXIT     (A)=SINE (-127 TO +127)
+ * USES     A,X
+ */
+int8_t SIN(uint8_t A_angle) {
+    // SIN: BPL SIN1		;IF PI > ANGLE >-0
+    if ((int8_t) A_angle >= 0) {
+        return SIN1(A_angle);
+    }
+
+    // AND I,7F
+    A_angle &= 0x7F;
+    // JSR SIN1		;SIN(A) WHEN PI > A >= 0
+    // JMP COMP		;SIN(PI+A)=-SIN(A)
+    return (int8_t) COMP((uint8_t) SIN1(A_angle));
+}
+
+int8_t SIN1(uint8_t A_angle) {
+    // SIN1: CMP I,41
+    // BCC 10$			;PI/2 >- ANGLE >- 0
+    if (A_angle >= 0x41) {
+        // EOR I,7F		;SIN(PI/2+A)=SIN(PI/2-A)
+        A_angle ^= 0x7F;
+        // ADC I,0			;ADD 1
+        A_angle = (uint8_t) (A_angle + 0x01);
+    }
+
+    // 10$: TAX
+    // LDA AX,SINCOS
+    // RTS
+    return SINCOS[A_angle];
+}
 //
 // .END
