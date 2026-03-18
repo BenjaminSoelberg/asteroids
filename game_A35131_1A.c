@@ -2176,48 +2176,45 @@ bool NEARBY() {
     // NEARBY: LDX I,NOBJ+1
     for (int8_t X = SAUCER_OBJ; X >= 0; X--) {
         // 10$: LDA X,OBJ
+        uint8_t A_object = memory.currentPlayer.OBJ[X];
         // BEQ 40$			;OBJECT NOT ALIVE
-        if (memory.currentPlayer.OBJ[X] == 0) {
+        if (A_object == 0) {
             continue;
         }
+
         // LDA X,OBJXH
         // SEC
         // SBC OBJXH+NOBJ
-        int16_t A = (int16_t)memory.currentPlayer.OBJX[X] - (int16_t)memory.currentPlayer.OBJX[SHIP_OBJ];
+        int16_t dx = (int16_t) memory.currentPlayer.OBJX[X] - (int16_t) memory.currentPlayer.OBJX[SHIP_OBJ];
+
         // CMP I,04
         // BCC 20$			;IF CLOSE ENOUGH
-        if (A >= 0x0400) {
+        // CMP I,-4
+        // BCC 40$			;TOO FAR AWAY
+        if (dx < 0x400 && dx > -0x400) {
+            // 20$: LDA X,OBJYH
+            // SEC
+            // SBC OBJYH+NOBJ
+            int16_t dy = (int16_t) memory.currentPlayer.OBJY[X] - (int16_t) memory.currentPlayer.OBJY[SHIP_OBJ];
+            // CMP I,04
+            // BCC 50$			;TOO CLOSE
             // CMP I,-4
-            // BCC 40$			;TOO FAR AWAY
-            if (A < (int16_t)-0x0400) {
-                continue; //TODO: fixme ???
+            // BCS 50$			;TOO CLOSE
+            if (dy < 0x400 && dy > -0x400) {
+                goto _50;
             }
         }
-        // 20$: LDA X,OBJYH
-        // SEC
-        // SBC OBJYH+NOBJ
-        A = (int16_t)memory.currentPlayer.OBJY[X] - (int16_t)memory.currentPlayer.OBJY[SHIP_OBJ];
-        // CMP I,04
-        // BCC 50$			;TOO CLOSE
-        if (A < 0x0400) {
-            goto _50;
-        }
-        // CMP I,-4
-        // BCS 50$			;TOO CLOSE
-        if (A >= (int16_t)-0x0400) {
-            goto _50;
-        }
         // 40$: DEX
-        // BPL 10$			;LOOP THRU ALL OBJECTS
     }
-
+    // BPL 10$			;LOOP THRU ALL OBJECTS
     // INX			;ZERO FLAG ON EXIT
-    // RTS
-    return false;
 
-_50:
+    return false;
+    // RTS
+
     // 50$: INC SDELAY		;DELAY BEFORE ENTERING SHIP
-    memory.currentPlayer.SDELAY = (uint8_t)(memory.currentPlayer.SDELAY + 1);
+_50:
+    memory.currentPlayer.SDELAY++;
     // RTS			;SETS NON-ZERO FLAG
     return true;
 }
