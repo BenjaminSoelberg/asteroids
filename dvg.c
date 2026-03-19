@@ -95,7 +95,7 @@ void dvg_parse_vctr(cairo_t *cr, uint16_t word_1, uint16_t word_2) {
     scaled_delta_y = scale(scaled_delta_y);
     scaled_delta_x = scale(scaled_delta_x);
 
-    debug_printf("0x%04X VCTR scale=%d, bri=%d, x=%d, y=%d  (%d, %d)\n", current_pc, 0, brightness, delta_x, delta_y,
+    debug_printf("0x%04X VCTR scale=%d, bri=%d, x=%d, y=%d  (%d, %d)\n", current_pc, sf, brightness, delta_x, delta_y,
            scaled_delta_x, scaled_delta_y);
 
     dvg_draw_to(cr, scaled_delta_x, scaled_delta_y, brightness);
