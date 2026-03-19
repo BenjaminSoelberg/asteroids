@@ -123,7 +123,7 @@ typedef struct {
     uint8_t HITS[2];            //	HITS:       .BLKB 2			;NUMBER OF HITS REMAINING (=0 FOR ATTRACT MODE)
     uint8_t RENTRY;             //	RENTRY:     .BLKB 1			;BLOW UP ON REENTRY IF NEGATIVE (NON-ZERO IF HE JUST HYPERSPACED)
     uint8_t GDELAY;             //	GDELAY:     .BLKB 1			;DELAY BEFORE STARTING GAME
-    uint8_t SYNC;               //	SYNC:       .BLKB 1			;FRAME COUNTER SYNC
+    volatile uint8_t SYNC;      //	SYNC:       .BLKB 1			;FRAME COUNTER SYNC
     //uint8_t FRAME[2];         //	FRAME:      .BLKB 2			;FRAME COUNTER
     uint16_t FRAME_16;          //	16 bit replacement
     uint8_t $INTCT;             //	$INTCT:     .BLKB 1			;INTERRUPT COUNTER
