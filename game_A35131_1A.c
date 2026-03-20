@@ -252,33 +252,30 @@ int8_t COS(uint8_t A_angle);
 void START() {
     // ;	JMP PWRON
     // START: JSR INIT1		;TURN OFF SOUNDS
-START:
     INIT1();
-
     // JSR INIT		;INITIALIZE PLAYER 1 FOR START OF GAME
     INIT();
+}
 
-    //memory.page0.$$CRDT = 2; //TODO: Debug!!!!
+void START1() {
     // START1: JSR NEWAST		;START UP NEW ASTEROIDS
-START1:
     NEWAST();
+}
 
+bool START2() {
     // START2: LDA A,STSTSW		;NOTE NMI NOT ACTIVE IF STSTSW ON
     // 5$: BMI 5$			;IN SELF TEST-WANT FOR WATCHDOG TO RESET SOUNDS
     //FIXME: how to implement the above ?
-START2:
     if (memory.io.STSTSW & 0x80) {
         _trigger_nmi();
     }
-
     // LSR SYNC
+    bool c = (memory.page0.SYNC & 1);
+    memory.page0.SYNC = memory.page0.SYNC >> 1;
     // BCC START2			;WAIT FOR START OF FRAME
-    bool sync = memory.page0.SYNC & 1;
-    memory.page0.SYNC >>= 1;
-    if (!sync) {
-        goto START2;
+    if (!c) {
+        //TODO:Disabled by debug return true;
     }
-
     // 10$: LDA A,HALT
     // BMI 10$			;WAIT FOR BEAM TO HALT
     todo_io_wait_for_HALT();
@@ -306,7 +303,7 @@ START2:
     // JSR CHKST		;CHECK FOR START
     if (CHKST()) {
         // BCS START		;START NEW GAME
-        goto START;
+        return true;
     }
     // JSR UPDATE		;UPDATE HIGH SCORE TABLES
     todo_UPDATE();
@@ -355,11 +352,8 @@ START2:
     }
     // 30$: ORA NROCKS
     // BNE START2			;LOOP FOR NEXT PASS
-    if (A_rdelay | memory.currentPlayer.NROCKS != 0) {
-        goto START2;
-    }
+    return (A_rdelay | memory.currentPlayer.NROCKS) != 0;
 	// BEQ START1		;START NEW SET OF ASTEROIDS
-    goto START1;
 }
 
 /**

@@ -5,15 +5,13 @@
 #include "boot_A35131_1E.h"
 #include "game_A35131_1A.h"
 
-// Worker thread that runs the game start logic
-static gpointer start_thread_func(gpointer user_data) {
-    PWRON();
-    START();
-    return NULL;
-}
-
 // Custom draw function using Cairo
 static void draw_callback(GtkDrawingArea *area, cairo_t *cr, int width, int height, gpointer data) {
+    static bool reinit = true;
+    if (reinit) {
+        START1();
+    }
+    reinit = !START2();
     dvg_run(cr, 0x0000);
 }
 
@@ -27,8 +25,8 @@ gboolean on_draw(gpointer user_data) {
 static void on_activate(GtkApplication *app, gpointer user_data) {
     dvg_init();
 
-    // Run START() in a separate GTK-managed thread
-    g_thread_new("game-thread", start_thread_func, NULL);
+    PWRON();
+    START();
 
     // Create main application window
     GtkWidget *window = gtk_application_window_new(app);
