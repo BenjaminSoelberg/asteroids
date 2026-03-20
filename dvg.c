@@ -29,8 +29,6 @@ void debug_printf(const char *format, ...) {
 #endif
 }
 
-//TODO: Change all SHIFT + AND to AND + SHIFT as it makes more sense
-
 void dvg_init() {
     x = DVG_MIN_X;
     y = DVG_MIN_Y;
@@ -71,20 +69,20 @@ void dvg_draw_to(cairo_t *cr, int16_t delta_x, int16_t delta_y, uint8_t brightne
 }
 
 void dvg_parse_vctr(cairo_t *cr, uint16_t word_1, uint16_t word_2) {
-    const uint8_t sf = word_1 >> 12 & DVG_SF_MASK;
+    const uint8_t sf = (word_1 & VCTR_W1_SF_MASK) >> 12;
     assert(sf <= DVG_MAX_SF);
 
-    const bool y_sign = word_1 >> 10 & DVG_SIGN_MASK;
+    const bool y_sign = (word_1 & VCTR_W1_SIGN_MASK) >> 10;
 
-    int16_t delta_y = (int16_t) (word_1 & DVG_Y_MASK);
+    int16_t delta_y = (int16_t) (word_1 & VCTR_W1_Y_MASK);
     assert(delta_y <= DVG_MAX_Y);
 
-    const uint8_t brightness = word_2 >> 12 & DVG_BRIGHTNESS_MASK;
+    const uint8_t brightness = (word_2 & VCTR_W2_BRIGHTNESS_MASK) >> 12;
     assert(brightness <= DVG_MAX_BRIGHTNESS);
 
-    const bool x_sign = word_2 >> 10 & DVG_SIGN_MASK;
+    const bool x_sign = (word_2 & VCTR_W2_SIGN_MASK) >> 10;
 
-    int16_t delta_x = (int16_t) (word_2 & DVG_X_MASK);
+    int16_t delta_x = (int16_t) (word_2 & VCTR_W2_X_MASK);
     assert(delta_x <= DVG_MAX_X);
 
     delta_y = y_sign ? -delta_y : delta_y; // One's complement
@@ -102,16 +100,17 @@ void dvg_parse_vctr(cairo_t *cr, uint16_t word_1, uint16_t word_2) {
 }
 
 void dvg_parse_labs(uint16_t word_1, uint16_t word_2) {
-    assert((word_1 & 0b10000000000) == 0); // According to some docs Y should be signed but that doesn't make sense unless you move 0,0 to the center of the screen
-    assert((word_2 & 0b10000000000) == 0); // According to some docs X should be signed but that doesn't make sense unless you move 0,0 to the center of the screen
+    // According to some docs, X/Y should be signed, but that doesn't make sense unless you move 0,0 to the center of the screen
+    assert((word_1 & 0b10000000000) == 0);
+    assert((word_2 & 0b10000000000) == 0);
 
-    uint16_t new_y = word_1 & DVG_Y_MASK;
+    uint16_t new_y = word_1 & LABS_W1_Y_MASK;
     assert(new_y <= DVG_MAX_Y);
 
-    uint16_t new_x = word_2 & DVG_X_MASK;
+    uint16_t new_x = word_2 & LABS_W2_X_MASK;
     assert(new_x <= DVG_MAX_X);
 
-    uint8_t new_gsf = word_2 >> 12 & DVG_SF_MASK;
+    uint8_t new_gsf = (word_2 & LABS_W2_SF_MASK) >> 12;
     assert(new_gsf <= DVG_MAX_SF);
 
     debug_printf("0x%04X LABS scale=%d, x=%d, y=%d\n", current_pc, new_gsf, new_x, new_y);
@@ -129,7 +128,7 @@ void dvg_parse_jsrl(uint16_t word) {
     assert(sp < DVG_MAX_SP);
     uint8_t new_sp = sp + 1;
 
-    uint16_t new_pc = word & DVG_PC_MASK;
+    uint16_t new_pc = word & JSRL_PC_MASK;
     assert(new_pc >= DVG_MIN_PC);
     assert(new_pc <= DVG_MAX_PC);
 
@@ -155,7 +154,7 @@ void dvg_parse_rtsl() {
 }
 
 void dvg_parse_jmpl(uint16_t word) {
-    uint16_t new_pc = word & DVG_PC_MASK;
+    uint16_t new_pc = word & JMPL_PC_MASK;
     assert(new_pc >= DVG_MIN_PC);
     assert(new_pc <= DVG_MAX_PC);
 
@@ -164,20 +163,20 @@ void dvg_parse_jmpl(uint16_t word) {
 }
 
 void dvg_parse_svec(cairo_t *cr, uint16_t word) {
-    uint8_t ss = (word >> 11 & DVG_S0_MASK) | (word >> 2 & DVG_S1_MASK);
+    uint8_t ss = (word & SVEC_S1_MASK) >> 11 | (word & SVEC_S0_MASK) >> 2;
     assert(ss <= DVG_MAX_SS);
 
-    uint8_t brightness = word >> 4 & DVG_BRIGHTNESS_MASK;
+    uint8_t brightness = (word & SVEC_BRIGHTNESS_MASK) >> 4;
     assert(brightness <= DVG_MAX_BRIGHTNESS);
 
-    bool y_sign = word >> 10 & DVG_SIGN_MASK;
+    bool y_sign = (word & SVEC_Y_SIGN_MASK) >> 10;
 
-    int16_t delta_y = (word >> 8) & DVG_YY_MASK;
+    int16_t delta_y = (word & SVEC_Y_MASK) >> 8;
     assert(delta_y <= DVG_MAX_YY);
 
-    bool x_sign = word >> 2 & DVG_SIGN_MASK;
+    bool x_sign = (word & SVEC_X_SIGN_MASK) >> 2;
 
-    int16_t delta_x = (word >> 0) & DVG_XX_MASK;
+    int16_t delta_x = (word & SVEC_X_MASK) >> 0;
     assert(delta_x <= DVG_MAX_XX);
 
     uint8_t lsf = 1 << (7 - ss);
@@ -202,7 +201,7 @@ void dvg_run(cairo_t *cr, uint16_t start_pc) {
         current_pc = pc;
         uint16_t word = get_next_word();
 
-        int opcode = word >> 12 & DVG_OPCODE_MASK;
+        int opcode = (word & DVG_OPCODE_MASK) >> 12;
         switch (opcode) {
             case DVG_OPCODE_VCTR_0:
             case DVG_OPCODE_VCTR_1:
