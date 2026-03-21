@@ -45,10 +45,6 @@ uint16_t get_next_word() {
     return word;
 }
 
-int16_t scale(int16_t value) {
-    return gsf >= 8 ? value >> (16 - gsf) : value << gsf;
-}
-
 void dvg_draw_to(cairo_t *cr, int16_t delta_x, int16_t delta_y, uint8_t brightness) {
     uint16_t new_x = x + delta_x;
     uint16_t new_y = y + delta_y;
@@ -68,9 +64,13 @@ void dvg_draw_to(cairo_t *cr, int16_t delta_x, int16_t delta_y, uint8_t brightne
     y = new_y;
 }
 
+int16_t scale(int16_t value, int8_t sf) {
+    return sf >= 9 ? value << sf - 9 : value >> 9 - sf;
+}
+
 void dvg_parse_vctr(cairo_t *cr, uint16_t word_1, uint16_t word_2) {
-    const uint8_t sf = (word_1 & VCTR_W1_SF_MASK) >> 12;
-    assert(sf <= DVG_MAX_SF);
+    const uint8_t lsf = (word_1 & VCTR_W1_SF_MASK) >> 12;
+    assert(lsf <= DVG_MAX_SF);
 
     const bool y_sign = (word_1 & VCTR_W1_SIGN_MASK) >> 10;
 
@@ -87,13 +87,14 @@ void dvg_parse_vctr(cairo_t *cr, uint16_t word_1, uint16_t word_2) {
 
     delta_y = y_sign ? -delta_y : delta_y; // One's complement
     delta_x = x_sign ? -delta_x : delta_x; // One's complement
-    int16_t scaled_delta_y = delta_y >> (9 - sf);
-    int16_t scaled_delta_x = delta_x >> (9 - sf);
 
-    scaled_delta_y = scale(scaled_delta_y);
-    scaled_delta_x = scale(scaled_delta_x);
+    int8_t sf = (int8_t)((gsf + lsf) & 0xF);
 
-    debug_printf("0x%04X VCTR scale=%d, bri=%d, x=%d, y=%d  (%d, %d)\n", current_pc, sf, brightness, delta_x, delta_y,
+    int16_t scaled_delta_y = scale(delta_y, sf);
+    int16_t scaled_delta_x = scale(delta_x, sf);
+
+    debug_printf("0x%04X VCTR gsf=%d lsf=%d sf=%d bri=%d x=%d y=%d -> (%d, %d)\n",
+           current_pc, gsf, lsf, sf, brightness, delta_x, delta_y,
            scaled_delta_x, scaled_delta_y);
 
     dvg_draw_to(cr, scaled_delta_x, scaled_delta_y, brightness);
@@ -164,7 +165,7 @@ void dvg_parse_jmpl(uint16_t word) {
 
 void dvg_parse_svec(cairo_t *cr, uint16_t word) {
     uint8_t ss = (word & SVEC_S1_MASK) >> 11 | (word & SVEC_S0_MASK) >> 2;
-    assert(ss <= DVG_MAX_SS);
+    assert(ss <= SVEC_MAX_SS);
 
     uint8_t brightness = (word & SVEC_BRIGHTNESS_MASK) >> 4;
     assert(brightness <= DVG_MAX_BRIGHTNESS);
@@ -172,24 +173,26 @@ void dvg_parse_svec(cairo_t *cr, uint16_t word) {
     bool y_sign = (word & SVEC_Y_SIGN_MASK) >> 10;
 
     int16_t delta_y = (word & SVEC_Y_MASK) >> 8;
-    assert(delta_y <= DVG_MAX_YY);
+    assert(delta_y <= SVEC_MAX_Y);
 
     bool x_sign = (word & SVEC_X_SIGN_MASK) >> 2;
 
     int16_t delta_x = (word & SVEC_X_MASK) >> 0;
-    assert(delta_x <= DVG_MAX_XX);
+    assert(delta_x <= SVEC_MAX_X);
 
-    uint8_t lsf = 1 << (7 - ss);
+    uint8_t lsf = ss + 2; // Normalize to match scaling scale
 
     delta_y = y_sign ? -delta_y : delta_y; // One's complement
     delta_x = x_sign ? -delta_x : delta_x; // One's complement
-    int16_t scaled_delta_y = delta_y << (ss + 1);
-    int16_t scaled_delta_x = delta_x << (ss + 1);
 
-    scaled_delta_y = scale(scaled_delta_y);
-    scaled_delta_x = scale(scaled_delta_x);
+    int8_t sf = (int8_t)((gsf + (8 + lsf)) & 0xF);
 
-    debug_printf("0x%04X SVEC scale=%d(*%d), bri=%d, x=%d, y=%d  (%d, %d)\n", current_pc, ss, lsf, brightness, delta_x, delta_y, scaled_delta_x, scaled_delta_y);
+    int16_t scaled_delta_y = scale(delta_y, sf);
+    int16_t scaled_delta_x = scale(delta_x, sf);
+
+    debug_printf("0x%04X SVEC gsf=%d lsf=%d sf=%d bri=%d x=%d y=%d -> (%d, %d)\n",
+           current_pc, gsf, lsf, sf, brightness, delta_x, delta_y,
+           scaled_delta_x, scaled_delta_y);
 
     dvg_draw_to(cr, scaled_delta_x, scaled_delta_y, brightness);
 }
